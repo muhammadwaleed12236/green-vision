@@ -16,7 +16,9 @@ class StockOutController extends Controller
         if (Auth::id()) {
             $userId = Auth::id();
 
-            $products = Product::all();
+            // Add initial_stock to the query
+            $products = Product::select('id', 'item_name', 'height', 'width', 'initial_stock')
+                ->get();
 
             $localSales = LocalSale::with('customer')
                 ->select('id', 'invoice_number', 'customer_id')
@@ -51,18 +53,34 @@ class StockOutController extends Controller
             ]);
 
             foreach ($request->products as $product) {
-                $total_stock = $product['current_stock'] - $product['close_stock'];
+                // Skip empty rows
+                if (empty($product['product_id'])) {
+                    continue;
+                }
 
+                $currentStock = floatval($product['current_stock']);
+                $closeStock = floatval($product['close_stock']);
+                $usedStock = $currentStock - $closeStock;
+
+                // Save stock out record
                 StockOut::create([
                     'admin_or_user_id' => $userId,
                     'product_id' => $product['product_id'],
                     'local_sales_id' => $request->local_sales_id,
-                    'current_stock' => $product['current_stock'],
-                    'close_stock' => $product['close_stock'],
-                    'total_stock' => $total_stock,
+                    'current_stock' => $currentStock,
+                    'close_stock' => $closeStock,
+                    'total_stock' => $usedStock,
                     'created_at' => Carbon::now(),
                     'updated_at' => Carbon::now(),
                 ]);
+
+                // Update product's initial_stock with closing stock (NOT used stock)
+                $productModel = Product::find($product['product_id']);
+                if ($productModel) {
+                    // The closing stock becomes the new initial stock for next time
+                    $productModel->initial_stock = $closeStock;
+                    $productModel->save();
+                }
             }
 
             return redirect()->back()->with('success', 'StockOut created successfully');
@@ -106,5 +124,36 @@ class StockOutController extends Controller
         }
 
         return response()->json(['error' => 'StockOut not found'], 404);
+    }
+
+    public function stockout_details($jobId)
+    {
+        if (Auth::id()) {
+            $stockOuts = StockOut::with(['product', 'localSale.customer'])
+                ->where('local_sales_id', $jobId)
+                ->get();
+
+            $localSale = LocalSale::with('customer')->find($jobId);
+
+            return view('admin_panel.stockOut.stockout_details', [
+                'stockOuts' => $stockOuts,
+                'localSale' => $localSale,
+            ]);
+        } else {
+            return redirect()->back();
+        }
+    }
+
+    public function delete_job_stockout(Request $request)
+    {
+        $stockOuts = StockOut::where('local_sales_id', $request->job_id)->get();
+
+        if ($stockOuts->count() > 0) {
+            StockOut::where('local_sales_id', $request->job_id)->delete();
+
+            return response()->json(['success' => 'All StockOut records deleted successfully']);
+        }
+
+        return response()->json(['error' => 'No records found'], 404);
     }
 }

@@ -14,7 +14,6 @@ use App\Models\Recovery;
 use App\Models\Sale;
 use App\Models\Salesman;
 use App\Models\Vendor;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -42,6 +41,7 @@ class ReportController extends Controller
         $startDate = $request->input('start_date').' 00:00:00';
         $endDate = $request->input('end_date').' 23:59:59';
 
+        // ---- Get Ledger Base Opening ----
         $ledger = DB::table('distributor_ledgers')
             ->where('distributor_id', $distributorId)
             ->select('opening_balance')
@@ -238,57 +238,78 @@ class ReportController extends Controller
 
     public function Customer_Ledger_Record()
     {
-        if (Auth::id()) {
-            $userId = Auth::id();
-            $Customers = Customer::where('admin_or_user_id', $userId)->get(); // Adjust according to your database structure
-
-            return view('admin_panel.reports.customer_ledger_record', [
-                'Customers' => $Customers,
-            ]);
-        } else {
+        if (! Auth::check()) {
             return redirect()->back();
         }
+
+        $authUser = Auth::user();
+
+        // Step 1: Determine owner/admin ID
+        if ($authUser->usertype === 'salesman') {
+            $salesman = Salesman::where('name', $authUser->name)->first();
+
+            if (! $salesman) {
+                return redirect()->back()->with('error', 'Salesman not found.');
+            }
+
+            $ownerId = $salesman->admin_or_user_id;
+        } else {
+            // If admin/owner
+            $ownerId = $authUser->id;
+        }
+
+        // Step 2: Fetch all customers under this owner
+        $Customers = Customer::where('admin_or_user_id', $ownerId)
+            ->get();
+
+        return view('admin_panel.reports.customer_ledger_record', compact('Customers'));
     }
 
     public function fetchCustomerLedger(Request $request)
     {
         $CustomerId = $request->input('Customer_id');
-        if (! $CustomerId) {
-            return response()->json(['message' => 'Customer_id is required'], 422);
-        }
+        $startDate = $request->input('start_date').' 00:00:00';
+        $endDate = $request->input('end_date').' 23:59:59';
 
-        $startDate = ($request->input('start_date') ?: date('Y-m-d')).' 00:00:00';
-        $endDate = ($request->input('end_date') ?: now()->format('Y-m-d')).' 23:59:59';
-
-        /* ---- Base opening from ledger (NO carry-forward) ---- */
-        $ledgerRow = DB::table('customer_ledgers')
+        // ---- Ledger Opening Balance from DB (first time user set) ----
+        $ledger = DB::table('customer_ledgers')
             ->where('customer_id', $CustomerId)
-            ->latest('id')
-            ->select('id', 'opening_balance', 'closing_balance', 'created_at')
+            ->select('opening_balance')
             ->first();
 
-        $openingBalance = (float) ($ledgerRow->opening_balance ?? 0); // ← fixed opening
-        $carryFwd = (float) ($ledgerRow->closing_balance ?? 0); // info only
+        $baseOpening = $ledger->opening_balance ?? 0;
 
-        /* ---- Period details (for listing) ---- */
-        $recoveries = DB::table('customer_recoveries as cr')
-            ->join('customer_ledgers as cl', 'cl.id', '=', 'cr.customer_ledger_id')
-            ->where('cl.customer_id', $CustomerId)
-            ->whereBetween('cr.date', [$startDate, $endDate])
-            ->select('cr.id', 'cr.amount_paid', 'cr.salesman', 'cr.date', 'cr.remarks')
+        // ---- Transactions Before Start Date ----
+        $previousSales = DB::table('local_sales')
+            ->where('customer_id', $CustomerId)
+            ->where('Date', '<', $startDate)
+            ->sum('net_amount');
+
+        $previousRecoveries = DB::table('customer_recoveries')
+            ->where('customer_ledger_id', $CustomerId)
+            ->where('date', '<', $startDate)
+            ->sum('amount_paid');
+
+        $previousReturns = DB::table('sale_returns')
+            ->where('sale_type', 'customer')
+            ->where('party_id', $CustomerId)
+            ->where('created_at', '<', $startDate)
+            ->sum('total_return_amount');
+
+        // ✅ Opening Balance = Ledger Opening + (Sales − Recoveries − Returns)
+        $openingBalance = $baseOpening + $previousSales - ($previousRecoveries + $previousReturns);
+
+        // ---- Current Period Transactions ----
+        $recoveries = DB::table('customer_recoveries')
+            ->where('customer_ledger_id', $CustomerId)
+            ->whereBetween('date', [$startDate, $endDate])
+            ->select('id', 'amount_paid', 'salesman', 'date', 'remarks')
             ->get();
 
         $localSales = DB::table('local_sales')
             ->where('customer_id', $CustomerId)
-            ->where(function ($q) use ($startDate, $endDate) {
-                $q->whereBetween('Date', [$startDate, $endDate])
-                    ->orWhere(function ($qq) use ($startDate, $endDate) {
-                        $qq->whereNull('Date')->whereBetween('created_at', [$startDate, $endDate]);
-                    });
-            })
-            ->select('invoice_number', 'Date', 'customer_shopname', 'grand_total',
-                'discount_value', 'scheme_value', 'net_amount', 'cash_received',
-                'Saleman', 'created_at')
+            ->whereBetween('Date', [$startDate, $endDate])
+            ->select('invoice_number', 'Date', 'customer_shopname', 'grand_total', 'discount_value', 'scheme_value', 'net_amount', 'Saleman')
             ->get();
 
         $saleReturns = DB::table('sale_returns')
@@ -298,61 +319,17 @@ class ReportController extends Controller
             ->select('invoice_number', 'total_return_amount', 'created_at')
             ->get();
 
-        /* ---- Upto endDate aggregates (for closing) ---- */
-        $salesUptoEnd = (float) DB::table('local_sales')
-            ->where('customer_id', $CustomerId)
-            ->where(function ($q) use ($endDate) {
-                $q->where('Date', '<=', $endDate)
-                    ->orWhere(function ($qq) use ($endDate) {
-                        $qq->whereNull('Date')->where('created_at', '<=', $endDate);
-                    });
-            })
-            ->sum('net_amount');
-
-        $cashAtSaleUptoEnd = (float) DB::table('local_sales')
-            ->where('customer_id', $CustomerId)
-            ->where(function ($q) use ($endDate) {
-                $q->where('Date', '<=', $endDate)
-                    ->orWhere(function ($qq) use ($endDate) {
-                        $qq->whereNull('Date')->where('created_at', '<=', $endDate);
-                    });
-            })
-            ->sum('cash_received');
-
-        $recoveriesUptoEnd = (float) DB::table('customer_recoveries as cr')
-            ->join('customer_ledgers as cl', 'cl.id', '=', 'cr.customer_ledger_id')
-            ->where('cl.customer_id', $CustomerId)
-            ->where('cr.date', '<=', $endDate)
-            ->sum('cr.amount_paid');
-
-        $returnsUptoEnd = (float) DB::table('sale_returns')
-            ->where('sale_type', 'customer')
-            ->where('party_id', $CustomerId)
-            ->where('created_at', '<=', $endDate)
-            ->sum('total_return_amount');
-
-        // Assumption: sale-time cash_received NOT in recoveries table → include both
+        // ✅ Closing Balance = Opening + Sales − (Recoveries + Returns)
         $closingBalance = $openingBalance
-            + $salesUptoEnd
-            - ($recoveriesUptoEnd + $cashAtSaleUptoEnd + $returnsUptoEnd);
+            + $localSales->sum('net_amount')
+            - ($recoveries->sum('amount_paid') + $saleReturns->sum('total_return_amount'));
 
         return response()->json([
-            // snapshot
-            'opening_balance' => round($openingBalance, 2),
-            'closing_balance' => round($closingBalance, 2),
-
-            // preferred names
-            'opening_as_of_start' => round($openingBalance, 2),
-            'closing_as_of_end' => round($closingBalance, 2),
-
-            // info
-            'ledger_closing_balance' => round($carryFwd, 2),
-
-            // period data (lists)
+            'opening_balance' => $openingBalance,
+            'closing_balance' => $closingBalance,
             'recoveries' => $recoveries,
             'local_sales' => $localSales,
             'sale_returns' => $saleReturns,
-
             'startDate' => $startDate,
             'endDate' => $endDate,
         ]);
@@ -381,168 +358,145 @@ class ReportController extends Controller
 
     public function getItemDetails(Request $request)
     {
-
-        \Log::info('Filter Request:', [
-            'category' => $request->category,
-            'subcategory' => $request->subcategory,
-            'itemCode' => $request->itemCode,
-        ]);
-
         $query = Product::query();
 
         if ($request->category !== 'all') {
-            $query->where('category', 'LIKE', '%'.$request->category.'%');
+            $query->where('category', $request->category);
         }
-
-        // ✅ FIXED: Case-insensitive subcategory filtering
         if ($request->subcategory !== 'all') {
-            $query->where('sub_category', 'LIKE', '%'.$request->subcategory.'%');
+            $query->where('sub_category', $request->subcategory);
         }
-
         if ($request->itemCode !== 'all') {
             $query->where('item_code', $request->itemCode);
         }
 
         $items = $query->get();
 
-        $items = $query->get();
-
-        // ✅ Agar koi item nahi mila toh log mein message show karein
-        if ($items->isEmpty()) {
-            \Log::info('No items found with filters:', [
-                'category' => $request->category,
-                'subcategory' => $request->subcategory,
-                'itemCode' => $request->itemCode,
-            ]);
-        }
-
         foreach ($items as $item) {
+            // 1️⃣ **Total Purchased Quantity**
+            $purchaseData = Purchase::whereJsonContains('item', $item->item_name)->get();
+            $totalPurchasedQty = 0;
 
-            /* ================= BASE ================= */
-            $pcsInCarton = max((int) $item->pcs_in_carton, 1);
+            foreach ($purchaseData as $purchase) {
+                $itemNames = json_decode($purchase->item, true);
+                $cartonQtyArray = json_decode($purchase->carton_qty, true);
 
-            /* ================= OPENING (DISPLAY ONLY) ================= */
-            $openingTotalPCS = (int) ($item->initial_stock ?? 0);
-
-            $item->opening_carton = intdiv($openingTotalPCS, $pcsInCarton);
-            $item->opening_pcs = $openingTotalPCS % $pcsInCarton;
-
-            /* ================= PURCHASE (DISPLAY ONLY) ================= */
-            $purchasePCS = 0;
-
-            foreach (
-                DB::table('purchases')
-                    ->whereJsonContains('item', $item->item_name)
-                    ->get() as $purchase
-            ) {
-                $names = json_decode($purchase->item, true) ?? [];
-                $cartons = json_decode($purchase->carton_qty, true) ?? [];
-                $pcs = json_decode($purchase->pcs ?? '[]', true);
-
-                foreach ($names as $i => $n) {
-                    if (trim($n) === trim($item->item_name)) {
-
-                        $purchasePCS +=
-                            ((int) ($cartons[$i] ?? 0) * $pcsInCarton)
-                            + (int) ($pcs[$i] ?? 0);
+                if (is_array($itemNames) && is_array($cartonQtyArray)) {
+                    foreach ($itemNames as $index => $purchasedItem) {
+                        if ($purchasedItem === $item->item_name) {
+                            $totalPurchasedQty += isset($cartonQtyArray[$index]) ? intval($cartonQtyArray[$index]) : 0;
+                        }
                     }
                 }
             }
 
-            $item->purchase_carton = intdiv($purchasePCS, $pcsInCarton);
-            $item->purchase_pcs = $purchasePCS % $pcsInCarton;
+            // 2️⃣ **Total Distributor Sale Quantity**
+            $salesData = Sale::whereJsonContains('item', $item->item_name)->get();
+            $totalDistributorSoldQty = 0;
 
-            /* ================= PURCHASE RETURN (DISPLAY ONLY) ================= */
-            $purchaseReturnPCS = 0;
+            foreach ($salesData as $sale) {
+                $itemNames = json_decode($sale->item, true);
+                $cartonQtyArray = json_decode($sale->carton_qty, true);
 
-            foreach (
-                DB::table('purchase_returns')
-                    ->whereJsonContains('item', $item->item_name)
-                    ->get() as $pr
-            ) {
-                $names = json_decode($pr->item, true) ?? [];
-                $cartons = json_decode($pr->carton_qty ?? '[]', true) ?? [];
-                $pcs = json_decode($pr->return_qty ?? '[]', true) ?? [];
-
-                foreach ($names as $i => $n) {
-                    if (trim($n) === trim($item->item_name)) {
-
-                        $purchaseReturnPCS +=
-                            ((int) ($cartons[$i] ?? 0) * $pcsInCarton)
-                            + (int) ($pcs[$i] ?? 0);
+                if (is_array($itemNames) && is_array($cartonQtyArray)) {
+                    foreach ($itemNames as $index => $soldItem) {
+                        if ($soldItem === $item->item_name) {
+                            $totalDistributorSoldQty += isset($cartonQtyArray[$index]) ? intval($cartonQtyArray[$index]) : 0;
+                        }
                     }
                 }
             }
 
-            $item->purchase_return_carton = intdiv($purchaseReturnPCS, $pcsInCarton);
-            $item->purchase_return_pcs = $purchaseReturnPCS % $pcsInCarton;
+            // 3️⃣ **Total Local Sale Quantity**
+            $localSalesData = LocalSale::whereJsonContains('item', $item->item_name)->get();
+            $totalLocalSoldQty = 0;
 
-            /* ================= LOCAL SOLD (DISPLAY ONLY) ================= */
-            $soldPCS = 0;
+            foreach ($localSalesData as $localSale) {
+                $itemNames = json_decode($localSale->item, true);
+                $cartonQtyArray = json_decode($localSale->carton_qty, true);
 
-            foreach (LocalSale::whereJsonContains('item', $item->item_name)->get() as $sale) {
-                $names = json_decode($sale->item, true) ?? [];
-                $cartons = json_decode($sale->carton_qty, true) ?? [];
-                $pcs = json_decode($sale->pcs, true) ?? [];
-
-                foreach ($names as $i => $n) {
-                    if (trim($n) === trim($item->item_name)) {
-                        $soldPCS += (int) ($pcs[$i] ?? 0);
+                if (is_array($itemNames) && is_array($cartonQtyArray)) {
+                    foreach ($itemNames as $index => $soldItem) {
+                        if ($soldItem === $item->item_name) {
+                            $totalLocalSoldQty += isset($cartonQtyArray[$index]) ? intval($cartonQtyArray[$index]) : 0;
+                        }
                     }
                 }
             }
 
-            /* ================= LOCAL RETURN (DISPLAY ONLY) ================= */
-            $returnPCS = 0;
+            // 4️⃣ **Total Purchase Return Quantity**
+            $returnData = DB::table('purchase_returns')->whereJsonContains('item', $item->item_name)->get();
+            $totalPurchaseReturnQty = 0;
 
-            foreach (
-                DB::table('sale_returns')
-                    ->where('sale_type', 'customer')
-                    ->where('item_names', $item->item_name)
-                    ->get() as $r
-            ) {
-                $pcsVal = (int) ($r->pcs_qty ?? 0);
-                $cartonVal = (int) ($r->carton_qty ?? 0);
+            foreach ($returnData as $return) {
+                $itemNames = json_decode($return->item, true);
+                $returnQtyArray = json_decode($return->return_qty, true);
 
-                if ($pcsVal > 0) {
-                    // PCS based return
-                    $returnPCS += $pcsVal;
-                } else {
-                    // Carton based return → convert using product pcs_in_carton
-                    $returnPCS += ($cartonVal * $pcsInCarton);
+                if (is_array($itemNames) && is_array($returnQtyArray)) {
+                    foreach ($itemNames as $index => $returnItem) {
+                        if ($returnItem === $item->item_name) {
+                            $totalPurchaseReturnQty += isset($returnQtyArray[$index]) ? intval($returnQtyArray[$index]) : 0;
+                        }
+                    }
                 }
             }
 
-            /* ================= FINAL STOCK ================= */
-            /**
-             * 🔥 IMPORTANT RULE:
-             * product.initial_stock is ALREADY UPDATED
-             * on SALE (minus) and RETURN (plus)
-             * so report me kuch add / minus nahi karna
-             */
-            /* ================= STOCK VALUE (PCS BASED) ================= */
-            $pcsInCarton = max((int) $item->pcs_in_carton, 1);
-            $initialStock = (int) ($item->initial_stock ?? 0);
-            $wholesalePrice = (float) ($item->wholesale_price ?? 0);
+            // 5️⃣ **Total Distributor Return Quantity**
+            $distributorReturns = DB::table('sale_returns')
+                ->where('sale_type', 'distributor')
+                ->where('item_names', 'LIKE', '%'.$item->item_name.'%')
+                ->get();
 
-            /* per pcs price */
-            // $perPcsPrice = $wholesalePrice / $pcsInCarton;
-            $perPcsPrice = $wholesalePrice * $initialStock;
+            $totalDistributorReturnQty = 0;
 
-            /* total stock value */
-            $item->stock_value = round($perPcsPrice);
+            foreach ($distributorReturns as $return) {
+                $itemNames = json_decode($return->item_names, true);
+                $cartonQtyArray = json_decode($return->carton_qty, true);
 
-            /* simple balance (as decided) */
-            $item->balance_stock = $initialStock;
-            $item->balance_wholesale_price = $wholesalePrice;
+                // Handle if not JSON (plain string case)
+                if (! is_array($itemNames)) {
+                    $itemNames = [$return->item_names];
+                    $cartonQtyArray = [$return->carton_qty];
+                }
 
-            /* ================= DISPLAY HELPERS ================= */
-            $item->total_local_sold_carton = intdiv($soldPCS, $pcsInCarton);
-            $item->total_local_sold_pcs = $soldPCS * $pcsInCarton;
+                foreach ($itemNames as $index => $returnItem) {
+                    if ($returnItem === $item->item_name) {
+                        $totalDistributorReturnQty += isset($cartonQtyArray[$index]) ? intval($cartonQtyArray[$index]) : 0;
+                    }
+                }
+            }
 
-            $item->total_local_return_carton = intdiv($returnPCS, $pcsInCarton);
-            $item->total_local_return_pcs = $returnPCS * $pcsInCarton;
+            // 6️⃣ **Total Local Return Quantity**
+            $localReturns = DB::table('sale_returns')
+                ->where('sale_type', 'customer')
+                ->where('item_names', 'LIKE', '%'.$item->item_name.'%')
+                ->get();
 
+            $totalLocalReturnQty = 0;
+
+            foreach ($localReturns as $return) {
+                $itemNames = json_decode($return->item_names, true);
+                $cartonQtyArray = json_decode($return->carton_qty, true);
+
+                if (! is_array($itemNames)) {
+                    $itemNames = [$return->item_names];
+                    $cartonQtyArray = [$return->carton_qty];
+                }
+
+                foreach ($itemNames as $index => $returnItem) {
+                    if ($returnItem === $item->item_name) {
+                        $totalLocalReturnQty += isset($cartonQtyArray[$index]) ? intval($cartonQtyArray[$index]) : 0;
+                    }
+                }
+            }
+
+            // ✅ Assign the Correct Values (Separate Counts)
+            $item->total_purchased = $totalPurchasedQty;
+            $item->total_purchase_return = $totalPurchaseReturnQty;
+            $item->total_distributor_sold = $totalDistributorSoldQty;
+            $item->total_distributor_return = $totalDistributorReturnQty; // New Line
+            $item->total_local_sold = $totalLocalSoldQty;
+            $item->total_local_return = $totalLocalReturnQty; // New Line
         }
 
         return response()->json($items);
@@ -550,21 +504,38 @@ class ReportController extends Controller
 
     public function date_wise_recovery_report()
     {
-        if (Auth::id()) {
-            $userId = Auth::id();
-            $Customers = Customer::where('admin_or_user_id', $userId)->get(); // Adjust according to your database structure
-
-            $Salesmans = Salesman::where('admin_or_user_id', $userId)
-                ->where('designation', 'Saleman')
-                ->get();
-
-            return view('admin_panel.reports.date_wise_recovery_report', [
-                'Customers' => $Customers,
-                'Salesmans' => $Salesmans,
-            ]);
-        } else {
+        if (! Auth::check()) {
             return redirect()->back();
         }
+
+        $authUser = Auth::user();
+
+        // Step 1: Determine owner/admin/distributor ID
+        if ($authUser->usertype === 'salesman') {
+            $salesman = Salesman::where('name', $authUser->name)->first();
+
+            if (! $salesman) {
+                return redirect()->back()->with('error', 'Salesman not found.');
+            }
+
+            $ownerId = $salesman->admin_or_user_id;
+
+            // Only the logged-in salesman visible
+            $Salesmans = collect([$salesman]);
+        } else {
+            $ownerId = $authUser->id;
+
+            // All salesmen created by this owner
+            $Salesmans = Salesman::where('admin_or_user_id', $ownerId)
+                ->where('designation', 'Saleman')
+                ->get();
+        }
+
+        // Step 2: Fetch all customers under this owner
+        $Customers = Customer::where('admin_or_user_id', $ownerId)
+            ->get(['id', 'customer_name', 'shop_name', 'area']);
+
+        return view('admin_panel.reports.date_wise_recovery_report', compact('Customers', 'Salesmans'));
     }
 
     public function getRecoveryReport(Request $request)
@@ -611,21 +582,16 @@ class ReportController extends Controller
             $customerRecoveries = $query->get();
 
             foreach ($customerRecoveries as $recovery) {
-                $customer = DB::table('customers')
-                    ->join('customer_ledgers', 'customer_ledgers.customer_id', '=', 'customers.id')
-                    ->where('customer_ledgers.id', $recovery->customer_ledger_id)
-                    ->select('customers.shop_name', 'customers.customer_name', 'customers.area')
-                    ->first();
+                $customer = Customer::find($recovery->customer_ledger_id);
                 $recoveries[] = [
                     'date' => $recovery->date,
-                    'shop_name' => $customer->shop_name ?? 'N/A',
-                    'party_name' => $customer->customer_name ?? 'N/A',
+                    'shop_name' => $customer->shop_name ?? 'N/A',   // ✅ Shop Name
+                    'party_name' => $customer->customer_name ?? 'N/A', // ✅ Party = Customer Name
                     'area' => $customer->area ?? 'N/A',
                     'remarks' => $recovery->remarks,
                     'amount_paid' => number_format($recovery->amount_paid),
                     'salesman' => $recovery->salesman ?? '-',
                 ];
-
             }
         }
 
@@ -653,7 +619,7 @@ class ReportController extends Controller
         $end = $request->end_date;
 
         $purchases = Purchase::where('admin_or_user_id', $userId)
-            ->whereBetween('created_at', [$start, $end])
+            ->whereBetween('purchase_date', [$start, $end])
             ->get();
 
         $report = [];
@@ -726,7 +692,7 @@ class ReportController extends Controller
 
         $purchases = Purchase::where('admin_or_user_id', $userId)
             ->where('party_name', $vendorId) // ✅ match by vendor ID in party_name
-            ->whereBetween('created_at', [$start, $end])
+            ->whereBetween('purchase_date', [$start, $end])
             ->get();
 
         $report = [];
@@ -774,23 +740,45 @@ class ReportController extends Controller
 
     public function Area_wise_Customer_payments()
     {
-        if (Auth::id()) {
-            $userId = Auth::id();
-            $Customers = Customer::where('admin_or_user_id', $userId)->get(); // Adjust according to your database structure
-            $cities = City::all(); // Updated the variable name to avoid confusion
-
-            $Salesmans = Salesman::where('admin_or_user_id', $userId)
-                ->where('designation', 'Saleman')
-                ->get();
-
-            return view('admin_panel.reports.Area_wise_Customer_payments', [
-                'Customers' => $Customers,
-                'cities' => $cities,
-                'Salesmans' => $Salesmans,
-            ]);
-        } else {
+        if (! Auth::check()) {
             return redirect()->back();
         }
+
+        $authUser = Auth::user();
+
+        // Step 1: Determine owner/admin/distributor ID
+        if ($authUser->usertype === 'salesman') {
+            $salesman = Salesman::where('name', $authUser->name)->first();
+
+            if (! $salesman) {
+                return redirect()->back()->with('error', 'Salesman not found.');
+            }
+
+            $ownerId = $salesman->admin_or_user_id;
+
+            // Only the logged-in salesman visible
+            $Salesmans = collect([$salesman]);
+        } else {
+            $ownerId = $authUser->id;
+
+            // All salesmen created by this owner
+            $Salesmans = Salesman::where('admin_or_user_id', $ownerId)
+                ->where('designation', 'Saleman')
+                ->get();
+        }
+
+        // Step 2: Fetch all customers under this owner
+        $Customers = Customer::where('admin_or_user_id', $ownerId)
+            ->get(['id', 'customer_name', 'shop_name', 'area']);
+
+        // Step 3: Fetch all cities
+        $cities = City::all();
+
+        return view('admin_panel.reports.Area_wise_Customer_payments', [
+            'Customers' => $Customers,
+            'cities' => $cities,
+            'Salesmans' => $Salesmans,
+        ]);
     }
 
     public function fetchReceivableReport(Request $request)
@@ -855,12 +843,11 @@ class ReportController extends Controller
                     })
                     ->sum('total_return_amount');
 
-                $totalRecoveries = DB::table('customer_recoveries as cr')
-                    ->join('customer_ledgers as cl', 'cl.id', '=', 'cr.customer_ledger_id')
-                    ->where('cl.customer_id', $customer->id)
-                    ->when($salesman !== 'All', fn ($q) => $q->where('cr.salesman', $salesman))
-                    ->whereBetween('cr.date', [$startDate, $endDate])
-                    ->sum('cr.amount_paid');
+                $totalRecoveries = DB::table('customer_recoveries')
+                    ->where('customer_ledger_id', $customer->id)
+                    ->whereBetween('date', [$startDate, $endDate])
+                    ->when($salesman !== 'All', fn ($query) => $query->where('salesman', $salesman))
+                    ->sum('amount_paid');
 
                 $balance = ($openingBalance + $totalSales - $totalReturns) - $totalRecoveries;
 
@@ -1037,12 +1024,11 @@ class ReportController extends Controller
                     ->whereBetween('created_at', [$startDate, $endDate])
                     ->sum('total_return_amount');
 
-                $totalRecoveries = DB::table('customer_recoveries as cr')
-                    ->join('customer_ledgers as cl', 'cl.id', '=', 'cr.customer_ledger_id')
-                    ->where('cl.customer_id', $customer->id)
-                    ->where('cr.salesman', $salesman)
-                    ->whereBetween('cr.date', [$startDate, $endDate])
-                    ->sum('cr.amount_paid');
+                $totalRecoveries = DB::table('customer_recoveries')
+                    ->where('salesman', $salesman)
+                    ->where('customer_ledger_id', $customer->id)
+                    ->whereBetween('date', [$startDate, $endDate])
+                    ->sum('amount_paid');
 
                 $balance = ($openingBalance + $totalSales - $totalReturns) - $totalRecoveries;
 
@@ -1085,128 +1071,88 @@ class ReportController extends Controller
             return redirect()->back();
         }
     }
-    // public function getsalesreport(Request $request)
-    // {
-    //     $salesman = $request->salesman;
-    //     $type = $request->type;
-    //     $startDate = $request->start_date;
-    //     $endDate = $request->end_date;
-
-    //     $sales = [];
-
-    //     // --- Distributor Sales ---
-    //     if ($type == 'all' || $type == 'distributor') {
-    //         $query = DB::table('sales')->whereBetween('Date', [$startDate, $endDate]);
-
-    //         if ($salesman !== 'All') {
-    //             $query->where('Saleman', $salesman);
-    //         }
-
-    //         $results = $query->get();
-
-    //         $distributorIds = $results->pluck('distributor_id')->unique()->filter()->values();
-
-    //         $distributorMap = DB::table('distributors')
-    //             ->whereIn('id', $distributorIds)
-    //             ->pluck('Customer', 'id');
-
-    //         foreach ($results as $row) {
-    //             $items = json_decode($row->cart_items, true) ?? [];
-    //             $cartons = json_decode($row->carton_qty, true) ?? [];
-    //             $pcs = json_decode($row->pcs, true) ?? [];
-
-    //             $itemDetails = [];
-    //             foreach ($items as $i => $itm) {
-    //                 $itemDetails[] = $itm . " (" . ($cartons[$i] ?? 0) . " CTN, " . ($pcs[$i] ?? 0) . " PCS)";
-    //             }
-
-    //             $distributorName = $distributorMap[$row->distributor_id] ?? 'Distributor-' . $row->distributor_id;
-
-    //             $sales[] = [
-    //                 'invoice_number' => $row->invoice_number,
-    //                 'date' => $row->Date,
-    //                 'party_name' => $distributorName,
-    //                 'area' => $row->distributor_area ?? 'N/A',
-    //                 'remarks' => 'Distributor Sale',
-    //                 'items' => implode(", ", $itemDetails),
-    //                 'amount_paid' => number_format($row->net_amount),
-    //                 'salesman' => $row->Saleman ?? '-'
-    //             ];
-    //         }
-    //     }
-
-    //     // --- Customer Sales ---
-    //     if ($type == 'all' || $type == 'customer') {
-    //         $query = DB::table('local_sales')->whereBetween('Date', [$startDate, $endDate]);
-
-    //         if ($salesman !== 'All') {
-    //             $query->where('Saleman', $salesman);
-    //         }
-
-    //         $results = $query->get();
-
-    //         foreach ($results as $row) {
-    //             $items = json_decode($row->cart_items, true) ?? [];
-    //             $cartons = json_decode($row->carton_qty, true) ?? [];
-    //             $pcs = json_decode($row->pcs, true) ?? [];
-
-    //             $itemDetails = [];
-    //             foreach ($items as $i => $itm) {
-    //                 $itemDetails[] = $itm . " (" . ($cartons[$i] ?? 0) . " CTN, " . ($pcs[$i] ?? 0) . " PCS)";
-    //             }
-
-    //             $sales[] = [
-    //                 'invoice_number' => $row->invoice_number,
-    //                 'date' => $row->Date,
-    //                 'party_name' => $row->customer_shopname ?? 'Customer-' . $row->customer_id,
-    //                 'area' => $row->customer_area ?? 'N/A',
-    //                 'remarks' => 'Customer Sale',
-    //                 'items' => implode(", ", $itemDetails),
-    //                 'amount_paid' => number_format($row->net_amount),
-    //                 'salesman' => $row->Saleman ?? '-'
-    //             ];
-    //         }
-    //     }
-
-    //     return response()->json($sales);
-    // }
 
     public function getsalesreport(Request $request)
     {
+        $salesman = $request->salesman;
+        $type = $request->type;
         $startDate = $request->start_date;
         $endDate = $request->end_date;
 
-        // If no dates provided, use today's date
-        if (empty($startDate) || empty($endDate)) {
-            $startDate = Carbon::today()->startOfDay();
-            $endDate = Carbon::today()->endOfDay();
-        }
-
-        $results = DB::table('local_sales')
-            ->whereBetween('created_at', [$startDate, $endDate])
-            ->get();
-
         $sales = [];
 
-        foreach ($results as $row) {
-            $items = json_decode($row->cart_items, true) ?? [];
-            $cartons = json_decode($row->carton_qty, true) ?? [];
-            $pcs = json_decode($row->pcs, true) ?? [];
+        // --- Distributor Sales ---
+        if ($type == 'all' || $type == 'distributor') {
+            $query = DB::table('sales')->whereBetween('Date', [$startDate, $endDate]);
 
-            $itemDetails = [];
-            foreach ($items as $i => $itm) {
-                $itemDetails[] = $itm.' ('.($cartons[$i] ?? 0).' CTN, '.($pcs[$i] ?? 0).' PCS)';
+            if ($salesman !== 'All') {
+                $query->where('Saleman', $salesman);
             }
 
-            $sales[] = [
-                'invoice_number' => $row->invoice_number,
-                'date' => $row->Date,
-                'party_name' => $row->customer_shopname ?? 'Customer-'.$row->customer_id,
-                'area' => $row->customer_area ?? 'N/A',
-                'remarks' => 'Local Sale',
-                'items' => implode(', ', $itemDetails),
-                'amount_paid' => number_format($row->net_amount),
-            ];
+            $results = $query->get();
+
+            $distributorIds = $results->pluck('distributor_id')->unique()->filter()->values();
+
+            $distributorMap = DB::table('distributors')
+                ->whereIn('id', $distributorIds)
+                ->pluck('Customer', 'id');
+
+            foreach ($results as $row) {
+                $items = json_decode($row->item, true) ?? [];
+                $cartons = json_decode($row->carton_qty, true) ?? [];
+                $pcs = json_decode($row->pcs, true) ?? [];
+
+                $itemDetails = [];
+                foreach ($items as $i => $itm) {
+                    $itemDetails[] = $itm.' ('.($cartons[$i] ?? 0).' CTN, '.($pcs[$i] ?? 0).' PCS)';
+                }
+
+                $distributorName = $distributorMap[$row->distributor_id] ?? 'Distributor-'.$row->distributor_id;
+
+                $sales[] = [
+                    'invoice_number' => $row->invoice_number,
+                    'date' => $row->Date,
+                    'party_name' => $distributorName,
+                    'area' => $row->distributor_area ?? 'N/A',
+                    'remarks' => 'Distributor Sale',
+                    'items' => implode(', ', $itemDetails),
+                    'amount_paid' => number_format($row->net_amount),
+                    'salesman' => $row->Saleman ?? '-',
+                ];
+            }
+        }
+
+        // --- Customer Sales ---
+        if ($type == 'all' || $type == 'customer') {
+            $query = DB::table('local_sales')->whereBetween('Date', [$startDate, $endDate]);
+
+            if ($salesman !== 'All') {
+                $query->where('Saleman', $salesman);
+            }
+
+            $results = $query->get();
+
+            foreach ($results as $row) {
+                $items = json_decode($row->item, true) ?? [];
+                $cartons = json_decode($row->carton_qty, true) ?? [];
+                $pcs = json_decode($row->pcs, true) ?? [];
+
+                $itemDetails = [];
+                foreach ($items as $i => $itm) {
+                    $itemDetails[] = $itm.' ('.($cartons[$i] ?? 0).' CTN, '.($pcs[$i] ?? 0).' PCS)';
+                }
+
+                $sales[] = [
+                    'invoice_number' => $row->invoice_number,
+                    'date' => $row->Date,
+                    'party_name' => $row->customer_shopname ?? 'Customer-'.$row->customer_id,
+                    'area' => $row->customer_area ?? 'N/A',
+                    'remarks' => 'Customer Sale',
+                    'items' => implode(', ', $itemDetails),
+                    'amount_paid' => number_format($row->net_amount),
+                    'salesman' => $row->Saleman ?? '-',
+                ];
+            }
         }
 
         return response()->json($sales);
@@ -1235,7 +1181,7 @@ class ReportController extends Controller
         $sales = [];
 
         // --- Distributor Sales ---
-        $query = DB::table('local_sales')->whereBetween('created_at', [$startDate, $endDate]);
+        $query = DB::table('sales')->whereBetween('Date', [$startDate, $endDate]);
         $results = $query->get();
 
         $distributorIds = $results->pluck('distributor_id')->unique()->filter()->values();
@@ -1244,7 +1190,7 @@ class ReportController extends Controller
             ->pluck('Customer', 'id');
 
         foreach ($results as $row) {
-            $items = json_decode($row->cart_items, true) ?? [];
+            $items = json_decode($row->item, true) ?? [];
             $cartons = json_decode($row->carton_qty, true) ?? [];
             $pcs = json_decode($row->pcs, true) ?? [];
             $amounts = json_decode($row->amount, true) ?? [];
@@ -1269,7 +1215,7 @@ class ReportController extends Controller
                         'liters' => 0,
                         'amount' => 0,
                     ];
-                }$items = json_decode($row->item, true);
+                }
 
                 $sales[$itm]['carton_qty'] += $cartons[$i] ?? 0;
                 $sales[$itm]['pcs'] += $pcs[$i] ?? 0;
@@ -1283,7 +1229,7 @@ class ReportController extends Controller
         $results = $query->get();
 
         foreach ($results as $row) {
-            $items = json_decode($row->cart_items, true) ?? [];
+            $items = json_decode($row->item, true) ?? [];
             $cartons = json_decode($row->carton_qty, true) ?? [];
             $pcs = json_decode($row->pcs, true) ?? [];
             $amounts = json_decode($row->amount, true) ?? [];
@@ -1318,325 +1264,6 @@ class ReportController extends Controller
 
         return response()->json(array_values($sales));
     }
-    // public function revenue_Record()
-    // {
-    //     // Totals
-    //     $totalSale = 0;
-    //     $totalCost = 0;
-    //     $totalProfit = 0;
-    //     $totalUnitProfit = 0;
-
-    //     $productSummary = [];
-
-    //     // Fetch all sales
-    //     $sales = LocalSale::all();
-
-    //     foreach ($sales as $sale) {
-    //         $items = json_decode($sale->item, true);
-    //         $codes = json_decode($sale->code, true);
-    //         $amounts = json_decode($sale->amount, true);
-    //         $quantities = json_decode($sale->pcs, true);
-    //         $returns = json_decode($sale->return_quantity ?? '[]', true);
-
-    //         if ($items && is_array($items)) {
-    //             foreach ($items as $index => $itemName) {
-    //                 $productId = $codes[$index] ?? null;
-    //                 $saleAmount = $amounts[$index] ?? 0;
-    //                 $quantity = $quantities[$index] ?? 0;
-    //                 $returnQty = $returns[$index] ?? 0;
-
-    //                 $product = Product::find($productId);
-    //                 if (!$product) continue;
-
-    //                 $wholesalePrice = $product->wholesale_price ?? 0;
-    //                 $retailPrice = $product->retail_price ?? 0;
-
-    //                 $cost = ($wholesalePrice * $quantity) - ($wholesalePrice * $returnQty);
-    //                 $adjustedSaleAmount = $saleAmount - ($retailPrice * $returnQty);
-    //                 $profit = $adjustedSaleAmount - $cost;
-
-    //                 $totalSale += $adjustedSaleAmount;
-    //                 $totalCost += $cost;
-    //                 $totalProfit += $profit;
-
-    //                 if (!isset($productSummary[$productId])) {
-    //                     $productSummary[$productId] = [
-    //                         'name' => $product->item_name,
-    //                         'category' => $product->category,
-    //                         'sub_category' => $product->sub_category,
-    //                         'quantity' => 0,
-    //                         'unit_wholesale' => $wholesalePrice,
-    //                         'unit_retail' => $retailPrice,
-    //                         'total_sale' => 0,
-    //                         'total_cost' => 0,
-    //                         'profit' => 0,
-    //                         'total_return' => 0,
-    //                     ];
-    //                 }
-
-    //                 $productSummary[$productId]['quantity'] += $quantity;
-    //                 $productSummary[$productId]['total_return'] += $returnQty;
-    //                 $productSummary[$productId]['total_sale'] += $adjustedSaleAmount;
-    //                 $productSummary[$productId]['total_cost'] += $cost;
-    //                 $productSummary[$productId]['profit'] += $profit;
-    //             }
-    //         }
-    //     }
-
-    //     // ✅ Total Unit Profit (sum of each product's unit profit)
-    //     foreach ($productSummary as $product) {
-    //         $unitProfit = $product['unit_retail'] - $product['unit_wholesale'];
-    //         $totalUnitProfit += $unitProfit;
-    //     }
-
-    //     $netProfit = $totalProfit;
-
-    //     return view('admin_panel.reports.revenue_record', compact(
-    //         'totalSale', 'totalCost', 'totalProfit', 'netProfit', 'productSummary', 'totalUnitProfit'
-    //     ));
-    // }
-
-    public function vendorStockRecord()
-    {
-        if (! Auth::id()) {
-            return redirect()->back();
-        }
-
-        $userId = Auth::id();
-
-        $categories = Category::where('admin_or_user_id', $userId)->get();
-        $vendors = DB::table('vendors')
-            ->where('admin_or_user_id', $userId)
-            ->select('id', 'Party_code', 'Party_name')
-            ->orderBy('Party_name')
-            ->get();
-
-        return view('admin_panel.reports.stock_Record_vendor', [
-            'categories' => $categories,
-            'vendors' => $vendors,
-        ]);
-    }
-
-    // Items by subcategory (same as before, vendor-agnostic)
-    public function getVendorItems($subcategory)
-    {
-        $items = Product::where('sub_category', $subcategory)
-            ->select('item_code', 'item_name')->get();
-
-        return response()->json($items);
-    }
-
-    // ===== Helper to sum cartons from JSON arrays for a matched $needle item =====
-    private function sumFromJsonRows($rows, $itemCol, $qtyCol, $needle)
-    {
-        $sum = 0;
-        foreach ($rows as $row) {
-            $items = json_decode($row->$itemCol, true);
-            $qtys = json_decode($row->$qtyCol, true);
-
-            if (is_array($items) && is_array($qtys)) {
-                foreach ($items as $i => $name) {
-                    if ($name === $needle) {
-                        $sum += isset($qtys[$i]) ? intval($qtys[$i]) : 0;
-                    }
-                }
-            }
-        }
-
-        return $sum;
-    }
-
-    // ===== Helper to sum "pcs to liters" if ever needed (we're using cartons here) =====
-    private function litersFor(Product $p, $cartons)
-    {
-        // size like "120ml" or "1 liter"
-        $sizeText = strtolower(trim($p->size ?? ''));
-        $perPieceL = 0;
-
-        if (str_contains($sizeText, 'ml')) {
-            $num = floatval(preg_replace('/[^0-9.]/', '', $sizeText));
-            $perPieceL = $num / 1000.0;
-        } elseif (str_contains($sizeText, 'liter') || preg_match('/\b\d+(\.\d+)?l\b/', $sizeText)) {
-            $num = floatval(preg_replace('/[^0-9.]/', '', $sizeText));
-            $perPieceL = $num;
-        } else {
-            $perPieceL = floatval($sizeText) ?: 0;
-        }
-
-        $pcsPerCarton = intval($p->pcs_in_carton ?: 0);
-
-        return $perPieceL * $pcsPerCarton * $cartons;
-    }
-
-    // ===== MAIN: Vendor-wise filtered data =====
-    public function getVendorItemDetailsVendorWise(Request $request)
-    {
-        $request->validate([
-            'vendor_id' => 'required|integer',
-            'start_date' => 'required|date',
-            'end_date' => 'required|date',
-            'category' => 'required',
-            'subcategory' => 'required',
-            'itemCode' => 'required',
-        ]);
-
-        $userId = Auth::id();
-        $vendorId = (int) $request->vendor_id;
-
-        $vendor = DB::table('vendors')
-            ->where('admin_or_user_id', $userId)
-            ->where('id', $vendorId)
-            ->first();
-
-        if (! $vendor) {
-            return response()->json([]);
-        }
-
-        $vendorPartyCode = $vendor->Party_code;
-
-        /* ========= 1️⃣ GET ONLY VENDOR PURCHASED ITEMS ========= */
-        $vendorItemNames = Purchase::where('admin_or_user_id', $userId)
-            ->where('party_code', $vendorPartyCode)
-            ->pluck('item')
-            ->toArray();
-
-        $allowedItems = [];
-
-        foreach ($vendorItemNames as $json) {
-            $items = json_decode($json, true) ?? [];
-            foreach ($items as $it) {
-                $allowedItems[] = trim($it);
-            }
-        }
-
-        $allowedItems = array_unique($allowedItems);
-
-        if (empty($allowedItems)) {
-            return response()->json([]);
-        }
-
-        /* ========= 2️⃣ PRODUCTS (ONLY THOSE ITEMS) ========= */
-        $q = Product::where('admin_or_user_id', $userId)
-            ->whereIn('item_name', $allowedItems);
-
-        if ($request->category !== 'all') {
-            $q->where('category', $request->category);
-        }
-        if ($request->subcategory !== 'all') {
-            $q->where('sub_category', $request->subcategory);
-        }
-        if ($request->itemCode !== 'all') {
-            $q->where('item_code', $request->itemCode);
-        }
-
-        $products = $q->get();
-        $result = [];
-
-        foreach ($products as $p) {
-
-            $pcsInCarton = max((int) $p->pcs_in_carton, 1);
-            $itemName = $p->item_name;
-
-            /* ========= PURCHASE (VENDOR ONLY) ========= */
-            $purchasePCS = 0;
-
-            $purchases = Purchase::where('admin_or_user_id', $userId)
-                ->where('party_code', $vendorPartyCode)
-                ->whereJsonContains('item', $itemName)
-                ->get();
-
-            foreach ($purchases as $pur) {
-                $names = json_decode($pur->item, true) ?? [];
-                $cartons = json_decode($pur->carton_qty, true) ?? [];
-                $pcs = json_decode($pur->pcs ?? '[]', true) ?? [];
-
-                foreach ($names as $i => $n) {
-                    if ($n === $itemName) {
-                        $purchasePCS +=
-                            ((int) ($cartons[$i] ?? 0) * $pcsInCarton)
-                            + (int) ($pcs[$i] ?? 0);
-                    }
-                }
-            }
-
-            /* ========= PURCHASE RETURN ========= */
-            $purchaseReturnPCS = 0;
-
-            $pReturns = DB::table('purchase_returns')
-                ->where('admin_or_user_id', $userId)
-                ->whereJsonContains('item', $itemName)
-                ->get();
-
-            foreach ($pReturns as $pr) {
-                $names = json_decode($pr->item, true) ?? [];
-                $cartons = json_decode($pr->carton_qty ?? '[]', true) ?? [];
-                $pcs = json_decode($pr->return_qty ?? '[]', true) ?? [];
-
-                foreach ($names as $i => $n) {
-                    if ($n === $itemName) {
-                        $purchaseReturnPCS +=
-                            ((int) ($cartons[$i] ?? 0) * $pcsInCarton)
-                            + (int) ($pcs[$i] ?? 0);
-                    }
-                }
-            }
-
-            $soldPCS = 0;
-
-            $sales = LocalSale::where('admin_or_user_id', $userId)
-                ->whereJsonContains('item', $itemName)
-                ->get();
-
-            foreach ($sales as $sale) {
-                $names = json_decode($sale->item, true) ?? [];
-                $pcs = json_decode($sale->pcs, true) ?? [];
-
-                foreach ($names as $i => $n) {
-                    if ($n === $itemName) {
-                        $soldPCS += (int) ($pcs[$i] ?? 0);
-                    }
-                }
-            }
-
-            $returnPCS = 0;
-
-            $returns = DB::table('sale_returns')
-                ->where('admin_or_user_id', $userId)
-                ->where('sale_type', 'customer')
-                ->where('item_names', $itemName)
-                ->get();
-
-            foreach ($returns as $r) {
-                $returnPCS += ((int) $r->pcs_qty > 0)
-                    ? (int) $r->pcs_qty
-                    : ((int) $r->carton_qty * $pcsInCarton);
-            }
-
-            $balanceStock = (int) ($p->initial_stock ?? 0);
-            $perPcsPrice = $p->wholesale_price / $pcsInCarton;
-            $stockValue = round($perPcsPrice * $balanceStock, 2);
-
-            $result[] = [
-                'vendor_name' => $vendor->Party_name,
-                'item_code' => $p->item_code,
-                'item_name' => $itemName,
-                'size' => $p->size,
-                'pcs_in_carton' => $pcsInCarton,
-
-                'opening_stock' => $balanceStock,
-
-                'purchased_qty' => $purchasePCS,
-                'purchase_return_qty' => $purchaseReturnPCS,
-
-                'sold_local_qty' => $soldPCS,
-                'return_local_qty' => $returnPCS,
-
-                'balance_stock' => $balanceStock,
-                'w_price' => $p->wholesale_price,
-                'stock_value' => $stockValue,
-            ];
-        }
-
-        return response()->json($result);
-    }
 }
+
+// backup

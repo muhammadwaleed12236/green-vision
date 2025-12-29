@@ -106,6 +106,8 @@ Route::get('/stockout', [StockOutController::class, 'stockout'])->name('stockout
 Route::post('/store-stockout', [StockOutController::class, 'store_stockout'])->name('store-stockout');
 Route::post('/update-stockout', [StockOutController::class, 'update_stockout'])->name('update-stockout');
 Route::delete('/delete-stockout', [StockOutController::class, 'delete_stockout'])->name('delete-stockout');
+Route::delete('/delete-job-stockout', [StockOutController::class, 'delete_job_stockout'])->name('delete-job-stockout');
+Route::get('/stockout-details/{jobId}', [StockOutController::class, 'stockout_details'])->name('stockout-details');
 
 // Product
 Route::get('/product', [ProductController::class, 'product'])->name('product');
