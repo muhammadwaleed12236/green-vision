@@ -10,7 +10,6 @@ use Illuminate\Support\Facades\Auth;
 
 class CategoryAndSubCategoryController extends Controller
 {
-
     public function category()
     {
         if (Auth::id()) {
@@ -32,11 +31,12 @@ class CategoryAndSubCategoryController extends Controller
             $usertype = Auth()->user()->usertype;
             $userId = Auth::id();
             Category::create([
-                'admin_or_user_id'    => $userId,
-                'category_name'          => $request->category_name,
-                'created_at'        => Carbon::now(),
-                'updated_at'        => Carbon::now(),
+                'admin_or_user_id' => $userId,
+                'category_name' => $request->category_name,
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
             ]);
+
             return redirect()->back()->with('success', 'Category created successfully');
         } else {
             return redirect()->back();
@@ -56,7 +56,6 @@ class CategoryAndSubCategoryController extends Controller
 
         return redirect()->back()->with('success', 'Category updated successfully');
     }
-
 
     public function sub_category()
     {
@@ -81,12 +80,13 @@ class CategoryAndSubCategoryController extends Controller
             $usertype = Auth()->user()->usertype;
             $userId = Auth::id();
             SubCategory::create([
-                'admin_or_user_id'    => $userId,
-                'category_name'          => $request->category_name,
-                'sub_category_name'          => $request->sub_category_name,
-                'created_at'        => Carbon::now(),
-                'updated_at'        => Carbon::now(),
+                'admin_or_user_id' => $userId,
+                'category_name' => $request->category_name,
+                'sub_category_name' => $request->sub_category_name,
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
             ]);
+
             return redirect()->back()->with('success', 'SubCategory created successfully');
         } else {
             return redirect()->back();
@@ -101,10 +101,23 @@ class CategoryAndSubCategoryController extends Controller
 
         // Update the cloth type in the database
         SubCategory::where('id', $sub_category_id)->update([
-            'category_name'          => $request->category_name,
-            'sub_category_name'          => $request->sub_category_name,
+            'category_name' => $request->category_name,
+            'sub_category_name' => $request->sub_category_name,
         ]);
 
         return redirect()->back()->with('success', 'SubCategory updated successfully');
+    }
+
+    public function category_delete($id)
+    {
+        $category = Category::find($id);
+
+        if (! $category) {
+            return response()->json(['status' => false, 'msg' => 'Data not found']);
+        }
+
+        $category->delete();
+
+        return response()->json(['status' => true, 'msg' => 'Deleted']);
     }
 }

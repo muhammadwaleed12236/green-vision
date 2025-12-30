@@ -98,6 +98,7 @@
                         <ul>
                             <!-- <li><a href="{{ route('designation') }}">Add Designation </a></li> -->
                             <li><a href="{{ route('salesmen') }}">Add Staff</a></li>
+                            <li><a href="{{ route('job-orders.index') }}">Add Job Order</a></li>
 
                         </ul>
                     </li>

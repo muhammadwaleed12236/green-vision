@@ -20,10 +20,10 @@ class SalesmanController extends Controller
             $salesmen = Salesman::where('admin_or_user_id', Auth::id())
                 ->with(['city', 'area', 'designationRelation']) // Use the renamed method
                 ->get();
-            $city = City::where('admin_or_user_id', $userId)->get();
-            $designation = Designation::where('admin_or_user_id', $userId)->get(); // Fetch all designations
+            $cities = City::where('admin_or_user_id', $userId)->get(); // Changed to $cities
+            $designation = Designation::where('admin_or_user_id', $userId)->get();
 
-            return view('admin_panel.salesmen.add_salesman', compact('salesmen', 'city', 'designation'));
+            return view('admin_panel.salesmen.add_salesman', compact('salesmen', 'cities', 'designation'));
         } else {
             return redirect()->back();
         }
@@ -33,9 +33,9 @@ class SalesmanController extends Controller
     {
         if (Auth::id()) {
             $userId = Auth::id();
-            $authUser = Auth::user(); // current logged in user
-            $creatorType = $authUser->usertype; // e.g. admin, distributor
-            // Step 1: Create salesman with identify info
+            $authUser = Auth::user();
+            $creatorType = $authUser->usertype;
+
             $salesman = Salesman::create([
                 'admin_or_user_id' => $userId,
                 'identify' => $creatorType,
@@ -45,13 +45,12 @@ class SalesmanController extends Controller
                 'city' => $request->city,
                 'area' => $request->area,
                 'address' => $request->address,
-                'salary' => $request->salary,
+                'salary' => $request->designation === 'labour' ? $request->salary : null,
                 'status' => $request->status,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
 
-            // Step 2: If designation is 'Saleman', create user login as well
             if (strtolower($request->designation) === 'saleman') {
                 \App\Models\User::create([
                     'user_id' => $salesman->id,
@@ -59,7 +58,7 @@ class SalesmanController extends Controller
                     'email' => $request->email,
                     'password' => Hash::make($request->password),
                     'usertype' => 'salesman',
-                    'identify' => $creatorType, // also store who created this user
+                    'identify' => $creatorType,
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
@@ -75,6 +74,7 @@ class SalesmanController extends Controller
     {
         $salesman_id = $request->input('salesman_id');
         $salesman = Salesman::find($salesman_id);
+
         if (! $salesman) {
             return redirect()->back()->with('error', 'Salesman not found!');
         }
@@ -86,12 +86,25 @@ class SalesmanController extends Controller
             'city' => $request->city,
             'area' => $request->area,
             'address' => $request->address,
-            'salary' => $request->salary,
+            'salary' => $request->designation === 'labour' ? $request->salary : null,
             'status' => $request->status,
             'updated_at' => now(),
         ]);
 
         return redirect()->back()->with('success', 'Salesman updated successfully');
+    }
+
+    public function delete($id)
+    {
+        $salesman = Salesman::find($id);
+
+        if (! $salesman) {
+            return response()->json(['status' => false, 'msg' => 'Not found']);
+        }
+
+        $salesman->delete();
+
+        return response()->json(['status' => true, 'msg' => 'Deleted']);
     }
 
     public function getCities()
@@ -103,7 +116,7 @@ class SalesmanController extends Controller
 
     public function getAreas(Request $request)
     {
-        $areas = Area::where('city_name', $request->city)
+        $areas = Area::where('city_name', $request->city_id)
             ->select('id', 'area_name')
             ->get();
 

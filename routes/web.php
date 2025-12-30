@@ -8,6 +8,7 @@ use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DistributorController;
 use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\JobOrderController;
 use App\Http\Controllers\LocalSaleController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProductController;
@@ -73,6 +74,7 @@ Route::put('/transfers/{id}', [DistributorController::class, 'update'])->name('t
 Route::get('/category', [CategoryAndSubCategoryController::class, 'category'])->name('category');
 Route::post('/store-category', [CategoryAndSubCategoryController::class, 'store_category'])->name('store-category');
 Route::post('/category/update', [CategoryAndSubCategoryController::class, 'update_category'])->name('category.update');
+Route::delete('/category/delete/{id}', [CategoryAndSubCategoryController::class, 'category_delete'])->name('category.delete');
 
 Route::get('/sub-category', [CategoryAndSubCategoryController::class, 'sub_category'])->name('sub-category');
 Route::post('/store-sub-category', [CategoryAndSubCategoryController::class, 'store_sub_category'])->name('store-sub-category');
@@ -151,10 +153,20 @@ Route::get('/salesmen', [SalesmanController::class, 'salesmen'])->name('salesmen
 Route::post('/store-salesman', [SalesmanController::class, 'store_salesman'])->name('store-salesman'); // Store a new Salesman
 Route::post('/salesman/update', [SalesmanController::class, 'update_salesman'])->name('update-salesman'); // Update existing Salesman
 Route::get('/fetch-cities', [SalesmanController::class, 'fetchCities'])->name('fetch-cities'); // Fetch list of cities (adjust method to actual logic)
+Route::delete('/salesman/delete/{id}', [SalesmanController::class, 'delete'])->name('delete-salesman');
+
 Route::post('/salesman/toggle-status', [SalesmanController::class, 'toggleStatus'])->name('toggle-salesman-status');
 Route::get('/fetch-areas', [CustomerController::class, 'fetchAreas'])->name('fetch-areas');
 Route::get('/fetch-designation', [CustomerController::class, 'fetchdesignation'])->name('fetch-designation');
 Route::get('/fetch-areas-report', [CustomerController::class, 'fetch_areas_report'])->name('fetch-areas-report');
+Route::get('/job-orders', [JobOrderController::class, 'index'])->name('job-orders.index');
+
+Route::get('/job-orders/get-sale-details/{id}', [JobOrderController::class, 'getSaleDetails'])->name('job-orders.sale-details');
+
+Route::post('/job-orders/store', [JobOrderController::class, 'store'])->name('job-orders.store');
+Route::post('/job-orders/update', [JobOrderController::class, 'update'])->name('job-orders.update');
+Route::delete('/job-orders/delete/{id}', [JobOrderController::class, 'delete'])->name('job-orders.delete');
+Route::post('/job-orders/status-update', [JobOrderController::class, 'toggleStatus'])->name('job-orders.toggle-status');
 
 // designation
 Route::get('/designation', [SalesmanController::class, 'designation'])->name('designation');

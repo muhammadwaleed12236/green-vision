@@ -48,6 +48,8 @@
                                                     data-id="{{ $category->id }}" data-name="{{ $category->category_name }}"
                                                     data-bs-toggle="modal" data-bs-target="#editCategoryModal">Edit
                                                 </button>
+                                                <button class="btn btn-sm btn-danger deleteCategoryBtn"
+                                                    data-id="{{ $category->id }}">Delete</button>
                                             @else
                                                 <button class="btn btn-sm btn-danger " disabled>No Action</button>
 
@@ -118,10 +120,62 @@
 @include('admin_panel.include.footer_include')
 
 <script>
+
     $(document).on("click", ".editCategoryBtn", function () {
         let id = $(this).data("id");
         let name = $(this).data("name");
         $("#edit_category_id").val(id);
         $("#edit_category_name").val(name);
+    });
+
+    $(document).on("click", ".deleteCategoryBtn", function (e) {
+        e.preventDefault();
+
+        let id = $(this).data("id");
+        let deleteUrl = "/category/delete/" + id;
+
+        Swal.fire({
+            title: "Are you sure?",
+            text: "You won't be able to revert this!",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#3085d6",
+            cancelButtonColor: "#d33",
+            confirmButtonText: "Yes, delete it!"
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: deleteUrl,
+                    type: "DELETE",
+                    data: {
+                        _token: "{{ csrf_token() }}"
+                    },
+                    success: function (response) {
+                        if (response.status) {
+                            Swal.fire(
+                                "Deleted!",
+                                response.msg ?? "Staff deleted successfully.",
+                                "success"
+                            ).then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire(
+                                "Error!",
+                                response.msg ?? "Delete failed",
+                                "error"
+                            );
+                        }
+                    },
+                    error: function () {
+                        Swal.fire(
+                            "Error!",
+                            "Something went wrong",
+                            "error"
+                        );
+                    }
+                });
+            }
+        });
     });
 </script>

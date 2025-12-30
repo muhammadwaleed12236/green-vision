@@ -51,6 +51,9 @@
                                                     data-category="{{ $subCategory->category_name }}"
                                                     data-subcategory="{{ $subCategory->sub_category_name }}"
                                                     data-bs-toggle="modal" data-bs-target="#editSubCategoryModal">Edit</button>
+
+                                                <button class="btn btn-sm btn-danger deleteSubCategoryBtn"
+                                                    data-id="{{ $subCategory->id }}">Delete</button>
                                             @else
                                                 <button class="btn btn-sm btn-danger" disabled>No Action</button>
                                             @endif

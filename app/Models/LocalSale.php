@@ -18,6 +18,17 @@ class LocalSale extends Model
         return $this->belongsTo(Customer::class, 'customer_id');
     }
 
+    public function product()
+    {
+        return $this->belongsTo(Product::class, 'product_id');
+    }
+
+    // LocalSale Model mein yeh relationship add karo
+    public function stockOuts()
+    {
+        return $this->hasMany(StockOut::class, 'local_sales_id');
+    }
+
     public static function generateSaleInvoiceNo()
     {
         // Define the prefix for the invoice number
@@ -27,13 +38,12 @@ class LocalSale extends Model
         $lastInvoice = self::orderBy('id', 'desc')->first();
 
         // Extract the last number, default to 0 if no previous record exists
-        $lastNumber = $lastInvoice ? (int)substr($lastInvoice->invoice_number, strlen($prefix)) : 0;
+        $lastNumber = $lastInvoice ? (int) substr($lastInvoice->invoice_number, strlen($prefix)) : 0;
 
         // Increment the last number and format it with leading zeros
         $newNumber = str_pad($lastNumber + 1, 3, '0', STR_PAD_LEFT);
 
         // Return the new invoice number
-        return $prefix . $newNumber;
+        return $prefix.$newNumber;
     }
-
 }
