@@ -47,6 +47,9 @@
                                                 <button class="btn btn-sm btn-primary editSizeBtn" data-id="{{ $size->id }}"
                                                     data-name="{{ $size->size_name }}" data-bs-toggle="modal"
                                                     data-bs-target="#editSizeModal">Edit</button>
+
+                                                <button class="btn btn-sm btn-danger deleteSizeBtn"
+                                                    data-id="{{ $size->id }}">Delete</button>
                                             @else
                                                 <button class="btn btn-sm btn-danger " disabled>No Action</button>
                                             @endif
@@ -73,9 +76,12 @@
             <form action="{{ route('store-size') }}" method="POST">
                 @csrf
                 <div class="modal-body">
-                    <div class="mb-3">
+                    <div class="">
                         <label class="form-label">Size Name</label>
-                        <input type="text" class="form-control" name="size_name" required>
+                        <input type="text" class="form-control" id="add_size_name" name="size_name" value="{{ old('size_name') }}">
+                        <div class="text-danger d-none" id="add_size_error">
+                            Size name is required
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -98,9 +104,12 @@
                 @csrf
                 <input type="hidden" name="size_id" id="edit_size_id">
                 <div class="modal-body">
-                    <div class="mb-3">
+                    <div class="">
                         <label class="form-label">Size Name</label>
-                        <input type="text" class="form-control" name="size_name" id="edit_size_name" required>
+                        <input type="text" class="form-control" name="size_name" id="edit_size_name" >
+                        <div class="text-danger d-none" id="edit_size_error">
+                            Size name is required
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -114,10 +123,88 @@
 @include('admin_panel.include.footer_include')
 
 <script>
+
+    $(document).on('submit', '#addSizeModal form', function(e){
+        let size = $('#add_size_name').val().trim();
+
+        if (size === '') {
+            e.preventDefault();
+            $('#add_size_error').removeClass('d-none');
+            $('#add_size_name').addClass('is-invalid');
+        }else{
+            $('#add_size_error').addClass('d-none');
+            $('#add_size_name').removeClass('is-invalid')
+        }
+    });
+
+    $(document).on('submit', '#editSizeModal form', function(e){
+        let size = $('#edit_size_name').val().trim();
+
+        if (size === '') {
+            e.preventDefault();
+            $('#edit_size_error').removeClass('d-none');
+            $('#edit_size_name').addClass('is-invalid');
+        }else{
+            $('#edit_size_error').addClass('d-none');
+            $('#edit_size_name').removeClass('is-invalid')
+        }
+    });
+
     $(document).on("click", ".editSizeBtn", function () {
         let id = $(this).data("id");
         let name = $(this).data("name");
         $("#edit_size_id").val(id);
         $("#edit_size_name").val(name);
+    });
+
+    $(document).on("click", ".deleteSizeBtn", function (e) {
+        e.preventDefault();
+
+        let id = $(this).data("id");
+        let deleteUrl = "/size/delete/" + id;
+
+        Swal.fire({
+            title: "Are you sure?",
+            text: "You won't be able to revert this!",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#3085d6",
+            cancelButtonColor: "#d33",
+            confirmButtonText: "Yes, delete it!"
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: deleteUrl,
+                    type: "DELETE",
+                    data: {
+                        _token: "{{ csrf_token() }}"
+                    },
+                    success: function (response) {
+                        if (response.status) {
+                            Swal.fire(
+                                "Deleted!",
+                                response.msg ?? "Staff deleted successfully.",
+                                "success"
+                            ).then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire(
+                                "Error!",
+                                response.msg ?? "Delete failed",
+                                "error"
+                            );
+                        }
+                    },
+                    error: function () {
+                        Swal.fire(
+                            "Error!",
+                            "Something went wrong",
+                            "error"
+                        );
+                    }
+                });
+            }
+        });
     });
 </script>

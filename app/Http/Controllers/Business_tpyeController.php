@@ -13,6 +13,7 @@ class Business_tpyeController extends Controller
         if (Auth::check()) {
             $userId = Auth::id();
             $businessTypes = BusinessType::where('admin_or_user_id', $userId)->get();
+
             return view('admin_panel.business.business_type', [
                 'businessTypes' => $businessTypes,
             ]);
@@ -28,10 +29,10 @@ class Business_tpyeController extends Controller
         ]);
 
         BusinessType::create([
-            'admin_or_user_id'   => Auth::id(),
+            'admin_or_user_id' => Auth::id(),
             'business_type_name' => $request->business_type_name,
-            'created_at'         => now(),
-            'updated_at'         => now(),
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
 
         return redirect()->back()->with('success', 'Business Type created successfully.');
@@ -40,16 +41,28 @@ class Business_tpyeController extends Controller
     public function update(Request $request)
     {
         $request->validate([
-            'business_type_id'   => 'required|exists:business_types,id',
+            'business_type_id' => 'required|exists:business_types,id',
             'business_type_name' => 'required|string|max:255',
         ]);
 
         BusinessType::where('id', $request->business_type_id)->update([
             'business_type_name' => $request->business_type_name,
-            'updated_at'         => now(),
+            'updated_at' => now(),
         ]);
 
         return redirect()->back()->with('success', 'Business Type updated successfully.');
     }
-}
 
+    public function delete($id)
+    {
+        $businessType = BusinessType::find($id);
+
+        if (! $businessType) {
+            return response()->json(['status' => false, 'msg' => 'Data not found']);
+        }
+
+        $businessType->delete();
+
+        return response()->json(['status' => true, 'msg' => 'Deleted']);
+    }
+}

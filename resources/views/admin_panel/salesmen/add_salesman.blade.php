@@ -201,7 +201,7 @@
 
                         <!-- Salary - Hidden by default -->
                         <div class="col-md-6 mb-3 d-none" id="editSalaryWrapper">
-                            <label for="edit_salary" class="form-label">Salary</label>
+                            <label for="edit_salary" class="form-label">Opening Balance</label>
                             <input type="number" class="form-control" id="edit_salary" name="salary">
                         </div>
                     </div>

@@ -77,7 +77,7 @@
 
 <script>
 
-   
+
 
     const routeTemplate = "{{ route('get.customer.balance', ['id' => 'CUSTOMER_ID']) }}";
 

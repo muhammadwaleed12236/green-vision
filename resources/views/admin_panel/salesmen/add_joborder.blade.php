@@ -326,13 +326,18 @@
                                 <option value="contract">Contractor</option>
                             </select>
                         </div>
-                        <div class="col-md-4 contractorBox d-none">
-                            <label class="small">Contractor</label>
-                            <select class="form-select form-select-sm contractor-select">
-                                <option>Ali Contractor</option>
-                                <option>Rehman Aluminium</option>
-                            </select>
-                        </div>
+                            <div class="col-md-4 contractorBox d-none">
+                                <label class="small">Contractor</label>
+                                <select class="form-select form-select-sm contractor-select">
+                                    <option value="">Select Contractor</option>
+                                    @foreach($contractors as $contractor)
+                                        <option value="{{ $contractor->id }}">
+                                            {{ $contractor->contractor_name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+
                     </div>
                     <div class="itemsContainer"></div>
                     <div class="mt-2">

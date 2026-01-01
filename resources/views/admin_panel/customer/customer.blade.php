@@ -29,13 +29,10 @@
                         <thead>
                             <tr>
                                 <th>#</th>
-                                <th>Shop Name</th>
-                                <th>Address</th>
                                 <th>Name</th>
+                                <th>Address</th>
                                 <th>Phone</th>
-                                <th>City</th>
-                                <th>Area</th>
-                                <th>Business Type</th>
+                                <th>Opening Balance</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -43,22 +40,19 @@
                             @foreach($customers as $key => $customer)
                                 <tr>
                                     <td>{{ $key + 1 }}</td>
-                                    <td>{{ $customer->shop_name }}</td>
-                                    <td>{{ $customer->address }}</td>
                                     <td>{{ $customer->customer_name }}</td>
+                                    <td>{{ $customer->address }}</td>
                                     <td>{{ $customer->phone_number }}</td>
-                                    <td>{{ $customer->city ?? 'N/A' }}</td>
-                                    <td>{{ $customer->area ?? 'N/A' }}</td>
-                                    <td>{{ $customer->business_type_name ?? 'N/A' }}</td>
+                                    <td>{{ $customer->opening_balance }}</td>
                                     <td>
                                         @if(Auth::check() && Auth::user()->usertype == 'admin')
-                                            <button class="btn btn-sm btn-warning editCustomerBtn"
+                                            <button class="btn btn-sm btn-primary editCustomerBtn"
                                                 data-id="{{ $customer->id }}">Edit</button>
                                             <button class="btn btn-sm btn-danger deleteCustomerBtn"
                                                 data-id="{{ $customer->id }}">Delete</button>
                                         @endif
                                         @if(Auth::check() && Auth::user()->usertype == 'distributor')
-                                            <button class="btn btn-sm btn-warning editCustomerBtn"
+                                            <button class="btn btn-sm btn-primary editCustomerBtn"
                                                 data-id="{{ $customer->id }}">Edit</button>
                                         @endif
                                         @if(Auth::check() && Auth::user()->usertype == 'salesman')
@@ -89,35 +83,29 @@
                 </div>
                 <div class="modal-body">
 
-                    <input type="text" name="shop_name" class="form-control mt-2" placeholder="Shop Name" required>
-                    <input type="text" name="address" class="form-control mt-2" placeholder="Address" required>
-                    <input type="text" name="customer_name" class="form-control mt-2" placeholder="ShopKeeper Name"
-                        required>
-                    <input type="text" name="phone_number" class="form-control mt-2" placeholder="Phone Number"
-                        required>
-                    <input type="number" name="opening_balance" class="form-control mt-2" placeholder="Opening Balance"
-                        required>
-                    <div class="row mt-3">
-                        <div class="col-md-6">
-                            <select class="form-control" name="city" id="citySelect" required>
-                                <option value="">Select City</option>
-                                @foreach($cities as $city)
-                                    <option value="{{ $city->city_name }}">{{ $city->city_name }}</option>
-                                @endforeach
-                            </select>
-
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <select class="form-control" name="area" id="areasSelect" required>
-                                <option value="">Select Areas</option>
-                            </select>
-                        </div>
+                    <div class="mb-3">
+                        <label class="form-label">Customer Name</label>
+                        <input type="text" name="customer_name" class="form-control mt-2" value="{{ old('customer_name') }}" placeholder="Enter Name">
                     </div>
-                    <select name="business_type_id" id="businessTypeDropdown" class="form-control mt-2"
-                        required></select>
+
+                    <div class="mb-3">
+                        <label class="form-label">Address</label>
+                        <input type="text" name="address" class="form-control mt-2" value="{{ old('address') }}" placeholder="Enter Address">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Phone Number</label>
+                        <input type="text" name="phone_number" class="form-control mt-2" value="{{ old('phone_number') }}" placeholder="Enter Phone Number">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Opening Balance</label>
+                        <input type="number" name="opening_balance" class="form-control mt-2" value="{{ old('opening_balance') }}" placeholder="Enter Opening Balance">
+                    </div>
+
                 </div>
                 <div class="modal-footer">
-                    <button type="submit" class="btn btn-success">Save</button>
+                    <button type="submit" class="btn btn-primary">Save</button>
                 </div>
             </form>
         </div>
@@ -138,56 +126,25 @@
                 <input type="hidden" name="customer_id" id="edit_customer_id">
                 <div class="modal-body">
                     <div class="row mb-3">
+
                         <div class="col-md-6">
-                            <label class="form-label">Shop Name</label>
-                            <input type="text" class="form-control" name="shop_name" id="edit_shop_name" required>
+                            <label class="form-label">Customer Name</label>
+                            <input type="text" class="form-control" name="customer_name" value="{{ old('customer_name') }}" id="edit_address" required>
                         </div>
+
                         <div class="col-md-6">
                             <label class="form-label">Address</label>
-                            <input type="text" class="form-control" name="address" id="edit_address" required>
+                            <input type="text" class="form-control" name="address" value="{{ old('address') }}" id="edit_address" required>
                         </div>
-                    </div>
 
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label class="form-label">ShopKeeper Name</label>
-                            <input type="text" class="form-control" name="customer_name" id="edit_customer_name"
-                                required>
-                        </div>
                         <div class="col-md-6">
                             <label class="form-label">Phone Number</label>
-                            <input type="text" class="form-control" name="phone_number" id="edit_phone_number" required>
-                        </div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label class="form-label">City</label>
-                            <select class="form-control" name="city" id="edit_citySelect" required>
-                                <option value="">Select City</option>
-                                @foreach($cities as $city)
-                                    <option value="{{ $city->city_name }}">{{ $city->city_name }}</option>
-                                @endforeach
-                            </select>
+                            <input type="text" name="phone_number" class="form-control mt-2" value="{{ old('phone_number') }}" placeholder="Enter Phone Number">
                         </div>
 
                         <div class="col-md-6">
-                            <label class="form-label">Area</label>
-                            <select class="form-control" name="area" id="edit_areasSelect" required>
-                                <option value="">Select Area</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label class="form-label">Business Type</label>
-                            <select class="form-control" name="business_type_name" id="edit_business_type">
-                                <option value="">Select Business Type</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Opening Balance</label>
-                            <input type="number" class="form-control" name="opening_balance" id="edit_opening_balance"
-                                required>
+                           <label class="form-label">Opening Balance</label>
+                            <input type="number" name="opening_balance" class="form-control mt-2" value="{{ old('opening_balance') }}" placeholder="Enter Opening Balance">
                         </div>
                     </div>
 

@@ -3,6 +3,7 @@
 use App\Http\Controllers\Business_tpyeController;
 use App\Http\Controllers\CategoryAndSubCategoryController;
 use App\Http\Controllers\CityAndAreaController;
+use App\Http\Controllers\ContractorController;
 use App\Http\Controllers\CreateBillController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DistributorController;
@@ -23,6 +24,7 @@ use App\Http\Controllers\SizeController;
 use App\Http\Controllers\StockOutController;
 use App\Http\Controllers\VendorController;
 use App\Models\Product;
+use App\Models\Size;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -79,16 +81,19 @@ Route::delete('/category/delete/{id}', [CategoryAndSubCategoryController::class,
 Route::get('/sub-category', [CategoryAndSubCategoryController::class, 'sub_category'])->name('sub-category');
 Route::post('/store-sub-category', [CategoryAndSubCategoryController::class, 'store_sub_category'])->name('store-sub-category');
 Route::post('/sub-category/update', [CategoryAndSubCategoryController::class, 'update_sub_category'])->name('sub-category.update');
+Route::delete('/sub-category/delete/{id}', [CategoryAndSubCategoryController::class, 'sub_category_delete'])->name('sub-category.delete');
 
 // size
 Route::get('/size', [SizeController::class, 'size'])->name('size');
 Route::post('/store-size', [SizeController::class, 'store_size'])->name('store-size');
 Route::post('/size/update', [SizeController::class, 'update'])->name('size.update');
+Route::delete('/size/delete/{id}', [SizeController::class, 'delete'])->name('size.delete');
 
 // business_tpye
 Route::get('/business-type', [Business_tpyeController::class, 'index'])->name('business_type');
 Route::post('/business-type/store', [Business_tpyeController::class, 'store'])->name('business_type.store');
 Route::post('/business-type/update', [Business_tpyeController::class, 'update'])->name('business_type.update');
+Route::delete('/business-type/delete/{id}', [Business_tpyeController::class, 'delete'])->name('business-type.delete');
 
 // expense
 Route::get('/expense', [ExpenseController::class, 'expense'])->name('expense');
@@ -117,6 +122,7 @@ Route::post('/store-product', [ProductController::class, 'store_product'])->name
 Route::put('/product/update/{id}', [ProductController::class, 'update'])->name('product.update');
 Route::get('/fetch-subcategories', [ProductController::class, 'fetchSubCategories'])->name('fetch-subcategories');
 Route::get('/products/{id}/edit', [ProductController::class, 'edit'])->name('products.edit');
+Route::post('/product/update', [ProductController::class, 'update_product'])->name('product.update');
 
 // purchase
 Route::get('/Purchase', [PurchaseController::class, 'Purchase'])->name('Purchase');
@@ -131,6 +137,18 @@ Route::put('/purchase/update/{id}', [PurchaseController::class, 'update_purchase
 Route::get('/purchase-return/{id}', [PurchaseReturnController::class, 'showReturnForm'])->name('purchase.return.form');
 Route::post('/purchase-return/store', [PurchaseReturnController::class, 'store'])->name('purchase.return.store');
 Route::get('/all-purchase-return', [PurchaseReturnController::class, 'all_purchase_return'])->name('all-purchase-return');
+
+// Contractor Routes
+Route::get('/contractor', [ContractorController::class, 'index'])->name('contractor');
+Route::post('/contractor/store', [ContractorController::class, 'store'])->name('contractor.store');
+Route::get('/contractor/edit/{id}', [ContractorController::class, 'getContractorData'])->name('contractor.edit');
+Route::post('/contractor/update', [ContractorController::class, 'update'])->name('contractor.update');
+Route::delete('/contractor/delete/{id}', [ContractorController::class, 'destroy'])->name('delete-contractor');
+
+Route::get('/contractor-ledger', [ContractorController::class, 'contractor_ledger'])->name('contractor-ledger');
+Route::post('/contractor-recovery-store', [ContractorController::class, 'contractor_recovery_store'])->name('contractor-recovery-store');
+Route::get('/contractor-recovery', [ContractorController::class, 'contractor_recovery'])->name('contractor-recovery');
+Route::put('/contractor-recovery/{id}', [ContractorController::class, 'updateRecovery'])->name('contractor_recovery.update');
 
 Route::get('/add-sale', [SaleController::class, 'add_sale'])->name('add-sale');
 Route::post('/store-sale', [SaleController::class, 'store_sale'])->name('store-sale');
@@ -155,7 +173,12 @@ Route::post('/salesman/update', [SalesmanController::class, 'update_salesman'])-
 Route::get('/fetch-cities', [SalesmanController::class, 'fetchCities'])->name('fetch-cities'); // Fetch list of cities (adjust method to actual logic)
 Route::delete('/salesman/delete/{id}', [SalesmanController::class, 'delete'])->name('delete-salesman');
 
+Route::get('/staff-ledger', [SalesmanController::class, 'staff_ledger'])->name('staff-ledger');
+Route::post('/staff-recovery-store', [SalesmanController::class, 'staff_recovery_store'])->name('staff-recovery-store');
+Route::get('/staff-recovery', [SalesmanController::class, 'staff_recovery'])->name('staff-recovery');
+Route::put('/staff-recovery/{id}', [SalesmanController::class, 'updateStaffRecovery'])->name('staff-recovery.update');
 Route::post('/salesman/toggle-status', [SalesmanController::class, 'toggleStatus'])->name('toggle-salesman-status');
+
 Route::get('/fetch-areas', [CustomerController::class, 'fetchAreas'])->name('fetch-areas');
 Route::get('/fetch-designation', [CustomerController::class, 'fetchdesignation'])->name('fetch-designation');
 Route::get('/fetch-areas-report', [CustomerController::class, 'fetch_areas_report'])->name('fetch-areas-report');
@@ -254,6 +277,11 @@ Route::get('/customer-payments', [PaymentController::class, 'customer_payments']
 Route::get('/get-customer-balance/{id}', [PaymentController::class, 'getCustomerBalance'])->name('get.customer.balance');
 Route::post('/customer-payment/store', [PaymentController::class, 'storeCustomerPayment'])->name('customer.payment.store');
 Route::get('customer/payment/receipt/{customer_id}/{amount}', [PaymentController::class, 'showCustomerPaymentReceipt'])->name('Customer.payment.receipt');
+
+Route::get('/staff-payments', [PaymentController::class, 'staff_payments'])->name('staff-payments');
+Route::get('/get-staff-balance/{id}', [PaymentController::class, 'getStaffBalance'])->name('get.staff.balance');
+Route::post('/staff-payment/store', [PaymentController::class, 'storeStaffPayment'])->name('staff.payment.store');
+Route::get('staff/payment/receipt/{staff_id}/{amount}', [PaymentController::class, 'showStaffPaymentReceipt'])->name('Staff.payment.receipt');
 
 Route::get('/Distributor-payments', [PaymentController::class, 'Distributor_payments'])->name('Distributor-payments');
 Route::get('/get-Distributor-balance/{id}', [PaymentController::class, 'getDistributorBalance'])->name('get.Distributor.balance');

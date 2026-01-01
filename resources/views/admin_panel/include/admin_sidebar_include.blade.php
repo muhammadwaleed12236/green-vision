@@ -28,7 +28,7 @@
 
 
                     <li class="submenu">
-                        <a href="javascript:void(0);"><i class="fas fa-user-friends"></i><span> Prodcut Managemet</span>
+                        <a href="javascript:void(0);"><i class="fas fa-user-friends"></i><span> Prodcut</span>
                             <span class="menu-arrow"></span></a>
                         <ul>
                             <li>
@@ -93,15 +93,28 @@
                         </ul>
                     </li>
                     <li class="submenu">
-                        <a href="javascript:void(0);"><i class="fas fa-user-tie"></i><span> Staff Management</span> <span
+                        <a href="javascript:void(0);"><i class="fas fa-user-tie"></i><span> Staff</span> <span
                                 class="menu-arrow"></span></a>
                         <ul>
                             <!-- <li><a href="{{ route('designation') }}">Add Designation </a></li> -->
                             <li><a href="{{ route('salesmen') }}">Add Staff</a></li>
+                            <li><a href="{{ route('staff-ledger') }}">Staff Payments</a></li>
+                            <li><a href="{{ route('staff-recovery') }}">Staff Given Payments</a></li>
                             <li><a href="{{ route('job-orders.index') }}">Add Job Order</a></li>
 
                         </ul>
                     </li>
+
+                    <li class="submenu">
+                        <a href="javascript:void(0);"><i class="fa fa-wrench"></i><span> Contractor</span> <span
+                                class="menu-arrow"></span></a>
+                        <ul>
+                            <li><a href="{{ route('contractor') }}">All Contractor</a></li>
+                            <li><a href="{{ route('contractor-ledger') }}">Contractor Payments</a></li>
+                            <li><a href="{{ route('contractor-recovery') }}">Contractor Given Payments</a></li>
+                        </ul>
+                    </li>
+
                     <li class="submenu">
                         <a href="javascript:void(0);"><i class="fas fa-money-bill-wave"></i><span> Expenses</span> <span
                                 class="menu-arrow"></span></a>
@@ -111,8 +124,7 @@
                         </ul>
                     </li>
                     <li class="submenu">
-                        <a href="javascript:void(0);"><i class="fas fa-address-book"></i><span>Customer
-                                Management</span>
+                        <a href="javascript:void(0);"><i class="fas fa-address-book"></i><span>Customer</span>
                             <span class="menu-arrow"></span></a>
                         <ul>
                             <li><a href="{{ route('customer') }}">Add Cutomers </a></li>
@@ -140,11 +152,11 @@
                         </ul>
                     </li>
                     <li class="submenu">
-                        <a href="javascript:void(0);"><i class="fas fa-address-book"></i><span>Payments Management</span>
+                        <a href="javascript:void(0);"><i class="fas fa-address-book"></i><span>Payments</span>
                             <span class="menu-arrow"></span></a>
                         <ul>
                             <li><a href="{{ route('vendors-payments') }}">Vendor Payments </a></li>
-                            <li><a href="{{ route('Distributor-payments') }}">Distributor Payments </a></li>
+                            <li><a href="{{ route('staff-payments') }}">Staff Payments </a></li>
                             <li><a href="{{ route('customer-payments') }}">Customer Payments </a></li>
                         </ul>
                     </li>

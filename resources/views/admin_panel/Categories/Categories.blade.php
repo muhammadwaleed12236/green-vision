@@ -77,12 +77,19 @@
             </div>
             <form action="{{ route('store-category') }}" method="POST">
                 @csrf
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">Category Name</label>
-                        <input type="text" class="form-control" name="category_name" required>
+                    <div class="modal-body">
+                        <div class="">
+                            <label class="form-label">Category Name</label>
+                                <input type="text"
+                                    class="form-control"
+                                    name="category_name"
+                                    value="{{ old('category_name') }}"
+                                    id="category_name">
+                                <div class="text-danger d-none" id="add_category_error">
+                                    Category name is required
+                                </div>
+                        </div>
                     </div>
-                </div>
                 <div class="modal-footer">
                     <button type="submit" class="btn btn-primary">Save</button>
                 </div>
@@ -100,19 +107,30 @@
                 <h5 class="modal-title">Edit Category</h5>
                 <button type="button" class="btn-close text-black" data-bs-dismiss="modal" aria-label="Close">X</button>
             </div>
+
             <form action="{{ route('category.update') }}" method="POST">
                 @csrf
                 <input type="hidden" name="Category_id" id="edit_category_id">
+
                 <div class="modal-body">
-                    <div class="mb-3">
+                    <div class="">
                         <label class="form-label">Category Name</label>
-                        <input type="text" class="form-control" name="category_name" id="edit_category_name" required>
+                        <input type="text"
+                            class="form-control @error('category_name') is-invalid @enderror"
+                            name="category_name"
+                            id="edit_category_name"
+                            value="{{ old('category_name') }}">
+
+                        <div class="text-danger d-none" id="edit_category_error">
+                            Category name is required
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="submit" class="btn btn-primary">Update</button>
                 </div>
             </form>
+
         </div>
     </div>
 </div>
@@ -120,6 +138,36 @@
 @include('admin_panel.include.footer_include')
 
 <script>
+
+
+    $(document).on('submit', '#addCategoryModal form', function (e) {
+        let category = $('#category_name').val().trim();
+
+        if (category === '') {
+            e.preventDefault();
+            $('#add_category_error').removeClass('d-none');
+            $('#category_name').addClass('is-invalid');
+        } else {
+            $('#add_category_error').addClass('d-none');
+            $('#category_name').removeClass('is-invalid');
+        }
+    });
+
+
+    $(document).on('submit', '#editCategoryModal form', function (e) {
+        let categoryInput = $('#edit_category_name');
+        let categoryValue = categoryInput.val().trim();
+
+        if (categoryValue === '') {
+            e.preventDefault();
+            $('#edit_category_error').removeClass('d-none');
+            categoryInput.addClass('is-invalid');
+        } else {
+            $('#edit_category_error').addClass('d-none');
+            categoryInput.removeClass('is-invalid');
+        }
+    });
+
 
     $(document).on("click", ".editCategoryBtn", function () {
         let id = $(this).data("id");
@@ -154,7 +202,7 @@
                         if (response.status) {
                             Swal.fire(
                                 "Deleted!",
-                                response.msg ?? "Staff deleted successfully.",
+                                response.msg ?? "Category deleted successfully.",
                                 "success"
                             ).then(() => {
                                 location.reload();

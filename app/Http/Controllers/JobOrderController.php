@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Contractor;
+use App\Models\ContractorLedger;
 use App\Models\JobOrder;
 use App\Models\LocalSale;
 use Illuminate\Http\Request;
@@ -23,9 +25,11 @@ class JobOrderController extends Controller
             ->latest()
             ->get();
 
+        $contractors = Contractor::where('admin_or_user_id', $userId)->get();
+
         return view(
             'admin_panel.salesmen.add_joborder',
-            compact('jobOrders', 'localSales')
+            compact('jobOrders', 'localSales', 'contractors')
         );
     }
 
@@ -65,17 +69,19 @@ class JobOrderController extends Controller
 
     public function store(Request $request)
     {
+        $request->validate([
+            'sale_id' => 'required',
+            'job_date' => 'required|date',
+            'total_amount' => 'required|numeric|min:0',
+            'paid_amount' => 'nullable|numeric|min:0',
+            'work_types' => 'required|array',
+        ]);
+
         try {
-            $request->validate([
-                'sale_id' => 'required',
-                'job_date' => 'required|date',
-                'total_amount' => 'required|numeric|min:0',
-                'work_types' => 'required|array',
-            ]);
 
             DB::transaction(function () use ($request) {
 
-                /* ---------- JOB HEADER ---------- */
+                /* ================= JOB HEADER ================= */
                 $job = JobOrder::create([
                     'admin_or_user_id' => Auth::id(),
                     'staff_id' => Auth::id(),
@@ -84,14 +90,16 @@ class JobOrderController extends Controller
                     'total_amount' => $request->total_amount,
                     'paid_amount' => $request->paid_amount ?? 0,
                     'remaining_amount' => $request->total_amount - ($request->paid_amount ?? 0),
-                    'status' => 'pending',
+                    'status' => ($request->total_amount - ($request->paid_amount ?? 0)) > 0 ? 'pending' : 'completed',
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
 
-                /* ---------- WORK TYPES + ITEMS ---------- */
+                /* ================= JOB ITEMS ================= */
                 foreach ($request->work_types as $workType) {
+
                     foreach ($workType['items'] as $item) {
+
                         DB::table('job_items')->insert([
                             'job_order_id' => $job->id,
                             'work_type' => $workType['name'],
@@ -107,18 +115,60 @@ class JobOrderController extends Controller
                         ]);
                     }
                 }
+
+                /* ================= CONTRACTOR LEDGER ================= */
+                foreach ($request->work_types as $workType) {
+
+                    // only contractor case
+                    if ($workType['assign_type'] !== 'contract' || empty($workType['contractor'])) {
+                        continue;
+                    }
+
+                    $contractorId = $workType['contractor'];
+
+                    // contractor ka total kaam
+                    $contractorJobTotal = 0;
+                    foreach ($workType['items'] as $item) {
+                        $contractorJobTotal += ($item['qty'] * $item['rate']);
+                    }
+
+                    $paid = $request->paid_amount ?? 0;
+
+                    $ledger = ContractorLedger::where('contractor_id', $contractorId)->first();
+
+                    if ($ledger) {
+
+                        $previous = $ledger->closing_balance;
+                        $closing = $previous + $contractorJobTotal - $paid;
+
+                        $ledger->update([
+                            'previous_balance' => $previous,
+                            'closing_balance' => $closing,
+                            'updated_at' => now(),
+                        ]);
+
+                    } else {
+
+                        // first time contractor
+                        ContractorLedger::create([
+                            'contractor_id' => $contractorId,
+                            'opening_balance' => 0,
+                            'previous_balance' => 0,
+                            'closing_balance' => $contractorJobTotal - $paid,
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]);
+                    }
+                }
             });
 
-            // AJAX response - NOT redirect!
             return redirect()
                 ->route('job-orders.index')
-                ->with('success', 'Job Order created successfully');
+                ->with('success', 'Job Order created & contractor ledger updated successfully');
 
         } catch (\Exception $e) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Error: '.$e->getMessage(),
-            ], 500);
+
+            return back()->with('error', $e->getMessage());
         }
     }
 

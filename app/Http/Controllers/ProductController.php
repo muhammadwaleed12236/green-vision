@@ -2,11 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Product;
 use App\Models\Category;
-use App\Models\SubCategory;
+use App\Models\Product;
 use App\Models\Size;
-use Carbon\Carbon;
+use App\Models\SubCategory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -14,7 +13,7 @@ class ProductController extends Controller
 {
     public function product()
     {
-        if (!Auth::check()) {
+        if (! Auth::check()) {
             return redirect()->back();
         }
         $user = Auth::user();
@@ -22,47 +21,47 @@ class ProductController extends Controller
             $products = Product::where('admin_or_user_id', $user->id)->get();
             $categories = Category::all();
             $sizes = Size::all();
+
             return view('admin_panel.product.add_product', compact('products', 'categories', 'sizes'));
         } elseif ($user->usertype === 'distributor') {
             $products = \App\Models\DistributorProduct::where('distributor_id', $user->user_id)->get();
             $categories = Category::all();
             $sizes = Size::all();
+
             return view('admin_panel.product.distributor_product_stock', compact('products', 'categories', 'sizes'));
         }
+
         return redirect()->back();
     }
-
-
 
     public function fetchSubCategories(Request $request)
     {
         $subCategories = SubCategory::where('category_name', $request->category_id)->get();
+
         return response()->json($subCategories);
     }
 
-
     public function store_product(Request $request)
-{
-    Product::create([
-        'admin_or_user_id' => Auth::id(),
-        'item_code' => Product::generateItemcodeNo(),
-        'item_name' => $request->item_name,
+    {
+        Product::create([
+            'admin_or_user_id' => Auth::id(),
+            'item_code' => Product::generateItemcodeNo(),
+            'item_name' => $request->item_name,
 
-        'product_mode' => $request->product_mode,
+            'product_mode' => $request->product_mode,
 
-        'height' => $request->height,
-        'width' => $request->width,
-        'area' => $request->area,
+            'height' => $request->height,
+            'width' => $request->width,
+            'area' => $request->area,
 
-        'wholesale_price' => $request->wholesale_price,
-        'retail_price' => $request->retail_price,
-    ]);
+            'wholesale_price' => $request->wholesale_price,
+            'retail_price' => $request->retail_price,
+        ]);
 
-    return back()->with('success','Product added successfully');
-}
+        return back()->with('success', 'Product added successfully');
+    }
 
-
-    public function update(Request $request, $id)
+    public function update_product(Request $request, $id)
     {
         $product_id = $id;
         Product::where('id', $product_id)->update([
@@ -75,9 +74,9 @@ class ProductController extends Controller
             'wholesale_price' => $request->wholesale_price,
             'carton_quantity' => $request->carton_quantity,
             'retail_price' => $request->retail_price,
-            'initial_stock' => $request->initial_stock,
             'alert_quantity' => $request->alert_quantity,
         ]);
+
         return redirect()->back()->with('success', 'Product updated successfully');
     }
 
@@ -87,6 +86,7 @@ class ProductController extends Controller
         $products = Product::all();
         $categories = Category::all();
         $sizes = Size::all(); // Size table se sab sizes le rahe hain
+
         return view('admin_panel.product.edit_product', compact('product', 'products', 'categories', 'sizes'));
     }
 }

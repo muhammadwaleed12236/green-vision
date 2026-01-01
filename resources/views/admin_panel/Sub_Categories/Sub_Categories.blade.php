@@ -83,17 +83,27 @@
                 <div class="modal-body">
                     <div class="mb-3">
                         <label class="form-label">Select Category</label>
-                        <select class="form-control" name="category_name" required>
-                            <option value="" disabled selected>Select Category</option>
+                        <select class="form-control" name="category_name" id="category_name">
+                            <option value="">Select Category</option>
                             @foreach($Categories as $category)
-                                <option value="{{ $category->category_name }}">{{ $category->category_name }}</option>
+                                <option value="{{ $category->category_name }}">
+                                    {{ $category->category_name }}
+                                </option>
                             @endforeach
                         </select>
+                        <div class="text-danger d-none" id="add_category_error">
+                            Category is required
+                        </div>
                     </div>
-                    <div class="mb-3">
+
+                    <div class="">
                         <label class="form-label">Sub Category Name</label>
-                        <input type="text" class="form-control" name="sub_category_name" required>
+                        <input type="text" class="form-control" id="sub_category_name" name="sub_category_name">
+                        <div class="text-danger d-none" id="add_sub_category_error">
+                            Sub category name is required
+                        </div>
                     </div>
+
                 </div>
                 <div class="modal-footer">
                     <button type="submit" class="btn btn-primary">Save</button>
@@ -118,17 +128,28 @@
                 <div class="modal-body">
                     <div class="mb-3">
                         <label class="form-label">Select Category</label>
-                        <select class="form-control" name="category_name" id="edit_category_name" required>
+                        <select class="form-control" id="edit_category_name" name="category_name">
+                            <option value="">Select Category</option>
                             @foreach($Categories as $category)
-                                <option value="{{ $category->category_name }}">{{ $category->category_name }}</option>
+                                <option value="{{ $category->category_name }}">
+                                    {{ $category->category_name }}
+                                </option>
                             @endforeach
                         </select>
+                        <div class="text-danger d-none" id="edit_category_error">
+                            Category is required
+                        </div>
                     </div>
-                    <div class="mb-3">
+
+                    <div class="">
                         <label class="form-label">Sub Category Name</label>
-                        <input type="text" class="form-control" name="sub_category_name" id="edit_sub_category_name"
-                            required>
+                        <input type="text" class="form-control" id="edit_sub_category_name" name="sub_category_name"
+                            placeholder="Sub Category Name">
+                        <div class="text-danger d-none" id="edit_sub_category_error">
+                            Sub category name is required
+                        </div>
                     </div>
+
                 </div>
                 <div class="modal-footer">
                     <button type="submit" class="btn btn-primary">Update</button>
@@ -141,6 +162,66 @@
 @include('admin_panel.include.footer_include')
 
 <script>
+    $(document).on('submit', '#addSubCategoryModal form', function (e) {
+
+        let category = $('#category_name').val();
+        let subCategory = $('#sub_category_name').val().trim();
+        let hasError = false;
+
+        if (category === '') {
+            $('#add_category_error').removeClass('d-none');
+            $('#category_name').addClass('is-invalid');
+            hasError = true;
+        } else {
+            $('#add_category_error').addClass('d-none');
+            $('#category_name').removeClass('is-invalid');
+        }
+
+        if (subCategory === '') {
+            $('#add_sub_category_error').removeClass('d-none');
+            $('#sub_category_name').addClass('is-invalid');
+            hasError = true;
+        } else {
+            $('#add_sub_category_error').addClass('d-none');
+            $('#sub_category_name').removeClass('is-invalid');
+        }
+
+        if (hasError) {
+            e.preventDefault();
+        }
+    });
+
+    $(document).on('submit', '#editSubCategoryModal form', function (e) {
+
+        let category = $('#edit_category_name').val();
+        let subCategory = $('#edit_sub_category_name').val().trim();
+        let hasError = false;
+
+        if (category === '') {
+            $('#edit_category_error').removeClass('d-none');
+            $('#edit_category_name').addClass('is-invalid');
+            hasError = true;
+        } else {
+            $('#edit_category_error').addClass('d-none');
+            $('#edit_category_name').removeClass('is-invalid');
+        }
+
+        if (subCategory === '') {
+            $('#edit_sub_category_error').removeClass('d-none');
+            $('#edit_sub_category_name').addClass('is-invalid');
+            hasError = true;
+        } else {
+            $('#edit_sub_category_error').addClass('d-none');
+            $('#edit_sub_category_name').removeClass('is-invalid');
+        }
+
+        if (hasError) {
+            e.preventDefault();
+        }
+    });
+
+
+
     $(document).on("click", ".editSubCategoryBtn", function () {
         let id = $(this).data("id");
         let category = $(this).data("category");
@@ -149,5 +230,56 @@
         $("#edit_sub_category_id").val(id);
         $("#edit_category_name").val(category);
         $("#edit_sub_category_name").val(subcategory);
+    });
+
+    $(document).on("click", ".deleteSubCategoryBtn", function (e) {
+        e.preventDefault();
+
+        let id = $(this).data("id");
+        let deleteUrl = "/sub-category/delete/" + id;
+
+        Swal.fire({
+            title: "Are you sure?",
+            text: "You won't be able to revert this!",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#3085d6",
+            cancelButtonColor: "#d33",
+            confirmButtonText: "Yes, delete it!"
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: deleteUrl,
+                    type: "DELETE",
+                    data: {
+                        _token: "{{ csrf_token() }}"
+                    },
+                    success: function (response) {
+                        if (response.status) {
+                            Swal.fire(
+                                "Deleted!",
+                                response.msg ?? "Sub Category deleted successfully.",
+                                "success"
+                            ).then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire(
+                                "Error!",
+                                response.msg ?? "Delete failed",
+                                "error"
+                            );
+                        }
+                    },
+                    error: function () {
+                        Swal.fire(
+                            "Error!",
+                            "Something went wrong",
+                            "error"
+                        );
+                    }
+                });
+            }
+        });
     });
 </script>

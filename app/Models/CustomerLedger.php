@@ -10,7 +10,7 @@ class CustomerLedger extends Model
 {
     use HasFactory;
     use SoftDeletes;
-       
+
     protected $guarded = [];
 
     public function Customer()

@@ -49,6 +49,16 @@ class SalesmanController extends Controller
                 'updated_at' => now(),
             ]);
 
+            // 👇 Staff Ledger Create (Customer ki tarah)
+            \App\Models\StaffLedger::create([
+                'admin_or_user_id' => $userId,
+                'saleman_id' => $salesman->id,
+                'opening_balance' => $request->salary ?? 0, // Salary ko opening balance bana do
+                'previous_balance' => $request->salary ?? 0,
+                'closing_balance' => $request->salary ?? 0,
+                'created_at' => now(),
+            ]);
+
             if (strtolower($request->designation) === 'saleman') {
                 \App\Models\User::create([
                     'user_id' => $salesman->id,
@@ -190,5 +200,126 @@ class SalesmanController extends Controller
         $designation->delete();
 
         return response()->json(['status' => 'success', 'message' => 'Designation deleted successfully!']);
+    }
+
+    // Staff Ledger Page
+    public function staff_ledger()
+    {
+        if (! Auth::check()) {
+            return redirect()->back();
+        }
+
+        $authUser = Auth::user();
+        $userId = Auth::id();
+
+        if ($authUser->usertype === 'admin') {
+            $StaffLedgers = \App\Models\StaffLedger::where('admin_or_user_id', $userId)
+                ->with('salesman')
+                ->get();
+        } else {
+            $StaffLedgers = collect();
+        }
+
+        $Salesmans = Salesman::where('admin_or_user_id', $userId)
+            ->where('designation', 'Saleman')
+            ->get();
+
+        return view('admin_panel.salesmen.salemen_ladger', compact('StaffLedgers', 'Salesmans'));
+    }
+
+    // Store Staff Recovery
+    public function staff_recovery_store(Request $request)
+    {
+        $ledger = \App\Models\StaffLedger::find($request->ledger_id);
+
+        if (! $ledger) {
+            return response()->json(['success' => false, 'message' => 'Ledger not found']);
+        }
+
+        $ledger->previous_balance = $ledger->closing_balance;
+        $ledger->closing_balance -= $request->amount_paid;
+        $ledger->save();
+
+        $userId = Auth::id();
+
+        \App\Models\StaffRecovery::create([
+            'admin_or_user_id' => $userId,
+            'saleman_ledger_id' => $ledger->id,
+            'amount_paid' => $request->amount_paid,
+            'date' => $request->date,
+            'remarks' => $request->remarks,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'new_closing_balance' => number_format($ledger->closing_balance, 0),
+        ]);
+    }
+
+    // Staff Recovery List Page
+    public function staff_recovery()
+    {
+        if (! Auth::check()) {
+            return redirect()->back();
+        }
+
+        $authUser = Auth::user();
+        $userId = Auth::id();
+
+        if ($authUser->usertype === 'admin') {
+            $Recoveries = \App\Models\StaffRecovery::where('admin_or_user_id', $userId)
+                ->with('saleman')
+                ->get();
+
+            $Salesmans = Salesman::where('admin_or_user_id', $userId)
+                ->where('designation', 'Saleman')
+                ->get();
+        } else {
+            $Recoveries = collect();
+            $Salesmans = collect();
+        }
+
+        return view('admin_panel.salesmen.salemen_recovery', compact('Recoveries', 'Salesmans'));
+    }
+
+    // Update Staff Recovery
+    public function updateStaffRecovery(Request $request, $id)
+    {
+        $request->validate([
+            'date' => 'required|date',
+            'adjust_type' => 'required|in:plus,minus',
+            'adjust_amount' => 'required|numeric|min:0',
+            'remarks' => 'nullable|string',
+        ]);
+
+        $recovery = \App\Models\StaffRecovery::findOrFail($id);
+        $ledger = \App\Models\StaffLedger::find($recovery->saleman_ledger_id);
+
+        if (! $ledger) {
+            return response()->json(['message' => 'Ledger record not found.'], 404);
+        }
+
+        $adjustAmount = $request->adjust_amount;
+
+        if ($request->adjust_type === 'plus') {
+            $new_amount_paid = $recovery->amount_paid + $adjustAmount;
+            $ledger->closing_balance -= $adjustAmount;
+        } else {
+            $new_amount_paid = $recovery->amount_paid - $adjustAmount;
+            $ledger->closing_balance += $adjustAmount;
+        }
+
+        $new_amount_paid = max(0, $new_amount_paid);
+        $ledger->closing_balance = max(0, $ledger->closing_balance);
+
+        $ledger->save();
+
+        $recovery->update([
+            'amount_paid' => $new_amount_paid,
+            'remarks' => $request->remarks,
+            'date' => $request->date,
+        ]);
+
+        return redirect()->route('staff-recovery')->with('success', 'Staff recovery updated successfully.');
     }
 }

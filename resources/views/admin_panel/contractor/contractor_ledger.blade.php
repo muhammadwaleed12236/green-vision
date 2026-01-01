@@ -7,8 +7,8 @@
         <div class="content">
             <div class="page-header d-flex justify-content-between align-items-center">
                 <div class="page-title">
-                    <h4>Customer Ledger Management</h4>
-                    <h6>Manage Customer Ledger Efficiently</h6>
+                    <h4>Contractor Ledger Management</h4>
+                    <h6>Manage Contractor Ledger Efficiently</h6>
                 </div>
             </div>
 
@@ -21,14 +21,13 @@
                     @endif
 
                     <div class="table-responsive">
-                        <table class="table datanew">
+                        <table class="table contractor-ledger-datatable">
                             <thead>
                                 <tr>
                                     <th>ID</th>
-                                    <th>Shop</th>
                                     <th>Name</th>
-                                    <th>Area</th>
-                                    <th>Business Type</th>
+                                    <th>Phone</th>
+                                    <th>Address</th>
                                     <th>Opening Balance</th>
                                     <th>Previous Balance</th>
                                     <th>Closing Balance</th>
@@ -37,13 +36,12 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @forelse($CustomerLedgers as $ledger)
+                                @forelse($ContractorLedgers as $ledger)
                                     <tr>
-                                        <td>{{ $ledger->customer_id }}</td>
-                                        <td>{{ $ledger->Customer ? $ledger->Customer->shop_name : '-' }}</td>
-                                        <td>{{ $ledger->Customer ? $ledger->Customer->customer_name : '-' }}</td>
-                                        <td>{{ $ledger->Customer ? $ledger->Customer->area : '-' }}</td>
-                                        <td>{{ $ledger->Customer ? $ledger->Customer->business_type_name : '-' }}</td>
+                                        <td>{{ $ledger->contractor_id }}</td>
+                                        <td>{{ $ledger->contractor ? $ledger->contractor->contractor_name : '-' }}</td>
+                                        <td>{{ $ledger->contractor ? $ledger->contractor->phone_number : '-' }}</td>
+                                        <td>{{ $ledger->contractor ? $ledger->contractor->address : '-' }}</td>
                                         <td>{{ number_format($ledger->opening_balance, 0) }}</td>
                                         <td>{{ number_format($ledger->previous_balance, 0) }}</td>
                                         <td id="closing_balance_{{ $ledger->id }}">
@@ -60,7 +58,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="8" class="text-center">No records found.</td>
+                                        <td colspan="9" class="text-center">No records found.</td>
                                     </tr>
                                 @endforelse
                             </tbody>
@@ -91,36 +89,39 @@
                     </div>
                     <div class="mb-3">
                         <label for="amount_paid" class="form-label">Amount Paid</label>
-                        <input type="number" class="form-control" id="amount_paid" name="amount_paid" required>
+                        <input type="number" class="form-control" id="amount_paid" name="amount_paid">
                     </div>
-                    <div class="mb-3">
-                        <label for="salesman" class="form-label">Salesman</label>
-                        <input type="text" name="salesmen" value="testing">
-                        {{-- <select class="form-control" id="salesman" name="salesman" required>
-                            <option value="" disabled>Select Salesman</option>
-                            @foreach($Salesmans as $saleman)
-                                <option value="{{ $saleman->name }}">{{ $saleman->name }}</option>
-                            @endforeach
-                        </select> --}}
-                    </div>
+
                     <div class="mb-3">
                         <label for="date" class="form-label">Date</label>
-                        <input type="date" class="form-control" id="date" name="date" required>
+                        <input type="date" class="form-control" id="date" name="date" value="{{ old('date', date('Y-m-d')) }}">
                     </div>
                     <div class="mb-3">
                         <label for="remarks" class="form-label">Remarks</label>
                         <textarea class="form-control" id="remarks" name="remarks"></textarea>
                     </div>
-                    <button type="submit" class="btn btn-success">Save Recovery</button>
+                    <button type="submit" class="btn btn-primary">Save Recovery</button>
                 </form>
             </div>
         </div>
     </div>
 </div>
 
+
 @include('admin_panel.include.footer_include')
 
 <script>
+    // $(document).ready(function () {
+    //     // Initialize DataTable for this specific page
+    //     if ($('.contractor-ledger-datatable').length) {
+    //         $('.contractor-ledger-datatable').DataTable({
+    //             "pageLength": 10,
+    //             "ordering": true,
+    //             "searching": true
+    //         });
+    //     }
+    // });
+
     document.addEventListener("DOMContentLoaded", function () {
         var recoveryModal = document.getElementById('recoveryModal');
 
@@ -130,14 +131,14 @@
             var closingBalance = button.getAttribute('data-closing-balance');
 
             document.getElementById('ledger_id').value = ledgerId;
-            document.getElementById('closing_balance').value = closingBalance;
+            document.getElementById('closing_balance').value = parseFloat(closingBalance);
         });
 
         document.getElementById('recoveryForm').addEventListener('submit', function (event) {
             event.preventDefault();
 
             var formData = new FormData(this);
-            fetch("{{ route('customer-recovery-store') }}", {
+            fetch("{{ route('contractor-recovery-store') }}", {
                 method: "POST",
                 headers: {
                     "X-CSRF-TOKEN": document.querySelector('input[name="_token"]').value
@@ -147,14 +148,6 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        var ledgerId = document.getElementById('ledger_id').value;
-                        var newClosingBalance = data.new_closing_balance;
-                        document.getElementById('closing_balance_' + ledgerId).innerText = newClosingBalance;
-
-                        var recoveryModal = bootstrap.Modal.getInstance(document.getElementById('recoveryModal'));
-                        recoveryModal.hide();
-
-                        // ✅ SweetAlert Success Message + Page Refresh
                         Swal.fire({
                             icon: 'success',
                             title: 'Recovery Added!',
@@ -162,11 +155,9 @@
                             timer: 2000,
                             showConfirmButton: false
                         }).then(() => {
-                            location.reload(); // ✅ Page Refresh After Success Alert
+                            location.reload();
                         });
-
                     } else {
-                        // ✅ SweetAlert Error Message (No Refresh)
                         Swal.fire({
                             icon: 'error',
                             title: 'Error!',
@@ -176,7 +167,6 @@
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    // ✅ SweetAlert Error Alert (No Refresh)
                     Swal.fire({
                         icon: 'error',
                         title: 'Error!',

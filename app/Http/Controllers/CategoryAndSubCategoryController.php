@@ -27,6 +27,11 @@ class CategoryAndSubCategoryController extends Controller
 
     public function store_category(Request $request)
     {
+
+        $request->validate([
+            'category_name' => 'required',
+        ]);
+
         if (Auth::id()) {
             $usertype = Auth()->user()->usertype;
             $userId = Auth::id();
@@ -45,11 +50,13 @@ class CategoryAndSubCategoryController extends Controller
 
     public function update_category(Request $request)
     {
-        // Get the cloth type ID from the request
-        $Category_id = $request->input('Category_id');
-        // dd($Category_id);
 
-        // Update the cloth type in the database
+        $request->validate([
+            'category_name' => 'required',
+        ]);
+
+        $Category_id = $request->input('Category_id');
+
         Category::where('id', $Category_id)->update([
             'category_name' => $request->category_name,
         ]);
@@ -76,6 +83,11 @@ class CategoryAndSubCategoryController extends Controller
 
     public function store_sub_category(Request $request)
     {
+        $request->validate([
+            'category_name' => 'required',
+            'sub_category_name' => 'required',
+        ]);
+
         if (Auth::id()) {
             $usertype = Auth()->user()->usertype;
             $userId = Auth::id();
@@ -117,6 +129,19 @@ class CategoryAndSubCategoryController extends Controller
         }
 
         $category->delete();
+
+        return response()->json(['status' => true, 'msg' => 'Deleted']);
+    }
+
+    public function sub_category_delete($id)
+    {
+        $subcategory = SubCategory::find($id);
+
+        if (! $subcategory) {
+            return response()->json(['status' => false, 'msg' => 'Data not found']);
+        }
+
+        $subcategory->delete();
 
         return response()->json(['status' => true, 'msg' => 'Deleted']);
     }

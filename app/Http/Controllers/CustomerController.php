@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Customer;
-use App\Models\City;
 use App\Models\Area;
 use App\Models\BusinessType;
+use App\Models\City;
+use App\Models\Customer;
 use App\Models\CustomerLedger;
 use App\Models\CustomerRecovery;
 use App\Models\Salesman;
@@ -32,7 +32,7 @@ class CustomerController extends Controller
                     ->where('identify', $ownerIdentify)
                     ->first();
 
-                if (!$admin) {
+                if (! $admin) {
                     return redirect()->back()->with('error', 'Admin not found for this salesman.');
                 }
 
@@ -62,13 +62,10 @@ class CustomerController extends Controller
         }
     }
 
-
-
-
-
     public function fetchAreas(Request $request)
     {
         $areas = Area::where('city_name', $request->city_id)->get();
+
         return response()->json($areas);
     }
 
@@ -82,7 +79,6 @@ class CustomerController extends Controller
         return response()->json($areas);
     }
 
-
     public function store(Request $request)
     {
         if (Auth::id()) {
@@ -91,14 +87,11 @@ class CustomerController extends Controller
 
             $customer = Customer::create([
                 'admin_or_user_id' => $userId,
-                'identify' => $user->identify,
-                'city' => $request->city,
-                'area' => $request->area,
                 'customer_name' => $request->customer_name,
                 'phone_number' => $request->phone_number,
                 'address' => $request->address,
                 'shop_name' => $request->shop_name,
-                'business_type_name' => $request->business_type_id,
+                'opening_balance' => $request->opening_balance,
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now(),
             ]);
@@ -119,10 +112,9 @@ class CustomerController extends Controller
         }
     }
 
-
     public function customer_ledger()
     {
-        if (!Auth::check()) {
+        if (! Auth::check()) {
             return redirect()->back();
         }
 
@@ -135,7 +127,7 @@ class CustomerController extends Controller
             // Salesman case: get owner/admin ID
             $salesman = Salesman::where('name', $userName)->first();
 
-            if (!$salesman) {
+            if (! $salesman) {
                 return redirect()->back()->with('error', 'Salesman not found.');
             }
 
@@ -169,8 +161,6 @@ class CustomerController extends Controller
         return view('admin_panel.customer.customer_ledger', compact('CustomerLedgers', 'Salesmans'));
     }
 
-
-
     public function customer_recovery_store(Request $request)
     {
         $ledger = CustomerLedger::find($request->ledger_id);
@@ -192,13 +182,13 @@ class CustomerController extends Controller
 
         return response()->json([
             'success' => true,
-            'new_closing_balance' => number_format($ledger->closing_balance, 0)
+            'new_closing_balance' => number_format($ledger->closing_balance, 0),
         ]);
     }
 
     public function customer_recovery()
     {
-        if (!Auth::check()) {
+        if (! Auth::check()) {
             return redirect()->back();
         }
 
@@ -206,7 +196,7 @@ class CustomerController extends Controller
         if ($authUser->usertype === 'salesman') {
             // Match salesman via user_id instead of name
             $salesman = Salesman::where('id', $authUser->user_id)->first();
-            if (!$salesman) {
+            if (! $salesman) {
                 return redirect()->back()->with('error', 'Salesman not found.');
             }
 
@@ -232,9 +222,6 @@ class CustomerController extends Controller
         return view('admin_panel.customer.customer_recovery', compact('Recoveries', 'Salesmans'));
     }
 
-
-
-
     public function getCustomerData($id)
     {
         $customer = Customer::findOrFail($id);
@@ -250,12 +237,11 @@ class CustomerController extends Controller
             'shop_name' => $customer->shop_name,
             'business_type_name' => $customer->business_type_name,
             'ledger' => $ledger,
-            'business_types' => $businessTypes
+            'business_types' => $businessTypes,
         ];
 
         return response()->json($response);
     }
-
 
     public function update(Request $request)
     {
@@ -276,9 +262,9 @@ class CustomerController extends Controller
         $recapeType = $request->recape_type;
 
         if ($ledger) {
-            if ($recapeType === "plus") {
+            if ($recapeType === 'plus') {
                 $ledger->opening_balance += $recapeAmount;
-            } elseif ($recapeType === "minus") {
+            } elseif ($recapeType === 'minus') {
                 $ledger->opening_balance -= $recapeAmount;
             }
 
@@ -297,7 +283,6 @@ class CustomerController extends Controller
         return redirect()->back()->with('success', 'Customer updated successfully');
     }
 
-
     // public function destroy($id)
     // {
     //     Customer::findOrFail($id)->delete();
@@ -307,7 +292,7 @@ class CustomerController extends Controller
     {
         $customer = Customer::find($id);
 
-        if (!$customer) {
+        if (! $customer) {
             return response()->json(['status' => 'error', 'message' => 'Customer not found.'], 404);
         }
 
@@ -316,16 +301,17 @@ class CustomerController extends Controller
         return response()->json(['status' => 'success', 'message' => 'Customer deleted successfully.']);
     }
 
-
     public function fetchBusinessTypes()
     {
         $userId = Auth::id();
+
         return response()->json(BusinessType::where('admin_or_user_id', $userId)->get());
     }
 
     public function getCities()
     {
         $cities = City::select('id', 'city_name')->get();
+
         return response()->json($cities);
     }
 
@@ -350,7 +336,7 @@ class CustomerController extends Controller
         $recovery = CustomerRecovery::findOrFail($id);
         $ledger = CustomerLedger::find($recovery->customer_ledger_id);
 
-        if (!$ledger) {
+        if (! $ledger) {
             return response()->json(['message' => 'Ledger record not found.'], 404);
         }
 
