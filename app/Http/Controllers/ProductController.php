@@ -89,4 +89,17 @@ class ProductController extends Controller
 
         return view('admin_panel.product.edit_product', compact('product', 'products', 'categories', 'sizes'));
     }
+
+    public function delete($id)
+    {
+        $product = Product::find($id);
+
+        if (! $product) {
+            return response()->json(['status' => 'error', 'message' => 'Customer not found.']);
+        }
+
+        $product->delete();
+
+        return response()->json(['status' => 'success', 'message' => 'Product deleted successfully.']);
+    }
 }

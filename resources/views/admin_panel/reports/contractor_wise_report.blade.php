@@ -33,17 +33,19 @@
         <div class="content">
             <div class="card p-4 shadow-lg">
                 <div class="card-body">
-                    <h3 class="card-title text-center fw-bold mb-4 text-primary">PURCHASE COMPANY REPORT</h3>
+                    <h3 class="card-title text-center fw-bold mb-4 text-primary">CONTRACTOR JOB REPORT</h3>
 
-                    <form id="ledgerSearchForm">
+                    <form id="contractorSearchForm">
                         @csrf
                         <div class="row g-3">
                             <div class="col-md-4">
-                                <label class="fw-bold" for="Vendor">Select Vendor</label>
-                                <select id="Vendor" class="form-control">
-                                    <option value="">-- Select Vendor --</option>
-                                    @foreach($Vendors as $Vendor)
-                                        <option value="{{ $Vendor->id }}">{{ $Vendor->Party_name }}</option>
+                                <label class="fw-bold" for="Contractor">Select Contractor</label>
+                                <select id="Contractor" class="form-control">
+                                    <option value="">-- Select Contractor --</option>
+                                    @foreach($Contractors as $contractor)
+                                        <option value="{{ $contractor->id }}">
+                                            {{ $contractor->contractor_name ?? $contractor->name }}
+                                        </option>
                                     @endforeach
                                 </select>
                             </div>
@@ -63,22 +65,21 @@
                         </div>
                     </form>
 
-                    <div class="table-responsive mt-4 Purcahse_report" id="report-preview">
-                        <h4 class="text-center fw-bold">PURCHASE COMPANY REPORT HYDERABAD</h4>
+                    <div class="table-responsive mt-4 Contractor_report" id="report-preview">
+                        <h4 class="text-center fw-bold">CONTRACTOR JOB REPORT HYDERABAD</h4>
                         <div class="date-range-text text-center mb-2"></div>
-                        <div class="report-party-name  fw-bold text-secondary mb-2"></div>
+                        <div class="report-party-name fw-bold text-secondary mb-2"></div>
 
                         <table class="report-table">
                             <thead>
                                 <tr>
-                                    <th>Inv#</th>
+                                    <th>Job No</th>
                                     <th>Date</th>
-                                    <th>Item Name</th>
-                                    <th>Carton Packing</th>
-                                    <th>Pur in Carton</th>
-                                    <th>Pur in Pcs</th>
-                                    <th>Pur in Liter</th>
-                                    <th>Net Amount</th>
+                                    <th>Work Type</th>
+                                    <th>Total Amount</th>
+                                    <th>Paid</th>
+                                    <th>Remaining</th>
+                                    <th>Status</th>
                                 </tr>
                             </thead>
                             <tbody></tbody>
@@ -104,69 +105,74 @@
     $('#searchLedger').click(function () {
         const start = $('#start_date').val();
         const end = $('#end_date').val();
-        const vendorId = $('#Vendor').val();
+        const contractorId = $('#Contractor').val();
 
-        if (!start || !end || !vendorId) {
-            alert('Please select Vendor, Start Date, and End Date.');
+        if (!start || !end || !contractorId) {
+            alert('Please select Contractor, Start Date, and End Date.');
             return;
         }
 
         $.ajax({
-            url: "{{ route('fetch.vendor.purchase.report') }}",
+            url: "{{ route('fetch.contractor.report') }}",
             method: "POST",
             data: {
                 _token: "{{ csrf_token() }}",
                 start_date: start,
                 end_date: end,
-                vendor_id: vendorId
+                contractor_id: contractorId
             },
             success: function (response) {
-                console.log(response); // For debugging
+                console.log(response); // Debug
 
                 let rows = '';
+
+                // ✅ Correct way to access report data
                 response.report.forEach(row => {
                     rows += `
-                        <tr>
-                            <td>${row.inv_no}</td>
-                            <td>${row.date}</td>
-                            <td>${row.item}</td>
-                            <td>${row.carton_packing}</td>
-                            <td>${row.carton_qty}</td>
-                            <td>${row.pcs}</td>
-                            <td>${row.liter}</td>
-                            <td>${Number(row.net_amount).toLocaleString()}</td>
-                        </tr>`;
+                    <tr>
+                        <td>${row.job_no}</td>
+                        <td>${row.date}</td>
+                        <td>${row.work_type}</td>
+                        <td>${Number(row.total_amount).toLocaleString()}</td>
+                        <td class="text-success">${Number(row.paid_amount).toLocaleString()}</td>
+                        <td class="text-danger">${Number(row.remaining_amount).toLocaleString()}</td>
+                        <td><span class="badge bg-${row.status === 'Completed' ? 'success' : 'warning'}">${row.status}</span></td>
+                    </tr>`;
                 });
 
-                // Set Vendor Name
-                $('.report-party-name').html(`<p>${$('#Vendor option:selected').text()}</p>`);
+                // Set Contractor Name
+                $('.report-party-name').html(`<p>${$('#Contractor option:selected').text()}</p>`);
 
                 // Set Date Range
                 const dateRangeHTML = `
-                    <p>From <strong>${formatDate(start)}</strong> To <strong>${formatDate(end)}</strong></p>
-                `;
+                <p>From <strong>${formatDate(start)}</strong> To <strong>${formatDate(end)}</strong></p>
+            `;
                 $('.date-range-text').html(dateRangeHTML);
 
                 // Set Table
                 $('#report-preview tbody').html(rows);
                 $('#report-preview tfoot').html(`
-                    <tr>
-                        <td colspan="4">Total</td>
-                        <td>${response.totals.carton}</td>
-                        <td>${response.totals.pcs}</td>
-                        <td>${response.totals.liter}</td>
-                        <td>${Number(response.totals.net_amount).toLocaleString()}</td>
-                    </tr>
-                `);
+                <tr>
+                    <td colspan="3">Total</td>
+                    <td>${Number(response.totals.total_amount).toLocaleString()}</td>
+                    <td>${Number(response.totals.paid_amount).toLocaleString()}</td>
+                    <td>${Number(response.totals.remaining_amount).toLocaleString()}</td>
+                    <td></td>
+                </tr>
+            `);
+            },
+            error: function (xhr) {
+                alert('Error loading report');
+                console.error(xhr);
             }
         });
     });
 
     document.getElementById("downloadPdf").addEventListener("click", function () {
-        const element = document.querySelector(".Purcahse_report");
+        const element = document.querySelector(".Contractor_report");
         const opt = {
             margin: 0.3,
-            filename: 'Vendor-Wise-Purchase-Report.pdf',
+            filename: 'Contractor-Job-Report.pdf',
             image: {
                 type: 'jpeg',
                 quality: 1
@@ -178,7 +184,7 @@
             jsPDF: {
                 unit: 'in',
                 format: 'a4',
-                orientation: 'portrait'
+                orientation: 'landscape' // ✅ Landscape for more columns
             }
         };
         html2pdf().set(opt).from(element).save();

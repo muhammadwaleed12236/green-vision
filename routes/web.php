@@ -123,6 +123,7 @@ Route::put('/product/update/{id}', [ProductController::class, 'update'])->name('
 Route::get('/fetch-subcategories', [ProductController::class, 'fetchSubCategories'])->name('fetch-subcategories');
 Route::get('/products/{id}/edit', [ProductController::class, 'edit'])->name('products.edit');
 Route::post('/product/update', [ProductController::class, 'update_product'])->name('product.update');
+Route::delete('/product/delete/{id}', [ProductController::class, 'delete'])->name('product.delete');
 
 // purchase
 Route::get('/Purchase', [PurchaseController::class, 'Purchase'])->name('Purchase');
@@ -255,6 +256,22 @@ Route::post('/fetch-purchase-report', [ReportController::class, 'fetch_purchase_
 
 Route::get('/vendor-wise-purcahse-report', [ReportController::class, 'vendor_wise_purcahse_report'])->name('vendor-wise-purcahse-report');
 Route::post('/fetch-vendor-purchase-report', [ReportController::class, 'fetchVendorPurchaseReport'])->name('fetch.vendor.purchase.report');
+
+// Contractor Report Routes
+Route::get('/contractor-wise-report', [ReportController::class, 'contractor_wise_report'])->name('contractor-wise-report');
+Route::post('/fetch-contractor-report', [ReportController::class, 'fetchContractorReport'])->name('fetch.contractor.report');
+
+// Staff Weekly UI
+Route::get('/staff-wise-report', [ReportController::class, 'staff_wise_report'])
+    ->name('staff-wise-report');
+
+// Weekly history (GET DATA)
+Route::post('/staff-weekly-history', [ReportController::class, 'staffWeeklyHistory'])
+    ->name('staff.weekly.history');
+
+// Save weekly entry
+Route::post('/staff-weekly-save', [ReportController::class, 'staffWeeklySave'])
+    ->name('staff.weekly.save');
 
 Route::get('/Area-wise-Customer-payments', [ReportController::class, 'Area_wise_Customer_payments'])->name('Area-wise-Customer-payments');
 Route::get('/receivable-report', [ReportController::class, 'fetchReceivableReport'])->name('fetch.receivable.report');

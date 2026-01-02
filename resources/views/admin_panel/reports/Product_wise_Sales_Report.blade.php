@@ -30,7 +30,7 @@
                                 <select class="form-control select2" id="Product" name="Product[]" multiple required>
                                     <option value="All">All</option>
                                     @foreach($Products as $Product)
-                                    <option value="{{ $Product->item_name }}">{{ $Product->item_name }}</option>
+                                        <option value="{{ $Product->item_name }}">{{ $Product->item_name }}</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -43,7 +43,7 @@
                                 <input type="date" id="end_date" name="end_date" class="form-control">
                             </div>
                         </div>
-                        <div class="text-center mt-4">
+                        <div class=" mt-4">
                             <button type="button" id="searchLedger" class="btn btn-primary btn-lg px-5">
                                 Search
                             </button>
@@ -114,7 +114,7 @@
     }
 </style>
 <script>
-    $(function() {
+    $(function () {
         $('#Product').select2({
             placeholder: 'Select Product',
             allowClear: true,
@@ -123,24 +123,24 @@
         });
     });
 
-    document.getElementById("searchLedger").addEventListener("click", function() {
+    document.getElementById("searchLedger").addEventListener("click", function () {
         let products = $('#Product').val() || [];
         let startDate = document.getElementById("start_date").value;
         let endDate = document.getElementById("end_date").value;
         let csrfToken = document.querySelector('input[name="_token"]').value;
 
         fetch("{{ route('get-Product-sales-report') }}", {
-                method: "POST",
-                headers: {
-                    "X-CSRF-TOKEN": csrfToken,
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    Product: products,
-                    start_date: startDate,
-                    end_date: endDate
-                })
+            method: "POST",
+            headers: {
+                "X-CSRF-TOKEN": csrfToken,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                Product: products,
+                start_date: startDate,
+                end_date: endDate
             })
+        })
             .then(response => response.json())
             .then(data => {
                 let tableBody = document.querySelector("#productSaleTable tbody");

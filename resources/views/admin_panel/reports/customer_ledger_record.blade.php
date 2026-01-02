@@ -17,12 +17,11 @@
                                 <select id="Customer" class="form-control">
                                     <option value="">-- Select Customer --</option>
                                     @foreach($Customers as $Customer)
-                                    <option value="{{ $Customer->id }}"
-                                        data-contact="{{ $Customer->phone_number }}"
-                                        data-city="{{ $Customer->city }}"
-                                        data-area="{{ $Customer->area }}">
-                                        {{ $Customer->shop_name }} ({{ $Customer->customer_name }}) ({{ $Customer->area }})
-                                    </option>
+                                        <option value="{{ $Customer->id }}" data-contact="{{ $Customer->phone_number }}"
+                                            data-city="{{ $Customer->city }}" data-area="{{ $Customer->area }}">
+                                            {{ $Customer->shop_name }} ({{ $Customer->customer_name }})
+                                            ({{ $Customer->area }})
+                                        </option>
                                     @endforeach
                                 </select>
                             </div>
@@ -49,23 +48,23 @@
                                 <input type="date" id="end_date" name="end_date" class="form-control bg-light">
                             </div>
                         </div>
-                        <div class="text-center mt-4">
+                        <div class="d-flex justify-content-between align-items-center gap-4 mt-4">
                             <button type="button" id="searchLedger" class="btn btn-primary btn-lg px-5">
                                 Search
                             </button>
+
+                            <button id="downloadPdf" class="btn btn-danger btn-lg">
+                                Download PDF
+                            </button>
                         </div>
                     </form>
-                    <div class="text-end mt-2">
-                        <button id="downloadPdf" class="btn btn-danger">
-                            Download PDF
-                        </button>
-                    </div>
                     <div id="ledgerResult" style="display: none;">
                         <div class="ledger-container mt-4">
                             <div class="ledger-header">CUSTOMER LEDGER</div>
                             <div class="ledger-info">
                                 <span><strong>Customer:</strong> <span id="CustomerName"></span></span>
-                                <span><strong>Duration:</strong> From <span id="startDate"></span> To <span id="endDate"></span></span>
+                                <span><strong>Duration:</strong> From <span id="startDate"></span> To <span
+                                        id="endDate"></span></span>
                             </div>
                             <table>
                                 <thead>
@@ -160,10 +159,10 @@
         return `${day}/${month}/${year}`;
     }
 
-    $(document).ready(function() {
+    $(document).ready(function () {
 
 
-        $('#Customer').change(function() {
+        $('#Customer').change(function () {
             var selected = $(this).find(':selected');
             $('#contact').val(selected.data('contact'));
             $('#city').val(selected.data('city'));
@@ -172,7 +171,7 @@
 
 
 
-        $('#searchLedger').click(function() {
+        $('#searchLedger').click(function () {
             var CustomerId = $('#Customer').val();
             let startDate = $('#start_date').val();
             let endDate = $('#end_date').val();
@@ -190,7 +189,7 @@
                     start_date: startDate,
                     end_date: endDate
                 },
-                success: function(response) {
+                success: function (response) {
                     const startDateObj = new Date(response.startDate);
                     const endDateObj = new Date(response.endDate);
                     // Format dates to 'dd/mm/yyyy'
@@ -330,7 +329,7 @@
     });
 </script>
 <script>
-    document.getElementById("downloadPdf").addEventListener("click", function() {
+    document.getElementById("downloadPdf").addEventListener("click", function () {
         const element = document.querySelector(".ledger-container");
 
         html2canvas(element).then(canvas => {
@@ -347,7 +346,7 @@
     });
 
     // Show PDF button only when result appears
-    $('#searchLedger').click(function() {
+    $('#searchLedger').click(function () {
         setTimeout(() => {
             $('#downloadPdf').removeClass('d-none');
         }, 500);

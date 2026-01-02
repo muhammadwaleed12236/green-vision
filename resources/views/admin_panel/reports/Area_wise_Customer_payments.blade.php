@@ -58,7 +58,7 @@
                                 <select class="form-control" id="salesman" name="salesman" required>
                                     <option value="All">All</option>
                                     @foreach($Salesmans as $saleman)
-                                    <option value="{{ $saleman->name }}">{{ $saleman->name }}</option>
+                                        <option value="{{ $saleman->name }}">{{ $saleman->name }}</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -67,7 +67,7 @@
                                 <select class="form-control select2" name="city[]" id="citySelect" multiple>
                                     <option value="All">All</option>
                                     @foreach($cities as $city)
-                                    <option value="{{ $city->city_name }}">{{ $city->city_name }}</option>
+                                        <option value="{{ $city->city_name }}">{{ $city->city_name }}</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -91,14 +91,12 @@
                             </div>
                         </div>
 
-                        <div class="text-center mt-4">
+                        <div class="d-flex justify-content-between align-items-center gap-4 mt-4">
                             <button type="button" id="searchLedger" class="btn btn-primary btn-lg px-5">Search</button>
+
+                            <button id="downloadPdf" class="btn btn-danger">Download PDF</button>
                         </div>
                     </form>
-
-                    <div class="text-end mt-3">
-                        <button id="downloadPdf" class="btn btn-danger">Download PDF</button>
-                    </div>
 
                     <hr>
                     <div id="reportResults"></div>
@@ -113,7 +111,7 @@
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
 <script>
-    $(function() {
+    $(function () {
         $('#citySelect').select2({
             placeholder: 'Select Cities',
             allowClear: true,
@@ -122,13 +120,13 @@
         });
     });
 
-    $(document).ready(function() {
-        $('#citySelect').on('change', function() {
+    $(document).ready(function () {
+        $('#citySelect').on('change', function () {
             let cities = $(this).val() || [];
 
             // Agar "All" select hua to sari cities auto select kar do
             if (cities.includes("All")) {
-                let allCities = $("#citySelect option").map(function() {
+                let allCities = $("#citySelect option").map(function () {
                     return $(this).val();
                 }).get();
 
@@ -153,7 +151,7 @@
                     cities: cities
                 },
                 dataType: "json",
-                success: function(data) {
+                success: function (data) {
                     if (!data || data.length === 0) {
                         $('#areasContainer').html('<p class="text-danger">No areas found.</p>');
                         return;
@@ -183,7 +181,7 @@
                     // ✅ saare areas ko default checked kar diya
                     $('#areasContainer').html(html);
                 },
-                error: function() {
+                error: function () {
                     $('#areasContainer').html('<p class="text-danger">Error fetching areas.</p>');
                 }
             });
@@ -191,11 +189,11 @@
 
 
 
-        $('#searchLedger').click(function() {
+        $('#searchLedger').click(function () {
             let salesman = $('#salesman').val();
             let city = $('#citySelect').val();
             let area = [];
-            $('.area-checkbox:checked').each(function() {
+            $('.area-checkbox:checked').each(function () {
                 area.push($(this).val());
             });
             let startDate = $('#start_date').val();
@@ -216,7 +214,7 @@
                     start_date: startDate,
                     end_date: endDate
                 },
-                success: function(response) {
+                success: function (response) {
                     $('#reportResults').html('');
                     let grandTotal = 0;
 
@@ -370,7 +368,7 @@
         </div>
     `);
                 },
-                error: function() {
+                error: function () {
                     alert('Failed to load data');
                 }
             });
@@ -378,7 +376,7 @@
     });
 </script>
 <script>
-    document.getElementById("downloadPdf").addEventListener("click", function() {
+    document.getElementById("downloadPdf").addEventListener("click", function () {
         const element = document.querySelector(".ledger-container");
 
         html2canvas(element).then(canvas => {
@@ -395,7 +393,7 @@
     });
 
     // Show PDF button only when result appears
-    $('#searchLedger').click(function() {
+    $('#searchLedger').click(function () {
         setTimeout(() => {
             $('#downloadPdf').removeClass('d-none');
         }, 500);

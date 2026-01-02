@@ -75,7 +75,7 @@
                             <span id="staff_balance">PKR 0</span>
                         </div>
 
-                        <div class="d-flex justify-content-center gap-3">
+                        <div class="">
                             <button type="submit" class="btn btn-success">
                                 Save & Close
                             </button>

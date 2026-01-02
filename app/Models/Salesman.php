@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Salesman extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $table = 'sales_mens'; // Explicitly define the table name
 
@@ -20,6 +21,7 @@ class Salesman extends Model
     {
         return $this->belongsTo(Area::class);
     }
+
     public function designationRelation()
     {
         return $this->belongsTo(Designation::class, 'designation');

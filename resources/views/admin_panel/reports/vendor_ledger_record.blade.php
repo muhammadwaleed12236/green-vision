@@ -17,12 +17,10 @@
                                 <select id="Vendor" class="form-control">
                                     <option value="">-- Select Vendor --</option>
                                     @foreach($Vendors as $Vendor)
-                                    <option value="{{ $Vendor->id }}"
-                                        data-contact="{{ $Vendor->Party_phone }}"
-                                        data-city="{{ $Vendor->City }}"
-                                        data-area="{{ $Vendor->Area }}">
-                                        {{ $Vendor->Party_name }}
-                                    </option>
+                                        <option value="{{ $Vendor->id }}" data-contact="{{ $Vendor->Party_phone }}"
+                                            data-city="{{ $Vendor->City }}" data-area="{{ $Vendor->Area }}">
+                                            {{ $Vendor->Party_name }}
+                                        </option>
                                     @endforeach
                                 </select>
                             </div>
@@ -49,23 +47,27 @@
                                 <input type="date" id="end_date" name="end_date" class="form-control bg-light">
                             </div>
                         </div>
-                        <div class="text-center mt-4">
+                        <div class="d-flex justify-content-between align-items-center gap-4 mt-4">
+
                             <button type="button" id="searchLedger" class="btn btn-primary btn-lg px-5">
                                 Search
                             </button>
+
+                            <button type="button" id="downloadPdf" class="btn btn-danger btn-lg">
+                                Download PDF
+                            </button>
                         </div>
+
+
                     </form>
-                    <div class="text-end mt-2">
-                        <button id="downloadPdf" class="btn btn-danger">
-                            Download PDF
-                        </button>
-                    </div>
+
                     <div id="ledgerResult" style="display: none;">
                         <div class="ledger-container mt-4">
                             <div class="ledger-header">VENDOR LEDGER</div>
                             <div class="ledger-info">
                                 <span><strong>Vendor:</strong> <span id="vendorName"></span></span>
-                                <span><strong>Duration:</strong> From <span id="startDate"></span> To <span id="endDate"></span></span>
+                                <span><strong>Duration:</strong> From <span id="startDate"></span> To <span
+                                        id="endDate"></span></span>
                             </div>
                             <table>
                                 <thead>
@@ -112,15 +114,15 @@
         const year = date.getFullYear();
         return `${day}/${month}/${year}`;
     }
-    $(document).ready(function() {
-        $('#Vendor').change(function() {
+    $(document).ready(function () {
+        $('#Vendor').change(function () {
             var selected = $(this).find(':selected');
             $('#contact').val(selected.data('contact'));
             $('#city').val(selected.data('city'));
             $('#area').val(selected.data('area'));
         });
 
-        $('#searchLedger').click(function() {
+        $('#searchLedger').click(function () {
             var vendorID = $('#Vendor').val();
             var vendorName = $('#Vendor option:selected').text();
             let startDate = $('#start_date').val();
@@ -138,7 +140,7 @@
                     start_date: startDate,
                     end_date: endDate
                 },
-                success: function(response) {
+                success: function (response) {
 
                     const startDateObj = new Date(response.startDate);
                     const endDateObj = new Date(response.endDate);
@@ -298,7 +300,7 @@
     });
 </script>
 <script>
-    document.getElementById("downloadPdf").addEventListener("click", function() {
+    document.getElementById("downloadPdf").addEventListener("click", function () {
         const element = document.querySelector(".ledger-container");
 
         html2canvas(element).then(canvas => {
@@ -315,7 +317,7 @@
     });
 
     // Show PDF button only when result appears
-    $('#searchLedger').click(function() {
+    $('#searchLedger').click(function () {
         setTimeout(() => {
             $('#downloadPdf').removeClass('d-none');
         }, 500);

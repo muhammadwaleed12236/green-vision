@@ -147,7 +147,7 @@
                         <ul>
                             <li><a href="{{ route('vendors') }}">Vendors</a></li>
                             <li><a href="{{ route('vendors-ledger') }}">Vendors Ledger </a></li>
-                            <li><a href="{{ route('amount-paid-vendors') }}">Vendors Payments </a></li>
+                            <li><a href="{{ route('amount-paid-vendors') }}">Vendors Given Payments </a></li>
                             <li><a href="{{ route('vendors-builty') }}">Vendors Builty </a></li>
                         </ul>
                     </li>
@@ -173,8 +173,8 @@
                             <li><a href="{{ route('date-wise-recovery-report') }}">Date Wise Recovery Report </a></li>
                             <li><a href="{{ route('date-wise-purcahse-report') }}">Date wise Purchase Report </a></li>
                             <li><a href="{{ route('vendor-wise-purcahse-report') }}">Vendor wise Purchase Report </a></li>
-                            {{-- <li><a href="{{ route('Area-wise-Customer-payments') }}">Market Credit Report </a></li>
-                            --}}
+                            <li><a href="{{ route('contractor-wise-report') }}">Contractor wise Purchase Report </a></li>
+                            <li><a href="{{ route('staff-wise-report') }}">Staff wise Purchase Report </a></li>
                             <li><a href="{{ route('Date-wise-Sales-Report') }}">Date wise Sales Report </a></li>
                             <li><a href="{{ route('Product-wise-Sales-Report') }}">Product Wise Sales Report </a></li>
                             {{--

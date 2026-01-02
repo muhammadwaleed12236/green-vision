@@ -45,7 +45,7 @@
 
                         <tr>
                             <th>Contact Number</th>
-                            <td>{{ $staff->contact_number ?? 'N/A' }}</td>
+                            <td>{{ $staff->phone_number ?? 'N/A' }}</td>
                         </tr>
 
                         <tr>
@@ -75,7 +75,7 @@
 
                 {{-- Actions --}}
                 <div class="text-center mt-5">
-                    <a href="{{ route('staff.payments') }}" class="btn btn-outline-primary px-4 me-2">
+                    <a href="{{ route('staff-payments') }}" class="btn btn-outline-primary px-4 me-2">
                         <i class="fas fa-arrow-left me-1"></i> Back to Staff Payments
                     </a>
 

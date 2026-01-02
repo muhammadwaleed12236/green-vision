@@ -103,9 +103,8 @@
                                             <div class="d-flex align-items-center gap-1 flex-wrap">
 
                                                 <!-- STATUS DROPDOWN -->
-                                                <select class="form-select form-select-sm job-status"
-                                                        style="width:110px"
-                                                        data-id="{{ $job->id }}">
+                                                <select class="form-select form-select-sm job-status" style="width:110px"
+                                                    data-id="{{ $job->id }}">
                                                     <option value="pending" {{ $job->status === 'pending' ? 'selected' : '' }}>
                                                         Pending
                                                     </option>
@@ -116,24 +115,19 @@
 
                                                 @if(Auth::user()->usertype === 'admin')
                                                     <a href="{{ route('job-orders.show', $job->id) }}"
-                                                    class="btn btn-sm btn-info">
+                                                        class="btn btn-sm btn-info">
                                                         View
                                                     </a>
 
-                                                    <button class="btn btn-sm btn-primary editJobBtn"
-                                                        data-id="{{ $job->id }}"
-                                                        data-job-no="{{ $job->job_order_no }}"
-                                                        data-date="{{ $job->job_date }}"
+                                                    <button class="btn btn-sm btn-primary editJobBtn" data-id="{{ $job->id }}"
+                                                        data-job-no="{{ $job->job_order_no }}" data-date="{{ $job->job_date }}"
                                                         data-total="{{ $job->total_amount }}"
-                                                        data-paid="{{ $job->paid_amount }}"
-                                                        data-status="{{ $job->status }}"
-                                                        data-bs-toggle="modal"
-                                                        data-bs-target="#editJobModal">
+                                                        data-paid="{{ $job->paid_amount }}" data-status="{{ $job->status }}"
+                                                        data-bs-toggle="modal" data-bs-target="#editJobModal">
                                                         Edit
                                                     </button>
 
-                                                    <button class="btn btn-sm btn-danger deleteJobBtn"
-                                                        data-id="{{ $job->id }}">
+                                                    <button class="btn btn-sm btn-danger deleteJobBtn" data-id="{{ $job->id }}">
                                                         Delete
                                                     </button>
                                                 @endif
@@ -316,7 +310,7 @@
                     <div class="row g-3 mb-2">
                         <div class="col-md-4">
                             <label class="small">Work Type</label>
-                            <input type="text" class="form-control form-control-sm work-type-name" placeholder="Glass / Aluminium">
+                            <input type="text" class="form-control form-control-sm work-type-name" name="work_type" placeholder="Glass / Aluminium">
                         </div>
                         <div class="col-md-4">
                             <label class="small">Assign To</label>
@@ -462,6 +456,7 @@
         $(document).on("keyup change", ".item-qty,.item-rate,#jobPaid", recalc);
 
         // Save job order
+        // Save job order - UPDATED VERSION
         $("#saveJobBtn").click(function () {
             let saleId = $("#jobSelect").val();
             if (!saleId) {
@@ -471,26 +466,32 @@
 
             let workTypes = [];
 
+            // ✅ Collect all work types
             $(".work-type-card").each(function () {
                 let card = $(this);
                 let workTypeName = card.find(".work-type-name").val();
                 let assignType = card.find(".assignType").val();
-                let contractor = card.find(".contractor-select").val();
+                let contractorId = card.find(".contractor-select").val();
 
+                // ✅ Validation
                 if (!workTypeName || !assignType) {
-                    return true;
+                    console.log('Skipping incomplete work type');
+                    return true; // continue to next
+                }
+
+                // ✅ For labour, contractor should be null
+                if (assignType === 'labour') {
+                    contractorId = null;
                 }
 
                 let items = [];
                 card.find(".item-row").each(function () {
-                    let itemId = $(this).data('item-id') || null;
                     let itemName = $(this).find(".item-name").val();
                     let qty = parseFloat($(this).find(".item-qty").val()) || 0;
                     let rate = parseFloat($(this).find(".item-rate").val()) || 0;
 
                     if (itemName && qty > 0) {
                         items.push({
-                            id: itemId,
                             name: itemName,
                             qty: qty,
                             rate: rate
@@ -502,41 +503,48 @@
                     workTypes.push({
                         name: workTypeName,
                         assign_type: assignType,
-                        contractor: contractor,
+                        contractor: contractorId, // ✅ null for labour, id for contract
                         items: items
                     });
                 }
             });
 
+            // ✅ Final validation
             if (workTypes.length === 0) {
                 alert('Please add at least one work type with items');
                 return;
             }
 
+            console.log('Work Types to send:', workTypes); // ✅ Debug
+
             let data = {
                 sale_id: saleId,
                 job_date: $("#jobDate").val(),
-                job_note: $("#jobNote").val(),
                 total_amount: parseFloat($("#jobTotal").val()) || 0,
                 paid_amount: parseFloat($("#jobPaid").val()) || 0,
-                work_types: workTypes,
+                work_types: workTypes, // ✅ This will be JSON encoded
                 _token: "{{ csrf_token() }}"
             };
+
+            console.log('Full data:', data); // ✅ Debug
 
             $.ajax({
                 url: '/job-orders/store',
                 method: 'POST',
                 data: data,
-                success: function () {
+                success: function (response) {
+                    console.log('Success:', response);
+                    alert('Job Order created successfully!');
                     window.location.reload();
                 },
                 error: function (xhr) {
+                    console.error('Error:', xhr);
                     if (xhr.status === 422) {
                         let errors = xhr.responseJSON.errors;
                         let errorMsg = Object.values(errors).map(e => e[0]).join('\n');
                         alert(errorMsg);
                     } else {
-                        alert('Failed to save job order');
+                        alert('Failed to save job order: ' + xhr.responseText);
                     }
                 }
             });
@@ -647,36 +655,36 @@
 </script>
 
 <script>
-$(document).on('change', '.job-status', function () {
+    $(document).on('change', '.job-status', function () {
 
-    let jobId  = $(this).data('id');
-    let status = $(this).val();
-    let badge  = $('.job-status-badge[data-id="' + jobId + '"]');
+        let jobId = $(this).data('id');
+        let status = $(this).val();
+        let badge = $('.job-status-badge[data-id="' + jobId + '"]');
 
-    $.ajax({
-        url: "{{ route('job-orders.toggle-status') }}",
-        type: "POST",
-        data: {
-            _token: "{{ csrf_token() }}",
-            job_id: jobId,
-            status: status
-        },
-        success: function (res) {
-            if (res.success) {
+        $.ajax({
+            url: "{{ route('job-orders.toggle-status') }}",
+            type: "POST",
+            data: {
+                _token: "{{ csrf_token() }}",
+                job_id: jobId,
+                status: status
+            },
+            success: function (res) {
+                if (res.success) {
 
-                // 🔁 Badge text update
-                badge.text(status.charAt(0).toUpperCase() + status.slice(1));
+                    // 🔁 Badge text update
+                    badge.text(status.charAt(0).toUpperCase() + status.slice(1));
 
-                // 🔁 Badge color update
-                badge
-                    .removeClass('bg-warning bg-success')
-                    .addClass(status === 'completed' ? 'bg-success' : 'bg-warning');
+                    // 🔁 Badge color update
+                    badge
+                        .removeClass('bg-warning bg-success')
+                        .addClass(status === 'completed' ? 'bg-success' : 'bg-warning');
 
-                // ✨ Small visual feedback
-                badge.addClass('px-2');
-                setTimeout(() => badge.removeClass('px-2'), 500);
+                    // ✨ Small visual feedback
+                    badge.addClass('px-2');
+                    setTimeout(() => badge.removeClass('px-2'), 500);
+                }
             }
-        }
+        });
     });
-});
 </script>

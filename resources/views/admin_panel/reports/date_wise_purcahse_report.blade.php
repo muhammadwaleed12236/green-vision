@@ -47,17 +47,16 @@
                                 <input type="date" id="end_date" name="end_date" class="form-control">
                             </div>
                         </div>
-                        <div class="text-center mt-4">
+                        <div class="d-flex justify-content-between align-items-center gap-4 mt-4">
                             <button type="button" id="searchLedger" class="btn btn-primary btn-lg px-5">
                                 Search
                             </button>
+
+                            <button id="downloadPdf" class="btn btn-danger btn-lg">
+                                Download PDF
+                            </button>
                         </div>
                     </form>
-                    <div class="text-end mt-2">
-                        <button id="downloadPdf" class="btn btn-danger">
-                            Download PDF
-                        </button>
-                    </div>
 
                     {{-- REPORT TABLE PREVIEW --}}
                     <div class="table-responsive mt-4 Purcahse_report" id="report-preview">
@@ -106,7 +105,7 @@
         const year = d.getFullYear().toString().slice(-2);
         return `${day}-${month}-${year}`;
     }
-    $('#searchLedger').click(function() {
+    $('#searchLedger').click(function () {
         const start = $('#start_date').val();
         const end = $('#end_date').val();
 
@@ -123,7 +122,7 @@
                 start_date: start,
                 end_date: end
             },
-            success: function(response) {
+            success: function (response) {
                 let rows = '';
                 response.report.forEach(row => {
                     rows += `
@@ -165,7 +164,7 @@
 </script>
 
 <script>
-    document.getElementById("downloadPdf").addEventListener("click", function() {
+    document.getElementById("downloadPdf").addEventListener("click", function () {
         const element = document.querySelector(".Purcahse_report");
 
         const opt = {

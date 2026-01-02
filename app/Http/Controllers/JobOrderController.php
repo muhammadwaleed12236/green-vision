@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Contractor;
-use App\Models\ContractorLedger;
 use App\Models\JobOrder;
 use App\Models\LocalSale;
 use Illuminate\Http\Request;
@@ -69,107 +68,49 @@ class JobOrderController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
-            'sale_id' => 'required',
-            'job_date' => 'required|date',
-            'total_amount' => 'required|numeric|min:0',
-            'paid_amount' => 'nullable|numeric|min:0',
-            'work_types' => 'required|array',
-        ]);
+        DB::transaction(function () use ($request) {
 
-        try {
+            if (! isset($request->work_types) || count($request->work_types) === 0) {
+                return response()->json(['error' => 'Work types required'], 422);
+            }
 
-            DB::transaction(function () use ($request) {
+            // ✅ Get first work type for default staff
+            $firstWork = $request->work_types[0];
 
-                /* ================= JOB HEADER ================= */
-                $job = JobOrder::create([
-                    'admin_or_user_id' => Auth::id(),
-                    'staff_id' => Auth::id(),
-                    'job_order_no' => 'JOB-'.str_pad((JobOrder::max('id') ?? 0) + 1, 4, '0', STR_PAD_LEFT),
-                    'job_date' => $request->job_date,
-                    'total_amount' => $request->total_amount,
-                    'paid_amount' => $request->paid_amount ?? 0,
-                    'remaining_amount' => $request->total_amount - ($request->paid_amount ?? 0),
-                    'status' => ($request->total_amount - ($request->paid_amount ?? 0)) > 0 ? 'pending' : 'completed',
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
+            // ✅ Generate Job Order Number
+            $userId = Auth::id();
+            $lastJob = JobOrder::where('admin_or_user_id', $userId)
+                ->orderBy('id', 'desc')
+                ->first();
 
-                /* ================= JOB ITEMS ================= */
-                foreach ($request->work_types as $workType) {
+            if ($lastJob && $lastJob->job_order_no) {
+                // Extract number from format like "JOB-0001"
+                $lastNumber = (int) substr($lastJob->job_order_no, 4);
+                $newNumber = $lastNumber + 1;
+            } else {
+                $newNumber = 1;
+            }
 
-                    foreach ($workType['items'] as $item) {
+            $jobOrderNo = 'JOB-'.str_pad($newNumber, 4, '0', STR_PAD_LEFT);
 
-                        DB::table('job_items')->insert([
-                            'job_order_id' => $job->id,
-                            'work_type' => $workType['name'],
-                            'assign_type' => $workType['assign_type'],
-                            'contractor' => $workType['contractor'] ?? null,
-                            'item_id' => $item['id'] ?? null,
-                            'item_name' => $item['name'],
-                            'qty' => $item['qty'],
-                            'rate' => $item['rate'],
-                            'total' => $item['qty'] * $item['rate'],
-                            'created_at' => now(),
-                            'updated_at' => now(),
-                        ]);
-                    }
-                }
+            JobOrder::create([
+                'admin_or_user_id' => $userId,
+                'job_order_no' => $jobOrderNo, // ✅ ADDED
+                'staff_id' => $firstWork['contractor'] ?? null,
+                'staff_type' => $firstWork['assign_type'] ?? null,
 
-                /* ================= CONTRACTOR LEDGER ================= */
-                foreach ($request->work_types as $workType) {
+                // ✅ Store all work types as JSON
+                'work_type' => json_encode($request->work_types),
 
-                    // only contractor case
-                    if ($workType['assign_type'] !== 'contract' || empty($workType['contractor'])) {
-                        continue;
-                    }
+                'job_date' => $request->job_date,
+                'total_amount' => $request->total_amount,
+                'paid_amount' => $request->paid_amount ?? 0,
+                'remaining_amount' => $request->total_amount - ($request->paid_amount ?? 0),
+                'status' => 'pending',
+            ]);
+        });
 
-                    $contractorId = $workType['contractor'];
-
-                    // contractor ka total kaam
-                    $contractorJobTotal = 0;
-                    foreach ($workType['items'] as $item) {
-                        $contractorJobTotal += ($item['qty'] * $item['rate']);
-                    }
-
-                    $paid = $request->paid_amount ?? 0;
-
-                    $ledger = ContractorLedger::where('contractor_id', $contractorId)->first();
-
-                    if ($ledger) {
-
-                        $previous = $ledger->closing_balance;
-                        $closing = $previous + $contractorJobTotal - $paid;
-
-                        $ledger->update([
-                            'previous_balance' => $previous,
-                            'closing_balance' => $closing,
-                            'updated_at' => now(),
-                        ]);
-
-                    } else {
-
-                        // first time contractor
-                        ContractorLedger::create([
-                            'contractor_id' => $contractorId,
-                            'opening_balance' => 0,
-                            'previous_balance' => 0,
-                            'closing_balance' => $contractorJobTotal - $paid,
-                            'created_at' => now(),
-                            'updated_at' => now(),
-                        ]);
-                    }
-                }
-            });
-
-            return redirect()
-                ->route('job-orders.index')
-                ->with('success', 'Job Order created & contractor ledger updated successfully');
-
-        } catch (\Exception $e) {
-
-            return back()->with('error', $e->getMessage());
-        }
+        return response()->json(['status' => true]);
     }
 
     public function show($id)
@@ -195,21 +136,19 @@ class JobOrderController extends Controller
         $job = JobOrder::find($request->job_id);
 
         if (! $job) {
-            return redirect()->back()->with('error', 'Job Order not found');
+            return back()->with('error', 'Job Order not found');
         }
-
-        $paid = $request->paid_amount ?? 0;
 
         $job->update([
             'job_date' => $request->job_date,
+            'work_type' => json_encode($request->work_types), // ✅ FIX
             'total_amount' => $request->total_amount,
-            'paid_amount' => $paid,
-            'remaining_amount' => $request->total_amount - $paid,
-            'status' => ($request->total_amount - $paid) > 0 ? 'pending' : 'completed',
-            'updated_at' => now(),
+            'paid_amount' => $request->paid_amount,
+            'remaining_amount' => $request->total_amount - $request->paid_amount,
+            'status' => ($request->total_amount - $request->paid_amount) > 0 ? 'pending' : 'completed',
         ]);
 
-        return redirect()->back()->with('success', 'Job Order updated successfully');
+        return back()->with('success', 'Job Order updated successfully');
     }
 
     public function delete($id)

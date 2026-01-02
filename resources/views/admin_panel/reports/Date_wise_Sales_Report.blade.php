@@ -18,26 +18,26 @@
                                 <select class="form-control" id="salesman" name="salesman" required>
                                     <option value="All">All</option>
                                     @foreach($Salesmans as $saleman)
-                                    <option value="{{ $saleman->name }}">{{ $saleman->name }}</option>
+                                        <option value="{{ $saleman->name }}">{{ $saleman->name }}</option>
                                     @endforeach
                                 </select>
                             </div>
                             @if(Auth::check() && Auth::user()->usertype === 'admin')
-                            <div class="col-md-3">
-                                <label for="type" class="form-label">Select Type</label>
-                                <select id="type" name="type" class="form-control">
-                                    <option value="all">All</option>
-                                    <option value="distributor">Distributor</option>
-                                    <option value="customer">Customer</option>
-                                </select>
-                            </div>
+                                <div class="col-md-3">
+                                    <label for="type" class="form-label">Select Type</label>
+                                    <select id="type" name="type" class="form-control">
+                                        <option value="all">All</option>
+                                        <option value="distributor">Distributor</option>
+                                        <option value="customer">Customer</option>
+                                    </select>
+                                </div>
                             @elseif(Auth::check() && Auth::user()->usertype === 'distributor')
-                            <div class="col-md-3">
-                                <label for="type" class="form-label">Select Type</label>
-                                <select id="type" name="type" class="form-control">
-                                    <option value="customer">Customer</option>
-                                </select>
-                            </div>
+                                <div class="col-md-3">
+                                    <label for="type" class="form-label">Select Type</label>
+                                    <select id="type" name="type" class="form-control">
+                                        <option value="customer">Customer</option>
+                                    </select>
+                                </div>
                             @endif
 
                             <div class="col-md-3">
@@ -49,7 +49,7 @@
                                 <input type="date" id="end_date" name="end_date" class="form-control">
                             </div>
                         </div>
-                        <div class="text-center mt-4">
+                        <div class="mt-4">
                             <button type="button" id="searchLedger" class="btn btn-primary btn-lg px-5">
                                 Search
                             </button>
@@ -117,7 +117,7 @@
     }
 </style>
 <script>
-    document.getElementById("searchLedger").addEventListener("click", function() {
+    document.getElementById("searchLedger").addEventListener("click", function () {
         let salesman = document.getElementById("salesman").value;
         let type = document.getElementById("type").value;
         let startDate = document.getElementById("start_date").value;
@@ -125,18 +125,18 @@
         let csrfToken = document.querySelector('input[name="_token"]').value;
 
         fetch("{{ route('get-sales-report') }}", {
-                method: "POST",
-                headers: {
-                    "X-CSRF-TOKEN": csrfToken,
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    salesman: salesman,
-                    type: type,
-                    start_date: startDate,
-                    end_date: endDate
-                })
+            method: "POST",
+            headers: {
+                "X-CSRF-TOKEN": csrfToken,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                salesman: salesman,
+                type: type,
+                start_date: startDate,
+                end_date: endDate
             })
+        })
             .then(response => response.json())
             .then(data => {
                 const selectedSalesman = document.getElementById("salesman").value;

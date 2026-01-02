@@ -28,7 +28,7 @@
                             <strong>Success!</strong> {{ session('success') }}.
                         </div>
                     @endif
-                    <table class="table table-bordered">
+                    <table class="table datanew">
                         <thead>
                             <tr>
                                 <th>#</th>
@@ -86,6 +86,10 @@
                                                 data-bs-target="#editProductModal">
                                             Edit
                                         </button>
+                                            <button class="btn btn-sm btn-danger deleteProductBtn"
+                                                data-id="{{ $p->id }}">
+                                                Delete
+                                            </button>
                                     </td>
                                 </tr>
                             @endforeach
@@ -403,4 +407,43 @@
     }
 
 $('#edit_height, #edit_width, #edit_wholesale_price, #edit_retail_price').on('input', calculateEditMeasurement);
+</script>
+
+<script>
+$(document).on("click", ".deleteProductBtn", function (e) {
+    e.preventDefault();
+
+    let productId = $(this).data("id");
+
+    Swal.fire({
+        title: "Are you sure?",
+        text: "This product will be permanently deleted!",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#d33",
+        cancelButtonColor: "#3085d6",
+        confirmButtonText: "Yes, delete it!"
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: "{{ route('product.delete', ':id') }}".replace(':id', productId),
+                type: "DELETE",
+                data: {
+                    _token: "{{ csrf_token() }}"
+                },
+                success: function (response) {
+                    if (response.status === 'success') {
+                        Swal.fire("Deleted!", response.message, "success")
+                            .then(() => location.reload());
+                    } else {
+                        Swal.fire("Error!", response.message, "error");
+                    }
+                },
+                error: function () {
+                    Swal.fire("Error!", "Something went wrong.", "error");
+                }
+            });
+        }
+    });
+});
 </script>

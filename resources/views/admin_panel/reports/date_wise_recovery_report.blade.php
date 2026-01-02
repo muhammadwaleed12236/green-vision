@@ -57,7 +57,7 @@
                                 <input type="date" id="end_date" name="end_date" class="form-control">
                             </div>
                         </div>
-                        <div class="text-center mt-4">
+                        <div class="mt-4">
                             <button type="button" id="searchLedger" class="btn btn-primary btn-lg px-5">
                                 Search
                             </button>

@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use App\Models\City;
+use App\Models\Contractor;
 use App\Models\Customer;
 use App\Models\CustomerRecovery;
 use App\Models\Distributor;
+use App\Models\JobOrder;
 use App\Models\LocalSale;
 use App\Models\Product;
 use App\Models\Purchase;
@@ -772,6 +774,149 @@ class ReportController extends Controller
         ]);
     }
 
+    public function contractor_wise_report()
+    {
+
+        if (Auth::id()) {
+            $userId = Auth::id();
+            // Assuming you have a Contractor model
+            $Contractors = Contractor::where('admin_or_user_id', $userId)->get();
+
+            return view('admin_panel.reports.contractor_wise_report', [
+                'Contractors' => $Contractors,
+            ]);
+        } else {
+            return redirect()->back();
+        }
+    }
+
+    public function fetchContractorReport(Request $request)
+    {
+        $userId = Auth::id();
+        $start = $request->start_date;
+        $end = $request->end_date;
+        $contractorId = $request->contractor_id;
+
+        if (! $contractorId) {
+            return response()->json(['error' => 'Contractor is required'], 422);
+        }
+        // ✅ JOB BASED CONTRACTOR REPORT
+        $jobs = JobOrder::where('admin_or_user_id', $userId)
+            ->where('staff_type', 'contract')
+            ->whereBetween('job_date', [$start, $end])
+            ->orderBy('job_date')
+            ->get();
+        $report = [];
+        foreach ($jobs as $job) {
+            $report[] = [
+                'job_no' => $job->job_order_no,
+                'date' => \Carbon\Carbon::parse($job->job_date)->format('d-M-Y'),
+                'work_type' => $job->work_type ?? 'N/A',
+                'total_amount' => $job->total_amount,
+                'paid_amount' => $job->paid_amount,
+                'remaining_amount' => $job->remaining_amount,
+                'status' => ucfirst($job->status),
+            ];
+        }
+
+        return response()->json([
+            'report' => $report,
+            'totals' => [
+                'total_amount' => $jobs->sum('total_amount'),
+                'paid_amount' => $jobs->sum('paid_amount'),
+                'remaining_amount' => $jobs->sum('remaining_amount'),
+            ],
+        ]);
+    }
+
+    // public function staff_wise_report()
+    // {
+    //     if (Auth::id()) {
+    //         $userId = Auth::id();
+
+    //         // ✅ Get all active staff from sales_mens table
+    //         $Staff = DB::table('sales_mens')
+    //             ->where('admin_or_user_id', $userId)
+    //             ->where('status', 1) // Active staff only
+    //             ->get();
+
+    //         return view('admin_panel.reports.staff_wise_report', [
+    //             'Staff' => $Staff,
+    //         ]);
+    //     } else {
+    //         return redirect()->back();
+    //     }
+    // }
+    public function staff_wise_report()
+    {
+        $staffs = Salesman::where('admin_or_user_id', Auth::id())
+            ->where('status', 1)
+            ->get();
+
+        return view('admin_panel.reports.staff_wise_report', compact('staffs'));
+    }
+
+    public function fetchStaffReport(Request $request)
+    {
+        $userId = Auth::id();
+        $staffId = $request->staff_id;
+
+        if (! $staffId) {
+            return response()->json(['error' => 'Staff is required'], 422);
+        }
+
+        // ================= STAFF =================
+        $staff = DB::table('sales_mens')
+            ->where('id', $staffId)
+            ->where('admin_or_user_id', $userId)
+            ->first();
+
+        if (! $staff) {
+            return response()->json(['error' => 'Staff not found'], 404);
+        }
+
+        // ================= LEDGER =================
+        $ledger = DB::table('staff_ledgers')
+            ->where('saleman_id', $staffId)
+            ->where('admin_or_user_id', $userId)
+            ->orderBy('ledger_date', 'desc')
+            ->get();
+
+        $totals = [
+            'opening' => 0,
+            'previous' => 0,
+            'closing' => 0,
+        ];
+
+        if ($ledger->count()) {
+            $totals['opening'] = $ledger->first()->opening_balance;
+            $totals['previous'] = $ledger->first()->previous_balance;
+            $totals['closing'] = $ledger->first()->closing_balance;
+        }
+
+        return response()->json([
+            'staff' => [
+                'name' => $staff->name,
+                'phone' => $staff->phone,
+                'designation' => $staff->designation,
+                'salary' => (float) $staff->salary,
+                'city' => $staff->city,
+                'address' => $staff->address,
+            ],
+            'ledger' => $ledger,
+            'totals' => $totals,
+        ]);
+    }
+
+    public function staffWeeklyHistory(Request $request)
+    {
+        return DB::table('staff_ledgers')
+            ->where('saleman_id', $request->staff_id)
+            ->where('admin_or_user_id', Auth::id())
+            ->orderBy('week_start', 'desc')
+            ->get();
+    }
+
     public function Area_wise_Customer_payments()
     {
         if (Auth::id()) {
@@ -791,6 +936,30 @@ class ReportController extends Controller
         } else {
             return redirect()->back();
         }
+    }
+
+    public function staffWeeklySave(Request $request)
+    {
+        $request->validate([
+            'staff_id' => 'required',
+            'week_start' => 'required|date',
+            'week_end' => 'required|date',
+        ]);
+
+        DB::table('staff_ledgers')->insert([
+            'admin_or_user_id' => Auth::id(),
+            'saleman_id' => $request->staff_id,
+            'week_start' => $request->week_start,
+            'week_end' => $request->week_end,
+            'weekly_amount' => $request->weekly_amount ?? 0,
+            'paid' => $request->paid ?? 0,
+            'advance' => $request->advance ?? 0,
+            'balance' => $request->balance ?? 0,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        return response()->json(['ok' => true]);
     }
 
     public function fetchReceivableReport(Request $request)
