@@ -273,6 +273,8 @@ Route::post('/staff-weekly-history', [ReportController::class, 'staffWeeklyHisto
 Route::post('/staff-weekly-save', [ReportController::class, 'staffWeeklySave'])
     ->name('staff.weekly.save');
 
+Route::post('staff/weekly/save', [ReportController::class, 'saveStaffWeekly'])->name('staff.weekly.save');
+
 Route::get('/Area-wise-Customer-payments', [ReportController::class, 'Area_wise_Customer_payments'])->name('Area-wise-Customer-payments');
 Route::get('/receivable-report', [ReportController::class, 'fetchReceivableReport'])->name('fetch.receivable.report');
 

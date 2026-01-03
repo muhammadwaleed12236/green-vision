@@ -829,93 +829,118 @@ class ReportController extends Controller
         ]);
     }
 
-    // public function staff_wise_report()
-    // {
-    //     if (Auth::id()) {
-    //         $userId = Auth::id();
-
-    //         // ✅ Get all active staff from sales_mens table
-    //         $Staff = DB::table('sales_mens')
-    //             ->where('admin_or_user_id', $userId)
-    //             ->where('status', 1) // Active staff only
-    //             ->get();
-
-    //         return view('admin_panel.reports.staff_wise_report', [
-    //             'Staff' => $Staff,
-    //         ]);
-    //     } else {
-    //         return redirect()->back();
-    //     }
-    // }
     public function staff_wise_report()
-    {
-        $staffs = Salesman::where('admin_or_user_id', Auth::id())
-            ->where('status', 1)
-            ->get();
+{
+    $staffs = Salesman::where('admin_or_user_id', Auth::id())
+        ->where('status', 1)
+        ->get();
 
-        return view('admin_panel.reports.staff_wise_report', compact('staffs'));
+    return view('admin_panel.reports.staff_wise_report', compact('staffs'));
+}
+
+public function fetchStaffReport(Request $request)
+{
+    $userId = Auth::id();
+    $staffId = $request->staff_id;
+
+    if (! $staffId) {
+        return response()->json(['error' => 'Staff is required'], 422);
     }
 
-    public function fetchStaffReport(Request $request)
-    {
-        $userId = Auth::id();
-        $staffId = $request->staff_id;
+    // ================= STAFF =================
+    $staff = DB::table('sales_mens')
+        ->where('id', $staffId)
+        ->where('admin_or_user_id', $userId)
+        ->first();
 
-        if (! $staffId) {
-            return response()->json(['error' => 'Staff is required'], 422);
-        }
-
-        // ================= STAFF =================
-        $staff = DB::table('sales_mens')
-            ->where('id', $staffId)
-            ->where('admin_or_user_id', $userId)
-            ->first();
-
-        if (! $staff) {
-            return response()->json(['error' => 'Staff not found'], 404);
-        }
-
-        // ================= LEDGER =================
-        $ledger = DB::table('staff_ledgers')
-            ->where('saleman_id', $staffId)
-            ->where('admin_or_user_id', $userId)
-            ->orderBy('ledger_date', 'desc')
-            ->get();
-
-        $totals = [
-            'opening' => 0,
-            'previous' => 0,
-            'closing' => 0,
-        ];
-
-        if ($ledger->count()) {
-            $totals['opening'] = $ledger->first()->opening_balance;
-            $totals['previous'] = $ledger->first()->previous_balance;
-            $totals['closing'] = $ledger->first()->closing_balance;
-        }
-
-        return response()->json([
-            'staff' => [
-                'name' => $staff->name,
-                'phone' => $staff->phone,
-                'designation' => $staff->designation,
-                'salary' => (float) $staff->salary,
-                'city' => $staff->city,
-                'address' => $staff->address,
-            ],
-            'ledger' => $ledger,
-            'totals' => $totals,
-        ]);
+    if (! $staff) {
+        return response()->json(['error' => 'Staff not found'], 404);
     }
 
-    public function staffWeeklyHistory(Request $request)
-    {
-        return DB::table('staff_ledgers')
-            ->where('saleman_id', $request->staff_id)
-            ->where('admin_or_user_id', Auth::id())
-            ->orderBy('week_start', 'desc')
-            ->get();
+    // ================= LEDGER =================
+    $ledger = DB::table('staff_ledgers')
+        ->where('saleman_id', $staffId)
+        ->where('admin_or_user_id', $userId)
+        ->orderBy('ledger_date', 'desc')
+        ->get();
+
+    $totals = [
+        'opening' => 0,
+        'previous' => 0,
+        'closing' => 0,
+    ];
+
+    if ($ledger->count()) {
+        $totals['opening'] = $ledger->first()->opening_balance;
+        $totals['previous'] = $ledger->first()->previous_balance;
+        $totals['closing'] = $ledger->first()->closing_balance;
     }
+
+    return response()->json([
+        'staff' => [
+            'name' => $staff->name,
+            'phone' => $staff->phone,
+            'designation' => $staff->designation,
+            'salary' => (float) $staff->salary,
+            'city' => $staff->city,
+            'address' => $staff->address,
+        ],
+        'ledger' => $ledger,
+        'totals' => $totals,
+    ]);
+}
+
+public function staffWeeklyHistory(Request $request)
+{
+    return DB::table('staff_ledgers')
+        ->where('saleman_id', $request->staff_id)
+        ->where('admin_or_user_id', Auth::id())
+        ->whereNotNull('week_start')  // ✅ null entries filter
+        ->whereNotNull('week_end')
+        ->orderBy('week_start', 'desc')
+        ->get();
+}
+
+// ✅ New function
+public function saveStaffWeekly(Request $request)
+{
+    $userId = Auth::id();
+    $staffId = $request->staff_id;
+
+    // Get previous balance
+    $previousEntry = DB::table('staff_ledgers')
+        ->where('saleman_id', $staffId)
+        ->where('admin_or_user_id', $userId)
+        ->whereNotNull('week_start')
+        ->orderBy('week_end', 'desc')
+        ->first();
+
+    $previousBalance = $previousEntry ? (float)$previousEntry->balance : 0;
+
+    // Calculate new balance
+    $weeklyAmount = (float)$request->weekly_amount;
+    $paid = (float)($request->paid ?? 0);
+    $advance = (float)($request->advance ?? 0);
+
+    // Previous Balance + Weekly - Paid - Advance
+    $newBalance = $previousBalance + $weeklyAmount - $paid - $advance;
+
+    // Save
+    DB::table('staff_ledgers')->insert([
+        'admin_or_user_id' => $userId,
+        'saleman_id' => $staffId,
+        'week_start' => $request->week_start,
+        'week_end' => $request->week_end,
+        'weekly_amount' => $weeklyAmount,
+        'paid' => $paid,
+        'advance' => $advance,
+        'balance' => $newBalance,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    return response()->json(['success' => true]);
+}
 
     public function Area_wise_Customer_payments()
     {
