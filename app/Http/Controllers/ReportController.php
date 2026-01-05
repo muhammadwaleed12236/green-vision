@@ -381,174 +381,335 @@ class ReportController extends Controller
         return response()->json($items);
     }
 
-    public function getItemDetails(Request $request)
-    {
 
-        \Log::info('Filter Request:', [
+
+    public function getItemDetails(Request $request)
+{
+    \Log::info('Filter Request:', [
+        'category' => $request->category,
+        'subcategory' => $request->subcategory,
+        'itemCode' => $request->itemCode,
+    ]);
+
+    $query = Product::query();
+
+    if ($request->category !== 'all') {
+        $query->where('category', 'LIKE', '%'.$request->category.'%');
+    }
+
+    if ($request->subcategory !== 'all') {
+        $query->where('sub_category', 'LIKE', '%'.$request->subcategory.'%');
+    }
+
+    if ($request->itemCode !== 'all') {
+        $query->where('item_code', $request->itemCode);
+    }
+
+    $items = $query->get();
+
+    if ($items->isEmpty()) {
+        \Log::info('No items found with filters:', [
             'category' => $request->category,
             'subcategory' => $request->subcategory,
             'itemCode' => $request->itemCode,
         ]);
-
-        $query = Product::query();
-
-        if ($request->category !== 'all') {
-            $query->where('category', 'LIKE', '%'.$request->category.'%');
-        }
-
-        // ✅ FIXED: Case-insensitive subcategory filtering
-        if ($request->subcategory !== 'all') {
-            $query->where('sub_category', 'LIKE', '%'.$request->subcategory.'%');
-        }
-
-        if ($request->itemCode !== 'all') {
-            $query->where('item_code', $request->itemCode);
-        }
-
-        $items = $query->get();
-
-        $items = $query->get();
-
-        // ✅ Agar koi item nahi mila toh log mein message show karein
-        if ($items->isEmpty()) {
-            \Log::info('No items found with filters:', [
-                'category' => $request->category,
-                'subcategory' => $request->subcategory,
-                'itemCode' => $request->itemCode,
-            ]);
-        }
-
-        foreach ($items as $item) {
-
-            /* ================= BASE ================= */
-            $pcsInCarton = max((int) $item->pcs_in_carton, 1);
-
-            /* ================= OPENING (DISPLAY ONLY) ================= */
-            $openingTotalPCS = (int) ($item->initial_stock ?? 0);
-
-            $item->opening_carton = intdiv($openingTotalPCS, $pcsInCarton);
-            $item->opening_pcs = $openingTotalPCS % $pcsInCarton;
-
-            /* ================= PURCHASE (DISPLAY ONLY) ================= */
-            $purchasePCS = 0;
-
-            foreach (
-                DB::table('purchases')
-                    ->whereJsonContains('item', $item->item_name)
-                    ->get() as $purchase
-            ) {
-                $names = json_decode($purchase->item, true) ?? [];
-                $cartons = json_decode($purchase->carton_qty, true) ?? [];
-                $pcs = json_decode($purchase->pcs ?? '[]', true);
-
-                foreach ($names as $i => $n) {
-                    if (trim($n) === trim($item->item_name)) {
-
-                        $purchasePCS +=
-                            ((int) ($cartons[$i] ?? 0) * $pcsInCarton)
-                            + (int) ($pcs[$i] ?? 0);
-                    }
-                }
-            }
-
-            $item->purchase_carton = intdiv($purchasePCS, $pcsInCarton);
-            $item->purchase_pcs = $purchasePCS % $pcsInCarton;
-
-            /* ================= PURCHASE RETURN (DISPLAY ONLY) ================= */
-            $purchaseReturnPCS = 0;
-
-            foreach (
-                DB::table('purchase_returns')
-                    ->whereJsonContains('item', $item->item_name)
-                    ->get() as $pr
-            ) {
-                $names = json_decode($pr->item, true) ?? [];
-                $cartons = json_decode($pr->carton_qty ?? '[]', true) ?? [];
-                $pcs = json_decode($pr->return_qty ?? '[]', true) ?? [];
-
-                foreach ($names as $i => $n) {
-                    if (trim($n) === trim($item->item_name)) {
-
-                        $purchaseReturnPCS +=
-                            ((int) ($cartons[$i] ?? 0) * $pcsInCarton)
-                            + (int) ($pcs[$i] ?? 0);
-                    }
-                }
-            }
-
-            $item->purchase_return_carton = intdiv($purchaseReturnPCS, $pcsInCarton);
-            $item->purchase_return_pcs = $purchaseReturnPCS % $pcsInCarton;
-
-            /* ================= LOCAL SOLD (DISPLAY ONLY) ================= */
-            $soldPCS = 0;
-
-            foreach (LocalSale::whereJsonContains('item', $item->item_name)->get() as $sale) {
-                $names = json_decode($sale->item, true) ?? [];
-                $cartons = json_decode($sale->carton_qty, true) ?? [];
-                $pcs = json_decode($sale->pcs, true) ?? [];
-
-                foreach ($names as $i => $n) {
-                    if (trim($n) === trim($item->item_name)) {
-                        $soldPCS += (int) ($pcs[$i] ?? 0);
-                    }
-                }
-            }
-
-            /* ================= LOCAL RETURN (DISPLAY ONLY) ================= */
-            $returnPCS = 0;
-
-            foreach (
-                DB::table('sale_returns')
-                    ->where('sale_type', 'customer')
-                    ->where('item_names', $item->item_name)
-                    ->get() as $r
-            ) {
-                $pcsVal = (int) ($r->pcs_qty ?? 0);
-                $cartonVal = (int) ($r->carton_qty ?? 0);
-
-                if ($pcsVal > 0) {
-                    // PCS based return
-                    $returnPCS += $pcsVal;
-                } else {
-                    // Carton based return → convert using product pcs_in_carton
-                    $returnPCS += ($cartonVal * $pcsInCarton);
-                }
-            }
-
-            /* ================= FINAL STOCK ================= */
-            /**
-             * 🔥 IMPORTANT RULE:
-             * product.initial_stock is ALREADY UPDATED
-             * on SALE (minus) and RETURN (plus)
-             * so report me kuch add / minus nahi karna
-             */
-            /* ================= STOCK VALUE (PCS BASED) ================= */
-            $pcsInCarton = max((int) $item->pcs_in_carton, 1);
-            $initialStock = (int) ($item->initial_stock ?? 0);
-            $wholesalePrice = (float) ($item->wholesale_price ?? 0);
-
-            /* per pcs price */
-            // $perPcsPrice = $wholesalePrice / $pcsInCarton;
-            $perPcsPrice = $wholesalePrice * $initialStock;
-
-            /* total stock value */
-            $item->stock_value = round($perPcsPrice);
-
-            /* simple balance (as decided) */
-            $item->balance_stock = $initialStock;
-            $item->balance_wholesale_price = $wholesalePrice;
-
-            /* ================= DISPLAY HELPERS ================= */
-            $item->total_local_sold_carton = intdiv($soldPCS, $pcsInCarton);
-            $item->total_local_sold_pcs = $soldPCS * $pcsInCarton;
-
-            $item->total_local_return_carton = intdiv($returnPCS, $pcsInCarton);
-            $item->total_local_return_pcs = $returnPCS * $pcsInCarton;
-
-        }
-
-        return response()->json($items);
     }
+
+    foreach ($items as $item) {
+
+        $pcsInCarton = max((int) $item->pcs_in_carton, 1);
+
+        $openingTotalPCS = (int) ($item->initial_stock ?? 0);
+
+        $item->opening_carton = intdiv($openingTotalPCS, $pcsInCarton);
+        $item->opening_pcs = $openingTotalPCS % $pcsInCarton;
+
+        $purchasePCS = 0;
+
+        foreach (
+            DB::table('purchases')
+                ->whereJsonContains('item', $item->item_name)
+                ->get() as $purchase
+        ) {
+            $names = json_decode($purchase->item, true) ?? [];
+            $cartons = json_decode($purchase->carton_qty, true) ?? [];
+            $pcs = json_decode($purchase->pcs ?? '[]', true);
+
+            foreach ($names as $i => $n) {
+                if (trim($n) === trim($item->item_name)) {
+                    $purchasePCS +=
+                        ((int) ($cartons[$i] ?? 0) * $pcsInCarton)
+                        + (int) ($pcs[$i] ?? 0);
+                }
+            }
+        }
+
+        $item->purchase_carton = intdiv($purchasePCS, $pcsInCarton);
+        $item->purchase_pcs = $purchasePCS % $pcsInCarton;
+
+        $purchaseReturnPCS = 0;
+
+        foreach (
+            DB::table('purchase_returns')
+                ->whereJsonContains('item', $item->item_name)
+                ->get() as $pr
+        ) {
+            $names = json_decode($pr->item, true) ?? [];
+            $cartons = json_decode($pr->carton_qty ?? '[]', true) ?? [];
+            $pcs = json_decode($pr->return_qty ?? '[]', true) ?? [];
+
+            foreach ($names as $i => $n) {
+                if (trim($n) === trim($item->item_name)) {
+                    $purchaseReturnPCS +=
+                        ((int) ($cartons[$i] ?? 0) * $pcsInCarton)
+                        + (int) ($pcs[$i] ?? 0);
+                }
+            }
+        }
+
+        $item->purchase_return_carton = intdiv($purchaseReturnPCS, $pcsInCarton);
+        $item->purchase_return_pcs = $purchaseReturnPCS % $pcsInCarton;
+
+        /* ================= 🔥 STOCK OUT (JOB ORDERS) ================= */
+        $stockOutPCS = 0;
+
+// Stock outs table se product_id se match karke total_stock sum karein
+$stockOutRecords = DB::table('stock_outs')
+    ->where('product_id', $item->id)
+    ->get();
+
+foreach ($stockOutRecords as $stockOut) {
+    // total_stock = jo stock use hua hai (current_stock - close_stock)
+    $usedStock = (float)$stockOut->current_stock - (float)$stockOut->close_stock;
+    $stockOutPCS += abs($usedStock); // absolute value lein
+}
+
+$item->stock_out_carton = intdiv($stockOutPCS, $pcsInCarton);
+$item->stock_out_pcs = $stockOutPCS % $pcsInCarton;
+
+        /* ================= LOCAL SOLD (DISPLAY ONLY) ================= */
+        $soldPCS = 0;
+
+        foreach (LocalSale::whereJsonContains('item', $item->item_name)->get() as $sale) {
+            $names = json_decode($sale->item, true) ?? [];
+            $cartons = json_decode($sale->carton_qty, true) ?? [];
+            $pcs = json_decode($sale->pcs, true) ?? [];
+
+            foreach ($names as $i => $n) {
+                if (trim($n) === trim($item->item_name)) {
+                    $soldPCS += (int) ($pcs[$i] ?? 0);
+                }
+            }
+        }
+
+        /* ================= LOCAL RETURN (DISPLAY ONLY) ================= */
+        $returnPCS = 0;
+
+        foreach (
+            DB::table('sale_returns')
+                ->where('sale_type', 'customer')
+                ->where('item_names', $item->item_name)
+                ->get() as $r
+        ) {
+            $pcsVal = (int) ($r->pcs_qty ?? 0);
+            $cartonVal = (int) ($r->carton_qty ?? 0);
+
+            if ($pcsVal > 0) {
+                $returnPCS += $pcsVal;
+            } else {
+                $returnPCS += ($cartonVal * $pcsInCarton);
+            }
+        }
+
+        /* ================= FINAL STOCK ================= */
+        $item->balance_stock = (int) ($item->initial_stock ?? 0);
+        $item->balance_wholesale_price = (float) ($item->wholesale_price ?? 0);
+
+        /* ================= STOCK VALUE (PCS BASED) ================= */
+        $wholesalePrice = (float) ($item->wholesale_price ?? 0);
+        $perPcsPrice = $wholesalePrice * $item->balance_stock;
+        $item->stock_value = round($perPcsPrice);
+
+        /* ================= DISPLAY HELPERS ================= */
+        $item->total_local_sold_carton = intdiv($soldPCS, $pcsInCarton);
+        $item->total_local_sold_pcs = $soldPCS % $pcsInCarton;
+
+        $item->total_local_return_carton = intdiv($returnPCS, $pcsInCarton);
+        $item->total_local_return_pcs = $returnPCS % $pcsInCarton;
+    }
+
+    return response()->json($items);
+}
+
+    // public function getItemDetails(Request $request)
+    // {
+
+    //     \Log::info('Filter Request:', [
+    //         'category' => $request->category,
+    //         'subcategory' => $request->subcategory,
+    //         'itemCode' => $request->itemCode,
+    //     ]);
+
+    //     $query = Product::query();
+
+    //     if ($request->category !== 'all') {
+    //         $query->where('category', 'LIKE', '%'.$request->category.'%');
+    //     }
+
+    //     // ✅ FIXED: Case-insensitive subcategory filtering
+    //     if ($request->subcategory !== 'all') {
+    //         $query->where('sub_category', 'LIKE', '%'.$request->subcategory.'%');
+    //     }
+
+    //     if ($request->itemCode !== 'all') {
+    //         $query->where('item_code', $request->itemCode);
+    //     }
+
+    //     $items = $query->get();
+
+    //     $items = $query->get();
+
+    //     // ✅ Agar koi item nahi mila toh log mein message show karein
+    //     if ($items->isEmpty()) {
+    //         \Log::info('No items found with filters:', [
+    //             'category' => $request->category,
+    //             'subcategory' => $request->subcategory,
+    //             'itemCode' => $request->itemCode,
+    //         ]);
+    //     }
+
+    //     foreach ($items as $item) {
+
+    //         /* ================= BASE ================= */
+    //         $pcsInCarton = max((int) $item->pcs_in_carton, 1);
+
+    //         /* ================= OPENING (DISPLAY ONLY) ================= */
+    //         $openingTotalPCS = (int) ($item->initial_stock ?? 0);
+
+    //         $item->opening_carton = intdiv($openingTotalPCS, $pcsInCarton);
+    //         $item->opening_pcs = $openingTotalPCS % $pcsInCarton;
+
+    //         /* ================= PURCHASE (DISPLAY ONLY) ================= */
+    //         $purchasePCS = 0;
+
+    //         foreach (
+    //             DB::table('purchases')
+    //                 ->whereJsonContains('item', $item->item_name)
+    //                 ->get() as $purchase
+    //         ) {
+    //             $names = json_decode($purchase->item, true) ?? [];
+    //             $cartons = json_decode($purchase->carton_qty, true) ?? [];
+    //             $pcs = json_decode($purchase->pcs ?? '[]', true);
+
+    //             foreach ($names as $i => $n) {
+    //                 if (trim($n) === trim($item->item_name)) {
+
+    //                     $purchasePCS +=
+    //                         ((int) ($cartons[$i] ?? 0) * $pcsInCarton)
+    //                         + (int) ($pcs[$i] ?? 0);
+    //                 }
+    //             }
+    //         }
+
+    //         $item->purchase_carton = intdiv($purchasePCS, $pcsInCarton);
+    //         $item->purchase_pcs = $purchasePCS % $pcsInCarton;
+
+    //         /* ================= PURCHASE RETURN (DISPLAY ONLY) ================= */
+    //         $purchaseReturnPCS = 0;
+
+    //         foreach (
+    //             DB::table('purchase_returns')
+    //                 ->whereJsonContains('item', $item->item_name)
+    //                 ->get() as $pr
+    //         ) {
+    //             $names = json_decode($pr->item, true) ?? [];
+    //             $cartons = json_decode($pr->carton_qty ?? '[]', true) ?? [];
+    //             $pcs = json_decode($pr->return_qty ?? '[]', true) ?? [];
+
+    //             foreach ($names as $i => $n) {
+    //                 if (trim($n) === trim($item->item_name)) {
+
+    //                     $purchaseReturnPCS +=
+    //                         ((int) ($cartons[$i] ?? 0) * $pcsInCarton)
+    //                         + (int) ($pcs[$i] ?? 0);
+    //                 }
+    //             }
+    //         }
+
+    //         $item->purchase_return_carton = intdiv($purchaseReturnPCS, $pcsInCarton);
+    //         $item->purchase_return_pcs = $purchaseReturnPCS % $pcsInCarton;
+
+    //         /* ================= LOCAL SOLD (DISPLAY ONLY) ================= */
+    //         $soldPCS = 0;
+
+    //         foreach (LocalSale::whereJsonContains('item', $item->item_name)->get() as $sale) {
+    //             $names = json_decode($sale->item, true) ?? [];
+    //             $cartons = json_decode($sale->carton_qty, true) ?? [];
+    //             $pcs = json_decode($sale->pcs, true) ?? [];
+
+    //             foreach ($names as $i => $n) {
+    //                 if (trim($n) === trim($item->item_name)) {
+    //                     $soldPCS += (int) ($pcs[$i] ?? 0);
+    //                 }
+    //             }
+    //         }
+
+    //         /* ================= LOCAL RETURN (DISPLAY ONLY) ================= */
+    //         $returnPCS = 0;
+
+    //         foreach (
+    //             DB::table('sale_returns')
+    //                 ->where('sale_type', 'customer')
+    //                 ->where('item_names', $item->item_name)
+    //                 ->get() as $r
+    //         ) {
+    //             $pcsVal = (int) ($r->pcs_qty ?? 0);
+    //             $cartonVal = (int) ($r->carton_qty ?? 0);
+
+    //             if ($pcsVal > 0) {
+    //                 // PCS based return
+    //                 $returnPCS += $pcsVal;
+    //             } else {
+    //                 // Carton based return → convert using product pcs_in_carton
+    //                 $returnPCS += ($cartonVal * $pcsInCarton);
+    //             }
+    //         }
+
+    //         /* ================= FINAL STOCK ================= */
+    //         /**
+    //          * 🔥 IMPORTANT RULE:
+    //          * product.initial_stock is ALREADY UPDATED
+    //          * on SALE (minus) and RETURN (plus)
+    //          * so report me kuch add / minus nahi karna
+    //          */
+    //         /* ================= STOCK VALUE (PCS BASED) ================= */
+    //         $pcsInCarton = max((int) $item->pcs_in_carton, 1);
+    //         $initialStock = (int) ($item->initial_stock ?? 0);
+    //         $wholesalePrice = (float) ($item->wholesale_price ?? 0);
+
+    //         /* per pcs price */
+    //         // $perPcsPrice = $wholesalePrice / $pcsInCarton;
+    //         $perPcsPrice = $wholesalePrice * $initialStock;
+
+    //         /* total stock value */
+    //         $item->stock_value = round($perPcsPrice);
+
+    //         /* simple balance (as decided) */
+    //         $item->balance_stock = $initialStock;
+    //         $item->balance_wholesale_price = $wholesalePrice;
+
+    //         /* ================= DISPLAY HELPERS ================= */
+    //         $item->total_local_sold_carton = intdiv($soldPCS, $pcsInCarton);
+    //         $item->total_local_sold_pcs = $soldPCS * $pcsInCarton;
+
+    //         $item->total_local_return_carton = intdiv($returnPCS, $pcsInCarton);
+    //         $item->total_local_return_pcs = $returnPCS * $pcsInCarton;
+
+    //     }
+
+    //     return response()->json($items);
+    // }
+
 
     public function date_wise_recovery_report()
     {

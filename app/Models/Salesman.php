@@ -10,6 +10,8 @@ class Salesman extends Model
 {
     use HasFactory, SoftDeletes;
 
+    protected $guarded = [];
+
     protected $table = 'sales_mens'; // Explicitly define the table name
 
     public function city()
@@ -27,5 +29,9 @@ class Salesman extends Model
         return $this->belongsTo(Designation::class, 'designation');
     }
 
-    protected $guarded = [];
+        public function attendances()
+    {
+        return $this->hasMany(StaffAttendence::class, 'staff_id', 'id');
+    }
+
 }

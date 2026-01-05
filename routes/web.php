@@ -8,6 +8,7 @@ use App\Http\Controllers\CreateBillController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DistributorController;
 use App\Http\Controllers\ExpenseController;
+use App\Http\Controllers\GeneralReportController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\JobOrderController;
 use App\Http\Controllers\LocalSaleController;
@@ -21,6 +22,7 @@ use App\Http\Controllers\SaleController;
 use App\Http\Controllers\SaleReturnController;
 use App\Http\Controllers\SalesmanController;
 use App\Http\Controllers\SizeController;
+use App\Http\Controllers\StaffAttendenceController;
 use App\Http\Controllers\StockOutController;
 use App\Http\Controllers\VendorController;
 use App\Models\Product;
@@ -241,6 +243,13 @@ Route::get('/fetch-distributor-ledger', [ReportController::class, 'fetchDistribu
 Route::get('/vendor-Ledger-Record', [ReportController::class, 'vendor_Ledger_Record'])->name('vendor-Ledger-Record');
 Route::get('/fetch-vendor-ledger', [ReportController::class, 'fetchvendorLedger'])->name('fetch-vendor-ledger');
 
+Route::get('/job-profit-report', [GeneralReportController::class, 'index'])
+    ->name('job.profit.report');
+
+Route::get('/job-profit-report/fetch', [GeneralReportController::class, 'fetch'])
+    ->name('job.profit.report.fetch');
+
+
 Route::get('/Customer-Ledger-Record', [ReportController::class, 'Customer_Ledger_Record'])->name('Customer-Ledger-Record');
 Route::get('/fetch-Customer-ledger', [ReportController::class, 'fetchCustomerledger'])->name('fetch-Customer-ledger');
 
@@ -286,6 +295,14 @@ Route::post('/get-sales-report', [ReportController::class, 'getsalesreport'])->n
 
 Route::get('/Product-wise-Sales-Report', [ReportController::class, 'Product_wise_Sales_Report'])->name('Product-wise-Sales-Report');
 Route::post('/get-Product-sales-report', [ReportController::class, 'getProductsalesreport'])->name('get-Product-sales-report');
+
+// Staff Attendance Routes
+Route::get('/staff-attendance', [StaffAttendenceController::class, 'index'])->name('staff-attendance.index');
+Route::post('/staff-attendance/save', [StaffAttendenceController::class, 'store'])->name('staff-attendance.store');
+Route::get('/staff-attendance/edit/{id}', [StaffAttendenceController::class, 'edit'])->name('staff-attendance.edit');
+Route::post('/staff-attendance/update', [StaffAttendenceController::class, 'update'])->name('staff-attendance.update');
+Route::delete('/staff-attendance/delete/{id}', [StaffAttendenceController::class, 'destroy'])->name('staff-attendance.delete');
+Route::get('/staff-attendance/history/{staffId}', [StaffAttendenceController::class, 'history'])->name('staff-attendance.history');
 
 Route::get('/vendors-payments', [PaymentController::class, 'vendors_payments'])->name('vendors-payments');
 Route::post('/vendor-payment-store', [PaymentController::class, 'storeVendorPayment'])->name('vendor-payment-store');

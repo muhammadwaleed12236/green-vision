@@ -15,16 +15,13 @@
                     </li> --}}
 
 
-                    {{-- <li class="submenu">
-                        <a href="javascript:void(0);"><i class="fas fa-users"></i><span> Distributor</span> <span
+                    <li class="submenu">
+                        <a href="javascript:void(0);"><i class="fas fa-users"></i><span> Attendance</span> <span
                                 class="menu-arrow"></span></a>
                         <ul>
-                            <li><a href="{{ route('Distributor') }}">Distributor</a></li>
-                            <li><a href="{{ route('Distributor-ledger') }}">Distributor Ledger </a></li>
-                            <li><a href="{{ route('Distributor-recovery') }}">Distributor Recoveries </a></li>
-                            <li><a href="{{ route('Distributor-Balance-Transfer') }}">Distributor Balance Transfer </a></li>
+                            <li><a href="{{ route('staff-attendance.index') }}">Staff Attendance</a></li>
                         </ul>
-                    </li> --}}
+                    </li>
 
 
                     <li class="submenu">
@@ -166,8 +163,8 @@
                                 class="menu-arrow"></span></a>
                         <ul>
                             <li><a href="{{ route('stock-Record') }}">Item Stock Report </a></li>
-                            {{-- <li><a href="{{ route('Distributor-Ledger-Record') }}">Distributor Ledger Record </a></li>
-                            --}}
+                            <li><a href="{{ route('job.profit.report') }}">General Report </a></li>
+
                             <li><a href="{{ route('vendor-Ledger-Record') }}">Vendor Ledger Record </a></li>
                             <li><a href="{{ route('Customer-Ledger-Record') }}">Customer Ledger Record </a></li>
                             <li><a href="{{ route('date-wise-recovery-report') }}">Date Wise Recovery Report </a></li>
