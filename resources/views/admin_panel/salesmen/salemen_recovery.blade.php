@@ -36,7 +36,7 @@
                                 @foreach($Recoveries as $key => $recovery)
                                     <tr id="recovery-row-{{ $recovery->id }}">
                                         <td>{{ $key + 1 }}</td>
-                                        <td>{{ $recovery->saleman->salesman->name ?? 'N/A' }}</td>
+<td>{{ $recovery->person_name }}</td>
                                         <td class="amount_paid">{{ number_format($recovery->amount_paid, 0) }}</td>
                                         <td>{{ $recovery->date }}</td>
                                         <td class="remarks">{{ $recovery->remarks }}</td>
@@ -69,9 +69,9 @@
                                                             <div class="modal-body">
                                                                 <div class="mb-3">
                                                                     <label class="form-label">Staff Name</label>
-                                                                    <input type="text" class="form-control"
-                                                                        value="{{ $recovery->saleman->salesman->name ?? 'N/A' }}"
-                                                                        readonly>
+                                                                   <input type="text" class="form-control"
+    value="{{ $recovery->person_name }}"
+    readonly>
                                                                 </div>
 
                                                                 <div class="mb-3">

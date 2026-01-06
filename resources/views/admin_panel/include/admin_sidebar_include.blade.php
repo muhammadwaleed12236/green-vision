@@ -89,6 +89,14 @@
                             <li><a href="{{ route('all-sale-return') }}">Sales Return</a></li>
                         </ul>
                     </li>
+
+                    <li class="submenu">
+                        <a href="javascript:void(0);"><i class="fas fa-clipboard-list"></i><span> Assign Job</span> <span
+                                class="menu-arrow"></span></a>
+                        <ul>
+                           <li><a href="{{ route('job-orders.index') }}">Add Job</a></li>
+                        </ul>
+                    </li>
                     <li class="submenu">
                         <a href="javascript:void(0);"><i class="fas fa-user-tie"></i><span> Staff</span> <span
                                 class="menu-arrow"></span></a>
@@ -97,8 +105,6 @@
                             <li><a href="{{ route('salesmen') }}">Add Staff</a></li>
                             <li><a href="{{ route('staff-ledger') }}">Staff Payments</a></li>
                             <li><a href="{{ route('staff-recovery') }}">Staff Given Payments</a></li>
-                            <li><a href="{{ route('job-orders.index') }}">Add Job Order</a></li>
-
                         </ul>
                     </li>
 

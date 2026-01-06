@@ -267,9 +267,10 @@ class SalesmanController extends Controller
         $userId = Auth::id();
 
         if ($authUser->usertype === 'admin') {
-            $Recoveries = \App\Models\StaffRecovery::where('admin_or_user_id', $userId)
-                ->with('saleman')
-                ->get();
+            // In staff_recovery() method
+$Recoveries = \App\Models\StaffRecovery::where('admin_or_user_id', $userId)
+    ->with(['salesman', 'contractor'])
+    ->get();
 
             $Salesmans = Salesman::where('admin_or_user_id', $userId)
                 ->where('designation', 'Saleman')

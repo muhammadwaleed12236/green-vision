@@ -56,7 +56,7 @@
                                                 {{ $firstItem->localSale->invoice_number ?? 'N/A' }}
                                             </span>
                                         </td>
-                                        <td>{{ $firstItem->localSale->customer->shop_name ?? 'N/A' }}</td>
+                                        <td>{{ $firstItem->localSale->customer->customer_name }}</td>
                                         <td><span class="badge bg-info">{{ $itemCount }} Items</span></td>
                                         <td>
                                             <span class="badge bg-danger">
@@ -104,9 +104,9 @@
                                 <option value="">Select Job Number</option>
                                 @foreach($localSales as $sale)
                                     <option value="{{ $sale->id }}"
-                                        data-customer="{{ $sale->customer->shop_name ?? 'N/A' }}">
-                                        {{ $sale->invoice_number }} - {{ $sale->customer->shop_name ?? 'N/A' }}
-                                    </option>
+    data-customer="{{ $sale->customer->customer_name ?? ($sale->customer->shop_name ?? 'N/A') }}">
+    {{ $sale->invoice_number }} - {{ $sale->customer->customer_name ?? ($sale->customer->shop_name ?? 'N/A') }}
+</option>
                                 @endforeach
                             </select>
                         </div>

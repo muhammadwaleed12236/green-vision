@@ -51,7 +51,7 @@
                         <div class="col-md-3">
                             <div class="mb-3">
                                 <label class="form-label fw-bold">Customer Name:</label>
-                                <p class="mb-0">{{ $localSale->customer->shop_name ?? 'N/A' }}</p>
+                                <p class="mb-0">{{ $localSale->customer->customer_name ?? 'N/A' }}</p>
                             </div>
                         </div>
 

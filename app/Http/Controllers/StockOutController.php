@@ -20,6 +20,7 @@ class StockOutController extends Controller
             $products = Product::select('id', 'item_name', 'height', 'width', 'initial_stock')
                 ->get();
 
+            // ✅ FIX: Add ->with('customer') here
             $localSales = LocalSale::with('customer')
                 ->select('id', 'invoice_number', 'customer_id')
                 ->orderBy('created_at', 'desc')

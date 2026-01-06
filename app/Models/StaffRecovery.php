@@ -12,8 +12,20 @@ class StaffRecovery extends Model
 
     protected $guarded = [];
 
-    public function saleman()
+    // Try salesman first, then contractor
+    public function salesman()
     {
-        return $this->belongsTo(Salesman::class, 'saleman_ledger_id');
+        return $this->belongsTo(Salesman::class, 'saleman_ledger_id', 'id');
+    }
+
+    public function contractor()
+    {
+        return $this->belongsTo(\App\Models\Contractor::class, 'saleman_ledger_id', 'id');
+    }
+
+    // Helper method to get the person name
+    public function getPersonNameAttribute()
+    {
+        return $this->salesman->name ?? $this->contractor->contractor_name ?? 'N/A';
     }
 }

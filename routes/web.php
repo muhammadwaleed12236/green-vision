@@ -249,7 +249,6 @@ Route::get('/job-profit-report', [GeneralReportController::class, 'index'])
 Route::get('/job-profit-report/fetch', [GeneralReportController::class, 'fetch'])
     ->name('job.profit.report.fetch');
 
-
 Route::get('/Customer-Ledger-Record', [ReportController::class, 'Customer_Ledger_Record'])->name('Customer-Ledger-Record');
 Route::get('/fetch-Customer-ledger', [ReportController::class, 'fetchCustomerledger'])->name('fetch-Customer-ledger');
 
