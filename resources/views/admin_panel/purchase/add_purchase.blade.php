@@ -140,7 +140,7 @@
             <input type="text"
                    class="form-control measurement"
                    name="measurement[]"
-                   style="width:140px"
+                   style="width:170px"
                    readonly>
         </td>
 

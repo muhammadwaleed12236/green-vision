@@ -15,13 +15,13 @@ use Illuminate\Support\Facades\Auth;
 
 class VendorController extends Controller
 {
-
     public function vendors()
     {
         if (Auth::id()) {
             $userId = Auth::id();
             $Vendors = Vendor::all();
             $cities = City::where('admin_or_user_id', $userId)->get();
+
             return view('admin_panel.vendors.vendors', compact('Vendors', 'cities'));
         } else {
             return redirect()->back();
@@ -54,7 +54,6 @@ class VendorController extends Controller
                 'created_at' => Carbon::now(),
             ]);
 
-
             return redirect()->back()->with('success', 'Vendor added successfully');
         } else {
             return redirect()->back();
@@ -75,7 +74,7 @@ class VendorController extends Controller
         ]);
 
         $vendor = Vendor::find($id);
-        if (!$vendor) {
+        if (! $vendor) {
             return redirect()->back()->with('error', 'Vendor not found.');
         }
 
@@ -86,9 +85,9 @@ class VendorController extends Controller
             $recapeType = $request->recape_type;
             $recapeAmount = $request->recape_opening;
 
-            if ($recapeType === "plus") {
+            if ($recapeType === 'plus') {
                 $ledger->opening_balance += $recapeAmount;
-            } elseif ($recapeType === "minus") {
+            } elseif ($recapeType === 'minus') {
                 $ledger->opening_balance -= $recapeAmount;
             }
 
@@ -118,12 +117,12 @@ class VendorController extends Controller
         return redirect()->back()->with('success', 'Vendor updated successfully.');
     }
 
-
     public function vendors_ledger()
     {
         if (Auth::id()) {
             $userId = Auth::id();
             $VendorLedgers = VendorLedger::where('admin_or_user_id', $userId)->with('vendor')->get();
+
             return view('admin_panel.vendors.vendors_ledger', compact('VendorLedgers'));
         } else {
             return redirect()->back();
@@ -182,12 +181,12 @@ class VendorController extends Controller
         return redirect()->back()->with('success', 'Payment recorded successfully.');
     }
 
-
     public function amount_paid_vendors()
     {
         if (Auth::id()) {
             $userId = Auth::id();
             $VendorPayments = VendorPayment::where('admin_or_user_id', $userId)->with('vendor')->get();
+
             return view('admin_panel.vendors.vendor_recovery', compact('VendorPayments'));
         } else {
             return redirect()->back();
@@ -198,12 +197,12 @@ class VendorController extends Controller
     {
         $ledger = VendorLedger::where('vendor_id', $id)->first();
 
-        if (!$ledger) {
+        if (! $ledger) {
             return response()->json(['opening_balance' => 0]);
         }
 
         return response()->json([
-            'opening_balance' => $ledger->opening_balance
+            'opening_balance' => $ledger->opening_balance,
         ]);
     }
 
@@ -254,6 +253,18 @@ class VendorController extends Controller
         return redirect()->back()->with('success', 'Vendor payment and ledger updated successfully.');
     }
 
+    public function delete_vendor_payment($id)
+    {
+        $payment = VendorPayment::find($id);
+
+        if (! $payment) {
+            return response()->json(['error' => 'Payment not found.'], 404);
+        }
+
+        $payment->delete();
+
+        return response()->json(['success' => 'Payment deleted successfully.']);
+    }
 
     public function vendors_builty()
     {
@@ -270,7 +281,6 @@ class VendorController extends Controller
         }
     }
 
-
     public function store_vendors_builty(Request $request)
     {
         $request->validate([
@@ -281,7 +291,7 @@ class VendorController extends Controller
             'description' => 'nullable|string',
         ]);
 
-        list($vendor_id, $vendor_name) = explode('|', $request->vendor_id);
+        [$vendor_id, $vendor_name] = explode('|', $request->vendor_id);
 
         // Step 1: Save the Builty
         $builty = VendorBuilty::create([
@@ -322,8 +332,6 @@ class VendorController extends Controller
         return redirect()->back()->with('success', 'Vendor Builty added and ledger updated successfully.');
     }
 
-
-
     public function update(Request $request, $id)
     {
         $request->validate([
@@ -359,5 +367,18 @@ class VendorController extends Controller
         }
 
         return redirect()->back()->with('success', 'Vendor Builty & Ledger updated successfully.');
+    }
+
+    public function delete($id)
+    {
+        $vendorBuilty = VendorBuilty::find($id);
+
+        if (! $vendorBuilty) {
+            return response()->json(['error' => 'Expense not found.'], 404);
+        }
+
+        $vendorBuilty->delete();
+
+        return response()->json(['success' => 'VendorBuilty deleted successfully.']);
     }
 }

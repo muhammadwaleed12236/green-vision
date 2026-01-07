@@ -122,23 +122,31 @@
                 contractor_id: contractorId
             },
             success: function (response) {
-                console.log(response); // Debug
+    let rows = '';
 
-                let rows = '';
+    response.report.forEach(row => {
+        // ✅ Parse work_type if it's JSON
+        let workType = row.work_type;
+        try {
+            const parsed = JSON.parse(workType);
+            if (Array.isArray(parsed)) {
+                workType = parsed.map(w => w.name).join(', ');
+            }
+        } catch (e) {
+            // Already a string, keep as is
+        }
 
-                // ✅ Correct way to access report data
-                response.report.forEach(row => {
-                    rows += `
-                    <tr>
-                        <td>${row.job_no}</td>
-                        <td>${row.date}</td>
-                        <td>${row.work_type}</td>
-                        <td>${Number(row.total_amount).toLocaleString()}</td>
-                        <td class="text-success">${Number(row.paid_amount).toLocaleString()}</td>
-                        <td class="text-danger">${Number(row.remaining_amount).toLocaleString()}</td>
-                        <td><span class="badge bg-${row.status === 'Completed' ? 'success' : 'warning'}">${row.status}</span></td>
-                    </tr>`;
-                });
+        rows += `
+        <tr>
+            <td>${row.job_no}</td>
+            <td>${row.date}</td>
+            <td>${workType}</td>
+            <td>${Number(row.total_amount).toLocaleString()}</td>
+            <td class="text-success">${Number(row.paid_amount).toLocaleString()}</td>
+            <td class="text-danger">${Number(row.remaining_amount).toLocaleString()}</td>
+            <td><span class="badge bg-${row.status === 'Completed' ? 'success' : 'warning'}">${row.status}</span></td>
+        </tr>`;
+    });
 
                 // Set Contractor Name
                 $('.report-party-name').html(`<p>${$('#Contractor option:selected').text()}</p>`);

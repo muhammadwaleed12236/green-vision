@@ -243,17 +243,17 @@
                                     <tbody>
                                         @foreach($stats['recentlocal_sales'] as $sale)
                                         <tr>
-                                            <td>{{ $sale->invoice_no }}</td>
+                                            <td>{{ $sale->invoice_number }}</td>
                                             <td>{{ $sale->customer_name }}</td>
                                             <td>{{ date('d M Y', strtotime($sale->created_at)) }}</td>
                                             <td class="amount-text" data-amount="{{ $sale->net_amount }}">{{ number_format($sale->net_amount, 2) }}</td>
                                             <td class="amount-text" data-amount="{{ $sale->grand_total }}">{{ number_format($sale->grand_total, 2) }}</td>
-                                            <td class="amount-text" data-amount="{{ $sale->net_amount - $sale->grand_total }}">{{ number_format($sale->net_amount - $sale->grand_total, 2) }}</td>
+                                            <td class="amount-text" data-amount="{{ $sale->grand_total - $sale->net_amount }}">{{ number_format($sale->grand_total - $sale->net_amount, 2) }}</td>
                                             <td>
-                                                @if($sale->job_status == 'paid')
+                                                 @if($sale->job_status == 'paid')
                                                     <span class="badges bg-lightgreen">Paid</span>
-                                                @elseif($sale->job_status == 'partial')
-                                                    <span class="badges bg-lightyellow">Partial</span>
+                                                @elseif($sale->job_status == 'pending')
+                                                    <span class="badges bg-secondary">Pending</span>
                                                 @else
                                                     <span class="badges bg-lightred">Unpaid</span>
                                                 @endif
@@ -361,42 +361,17 @@ const paymentStatus = @json($stats['paymentStatus']);
 new Chart(paymentStatusCtx, {
     type: 'doughnut',
     data: {
-        labels: ['Paid', 'Partial', 'Unpaid'],
+        labels: ['Paid', 'Unpaid', 'Pending'],
         datasets: [{
-            data: [paymentStatus.paid, paymentStatus.partial, paymentStatus.unpaid],
-            backgroundColor: ['#28a745', '#ffc107', '#dc3545'],
-            borderWidth: 2,
-            borderColor: '#fff'
-        }]
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: {
-                position: 'bottom'
-            }
-        }
-    }
-});
-
-// Category Sales Pie Chart
-const categorySalesCtx = document.getElementById('categorySalesChart').getContext('2d');
-const categorySales = @json($stats['categorylocal_sales']);
-
-new Chart(categorySalesCtx, {
-    type: 'pie',
-    data: {
-        labels: categorySales.map(item => item.sub_category_name),
-        datasets: [{
-            data: categorySales.map(item => item.total),
+            data: [
+                paymentStatus.paid, 
+                paymentStatus.unpaid,
+                paymentStatus.pending
+            ],
             backgroundColor: [
-                '#FF6384',
-                '#36A2EB',
-                '#FFCE56',
-                '#4BC0C0',
-                '#9966FF',
-                '#FF9F40'
+                '#28a745',  // Green for Paid
+                '#dc3545',  // Red for Unpaid
+                '#6c757d'   // Gray for Pending
             ],
             borderWidth: 2,
             borderColor: '#fff'
@@ -412,13 +387,64 @@ new Chart(categorySalesCtx, {
             tooltip: {
                 callbacks: {
                     label: function(context) {
-                        return context.label + ': ' + formatAmount(context.parsed);
+                        const label = context.label || '';
+                        const value = context.parsed || 0;
+                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                        const percentage = ((value / total) * 100).toFixed(1);
+                        return label + ': ' + value + ' (' + percentage + '%)';
                     }
                 }
             }
         }
     }
 });
+
+// Top Selling Items Pie Chart (Simple)
+const topSellingItemsCtx = document.getElementById('categorySalesChart').getContext('2d');
+const topSellingItems = @json($stats['topSellingItems']);
+
+console.log('Top Items:', topSellingItems); // ✅ Debug
+
+if (topSellingItems && topSellingItems.length > 0) {
+    new Chart(topSellingItemsCtx, {
+        type: 'pie',
+        data: {
+            labels: topSellingItems.map(item => item.item_name),
+            datasets: [{
+                data: topSellingItems.map(item => parseFloat(item.total_sales)),
+                backgroundColor: [
+                    '#FF6384',
+                    '#36A2EB',
+                    '#FFCE56',
+                    '#4BC0C0',
+                    '#9966FF',
+                    '#FF9F40'
+                ],
+                borderWidth: 2,
+                borderColor: '#fff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.label + ': ' + formatAmount(context.parsed);
+                        }
+                    }
+                }
+            }
+        }
+    });
+} else {
+    document.getElementById('categorySalesChart').parentElement.innerHTML = 
+        '<p class="text-center text-muted mt-5">No sales data yet</p>';
+}
 
 // Top Products Bar Chart
 const topProductsCtx = document.getElementById('topProductsChart').getContext('2d');

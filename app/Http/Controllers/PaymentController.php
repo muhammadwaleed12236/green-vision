@@ -140,7 +140,6 @@ class PaymentController extends Controller
 
             // All salesmen created by this owner
             $Salesmans = Salesman::where('admin_or_user_id', $ownerId)
-                ->where('designation', 'Saleman')
                 ->get();
         }
 

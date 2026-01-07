@@ -27,6 +27,11 @@ class ExpenseController extends Controller
 
     public function store_expense_category(Request $request)
     {
+
+        $request->validate([
+            'expense_category' => 'required',
+        ]);
+
         if (Auth::id()) {
 
             $usertype = Auth()->user()->usertype;
@@ -34,7 +39,7 @@ class ExpenseController extends Controller
 
             Expense::create([
                 'admin_or_user_id' => $userId,
-                'expense_category' => $request->expense_category, // Ensure the input name matches
+                'expense_category' => $request->expense_category,
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now(),
             ]);
@@ -47,6 +52,11 @@ class ExpenseController extends Controller
 
     public function update(Request $request)
     {
+
+        $request->validate([
+            'expense_category' => 'required',
+        ]);
+
         $expense_id = $request->input('expense_id');
 
         Expense::where('id', $expense_id)->update([

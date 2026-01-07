@@ -38,7 +38,7 @@
                         </div>
                         <div class="col-md-3">
                             <label class="form-label">Return Date</label>
-                            <input type="date" name="return_date" class="form-control wide-input" >
+                            <input type="date" name="return_date" value="{{ date('Y-m-d') }}" class="form-control wide-input" >
                         </div>
                     </div>
 
@@ -59,39 +59,38 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach($purchase->item as $index => $item)
-                                <tr>
-                                    <td style="width: 160px;"><input type="text" name="category[]" class="form-control wide-input" value="{{ $purchase->category[$index] }}" readonly></td>
-                                    <td style="width: 160px;"><input type="text" name="subcategory[]" class="form-control wide-input" value="{{ $purchase->subcategory[$index] }}" readonly></td>
-                                    <td style="width: 160px;"><input type="text" name="item[]" class="form-control wide-input" value="{{ $item }}" readonly></td>
-                                    <td style="width: 160px;"><input type="text" name="rate[]" class="form-control wide-input rate" value="{{ $purchase->rate[$index] }}" readonly></td>
-                                    <td style="width: 160px;"><input type="text" name="carton_qty[]" class="form-control wide-input" value="{{ $purchase->carton_qty[$index] }}" readonly></td>
+                               @foreach($purchase->item as $index => $item)
+<tr>
+    <td style="width: 160px;"><input type="text" name="category[]" class="form-control wide-input" value="{{ $purchase->category[$index] ?? '' }}" readonly></td>
+    <td style="width: 160px;"><input type="text" name="subcategory[]" class="form-control wide-input" value="{{ $purchase->subcategory[$index] ?? '' }}" readonly></td>
+    <td style="width: 160px;"><input type="text" name="item[]" class="form-control wide-input" value="{{ $item }}" readonly></td>
+    <td style="width: 160px;"><input type="text" name="rate[]" class="form-control wide-input rate" value="{{ $purchase->rate[$index] ?? 0 }}" readonly></td>
+    <td style="width: 160px;"><input type="text" name="carton_qty[]" class="form-control wide-input" value="{{ $purchase->carton_qty[$index] ?? 0 }}" readonly></td>
 
-                                    <td style="width: 160px;">
-                                        <input type="number"
-                                            name="return_qty[]"
-                                            class="form-control wide-input return-qty"
-                                            data-index="{{ $index }}"
-                                            data-rate="{{ $purchase->rate[$index] ?? 0 }}"
-                                            data-pcs="{{ $purchase->pcs_carton[$index] ?? 0 }}"
-                                            data-measurement="{{ $purchase->size[$index] ?? 0 }}"
-                                            max="{{ $purchase->carton_qty[$index] ?? 0 }}"
-                                            min="0"
-                                            value="0"
-                                            required>
+    <td style="width: 160px;">
+        <input type="number"
+            name="return_qty[]"
+            class="form-control wide-input return-qty"
+            data-index="{{ $index }}"
+            data-rate="{{ $purchase->rate[$index] ?? 0 }}"
+            data-pcs="{{ $purchase->pcs_carton[$index] ?? 0 }}"
+            data-measurement="{{ $purchase->size[$index] ?? 0 }}"
+            max="{{ $purchase->carton_qty[$index] ?? 0 }}"
+            min="0"
+            value="0"
+            required>
+    </td>
 
-                                    </td>
+    <td style="width: 160px;">
+        <input type="text" class="form-control wide-input" value="{{ $purchase->pcs_carton[$index] ?? 0 }}" readonly>
+        <input type="hidden" name="pcs_carton[]" value="{{ $purchase->pcs_carton[$index] ?? 0 }}">
+    </td>
 
-                                    <td style="width: 160px;">
-                                        <input type="text" class="form-control wide-input" value="{{ $purchase->pcs_carton[$index] }}" readonly>
-                                        <input type="hidden" name="pcs_carton[]" value="{{ $purchase->pcs_carton[$index] }}">
-                                    </td>
-
-                                    <!-- measurement (size) -->
-                                    <td style="width: 160px;">
-                                        <input type="text" class="form-control wide-input" value="{{ $purchase->size[$index] ?? '' }}" readonly>
-                                        <input type="hidden" name="size[]" value="{{ $purchase->size[$index] ?? '' }}">
-                                    </td>
+    <!-- measurement (size) -->
+    <td style="width: 160px;">
+        <input type="text" class="form-control wide-input" value="{{ $purchase->size[$index] ?? '' }}" readonly>
+        <input type="hidden" name="size[]" value="{{ $purchase->size[$index] ?? '' }}">
+    </td>
 
                                     <td style="width: 160px;">
                                         <input type="text" name="return_amount[]"

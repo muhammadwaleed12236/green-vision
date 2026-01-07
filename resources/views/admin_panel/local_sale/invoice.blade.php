@@ -50,8 +50,8 @@
                     <!-- CUSTOMER INFO -->
                     <div class="row my-3 mx-1" style="border:2px solid #000; padding:12px;">
                         <div class="col-md-6">
-                            <p class="mb-1"><strong>Client Name:</strong> {{ $sale->customer->shop_name ?? 'N/A' }}</p>
-                            <p class="mb-1"><strong>Area:</strong> {{ $sale->customer_area ?? 'N/A' }}</p>
+                            <p class="mb-1"><strong>Client Name:</strong> {{ $sale->customer->customer_name ?? 'N/A' }}</p>
+                            {{-- <p class="mb-1"><strong>Area:</strong> {{ $sale->customer_area ?? 'N/A' }}</p> --}}
                             <p class="mb-0"><strong>Mobile:</strong> {{ $sale->customer_phone ?? 'N/A' }}</p>
                         </div>
                     </div>

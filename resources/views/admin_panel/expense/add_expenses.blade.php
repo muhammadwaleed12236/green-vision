@@ -104,9 +104,9 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Date</label>
-                        <input type="date" class="form-control" name="date" required>
+                        <input type="date" class="form-control" name="date" value="{{ date('Y-m-d') }}" required>
                     </div>
-                    <div class="mb-3">
+                    <div class="">
                         <label class="form-label">Description</label>
                         <textarea class="form-control" name="description"></textarea>
                     </div>

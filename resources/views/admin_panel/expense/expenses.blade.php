@@ -43,7 +43,8 @@
                                                 data-id="{{ $expense->id }}" data-name="{{ $expense->expense_category }}"
                                                 data-bs-toggle="modal" data-bs-target="#editExpenseModal">Edit</button>
 
-                                            <!-- <button class="btn btn-sm btn-danger deleteAddExpenseBtn" data-id="{{ $expense->id }}">Delete</button> -->
+                                            <button class="btn btn-sm btn-danger deleteAddExpenseBtn"
+                                                data-id="{{ $expense->id }}">Delete</button>
 
                                         </td>
 
@@ -70,9 +71,12 @@
             <form action="{{ route('store-expense-category') }}" method="POST">
                 @csrf
                 <div class="modal-body">
-                    <div class="mb-3">
+                    <div class="">
                         <label class="form-label">Expense Name</label>
-                        <input type="text" class="form-control" name="expense_category" required>
+                        <input type="text" class="form-control" name="expense_category" id="expense_category">
+                        <div class="text-danger d-none" id="add_expence_error">
+                            Expense Category name is required
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -96,10 +100,12 @@
                 @csrf
                 <input type="hidden" name="expense_id" id="edit_expense_id">
                 <div class="modal-body">
-                    <div class="mb-3">
+                    <div class="">
                         <label class="form-label">Expense Name</label>
-                        <input type="text" class="form-control" name="expense_category" id="edit_expense_category"
-                            required>
+                        <input type="text" class="form-control" name="expense_category" id="edit_expense_category">
+                        <div class="text-danger d-none" id="edit_expence_error">
+                            Expense Category name is required
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -114,14 +120,40 @@
 @include('admin_panel.include.footer_include')
 
 <script>
+
+
+    $(document).on('submit', '#addExpenseModal form', function (e) {
+        let category = $('#expense_category').val().trim();
+
+        if (category === '') {
+            e.preventDefault();
+            $('#add_expence_error').removeClass('d-none');
+            $('#expense_category').addClass('is-invalid');
+        } else {
+            $('#add_expence_error').addClass('d-none');
+            $('#expense_category').removeClass('is-invalid');
+        }
+    });
+
+    $(document).on('submit', '#editExpenseModal form', function (e) {
+        let category = $('#edit_expense_category').val().trim();
+
+        if (category === '') {
+            e.preventDefault();
+            $('#edit_expence_error').removeClass('d-none');
+            $('#edit_expense_category').addClass('is-invalid');
+        } else {
+            $('#edit_expence_error').addClass('d-none');
+            $('#edit_expense_category').removeClass('is-invalid');
+        }
+    });
+
     $(document).on("click", ".editExpenseBtn", function () {
         let id = $(this).data("id");
         let name = $(this).data("name");
         $("#edit_expense_id").val(id);
         $("#edit_expense_category").val(name);
     });
-
-
 
 
     $(document).on("click", ".deleteAddExpenseBtn", function (e) {
@@ -143,8 +175,8 @@
                 $.ajax({
                     url: deleteUrl,
                     type: "DELETE",
-                    headers: {
-                        "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content") // Include CSRF token
+                    data: {
+                        _token: "{{ csrf_token() }}"
                     },
                     success: function (response) {
                         Swal.fire("Deleted!", response.success, "success")

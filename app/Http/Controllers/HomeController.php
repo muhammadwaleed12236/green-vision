@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -10,20 +9,21 @@ class HomeController extends Controller
 {
     public function index()
     {
-        if(Auth::id()) {
+        if (Auth::id()) {
             $usertype = Auth()->user()->usertype;
             $userId = Auth::id();
 
-            if($usertype == 'distributor') {
+            if ($usertype == 'distributor') {
                 return view('distributor_panel.dashboard', [
                     'userId' => $userId,
                 ]);
-            } else if($usertype == 'admin') {
+            } elseif ($usertype == 'admin') {
                 // Dashboard Statistics
                 $stats = $this->getAdminStats();
+
                 // dd($stats);
                 return view('admin_panel.dashboard', compact('stats', 'userId'));
-            } else if($usertype == 'local_salesman') {
+            } elseif ($usertype == 'local_salesman') {
                 return view('local_salesman_panel.dashboard', [
                     'userId' => $userId,
                 ]);
@@ -37,11 +37,15 @@ class HomeController extends Controller
     {
         // Total Purchase Due
         $totalPurchaseDue = DB::table('purchases')
-            ->sum(DB::raw('gross_total - grand_total'));
+            ->sum(DB::raw('grand_total - gross_total'));
 
         // Total local_sales Due
         $totallocal_salesDue = DB::table('local_sales')
-            ->sum(DB::raw('net_amount - grand_total'));
+            ->sum(DB::raw('grand_total - net_amount'));
+
+        //         $totallocal_salesDue = DB::table('local_sales')
+        // ->whereRaw('net_amount > grand_total')
+        // ->sum(DB::raw('net_amount - grand_total'));
 
         // Total Sale Amount
         $totalSaleAmount = DB::table('local_sales')->sum('net_amount');
@@ -58,7 +62,7 @@ class HomeController extends Controller
         $purchaseInvoiceCount = DB::table('purchases')->count();
         $local_salesInvoiceCount = DB::table('local_sales')->count();
         $productsCount = DB::table('products')->count();
-        $staffCount = DB::table('users')->where('usertype', 'staff')->count();
+        $staffCount = DB::table('sales_mens')->count();
 
         // Monthly local_sales & Purchase Data (Last 12 Months)
         $monthlylocal_sales = DB::table('local_sales')
@@ -106,24 +110,23 @@ class HomeController extends Controller
             ->limit(10)
             ->get();
 
-        // Category-wise local_sales
-        $categorylocal_sales = DB::table('job_items')
-            ->join('products', 'job_items.item_id', '=', 'products.id')
-            ->join('sub_categories', 'products.sub_category', '=', 'sub_categories.id')
+        // Top Selling Items (Simple - No categories needed)
+        $topSellingItems = DB::table('job_items')
             ->select(
-                'sub_categories.sub_category_name',
-                DB::raw('SUM(job_items.total) as total')
+                'item_name',
+                DB::raw('SUM(total) as total_sales')
             )
-            ->groupBy('sub_categories.id', 'sub_categories.sub_category_name')
-            ->orderBy('total', 'desc')
+            ->whereNotNull('item_name')
+            ->groupBy('item_name')
+            ->orderBy('total_sales', 'desc')
             ->limit(6)
             ->get();
 
         // Payment Status Distribution
         $paymentStatus = [
             'paid' => DB::table('local_sales')->where('job_status', 'paid')->count(),
-            'partial' => DB::table('local_sales')->where('job_status', 'partial')->count(),
             'unpaid' => DB::table('local_sales')->where('job_status', 'unpaid')->count(),
+            'pending' => DB::table('local_sales')->where('job_status', 'pending')->count(),
         ];
 
         // Net Profit Calculation
@@ -146,7 +149,7 @@ class HomeController extends Controller
             'monthlyPurchases' => $monthlyPurchases,
             'topProducts' => $topProducts,
             'recentlocal_sales' => $recentlocal_sales,
-            'categorylocal_sales' => $categorylocal_sales,
+            'topSellingItems' => $topSellingItems,
             'paymentStatus' => $paymentStatus,
         ];
     }

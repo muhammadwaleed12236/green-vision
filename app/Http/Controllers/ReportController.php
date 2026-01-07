@@ -289,8 +289,7 @@ class ReportController extends Controller
                     });
             })
             ->select('invoice_number', 'Date', 'customer_shopname', 'grand_total',
-                'discount_value', 'scheme_value', 'net_amount', 'cash_received',
-                'Saleman', 'created_at')
+                'discount_value', 'scheme_value', 'net_amount', 'created_at')
             ->get();
 
         $saleReturns = DB::table('sale_returns')
@@ -319,7 +318,7 @@ class ReportController extends Controller
                         $qq->whereNull('Date')->where('created_at', '<=', $endDate);
                     });
             })
-            ->sum('cash_received');
+            ->sum('grand_total');
 
         $recoveriesUptoEnd = (float) DB::table('customer_recoveries as cr')
             ->join('customer_ledgers as cl', 'cl.id', '=', 'cr.customer_ledger_id')
@@ -951,44 +950,63 @@ $item->stock_out_pcs = $stockOutPCS % $pcsInCarton;
         }
     }
 
-    public function fetchContractorReport(Request $request)
-    {
-        $userId = Auth::id();
-        $start = $request->start_date;
-        $end = $request->end_date;
-        $contractorId = $request->contractor_id;
+  public function fetchContractorReport(Request $request)
+{
+    $userId = Auth::id();
+    $start = $request->start_date;
+    $end = $request->end_date;
+    $contractorId = $request->contractor_id;
 
-        if (! $contractorId) {
-            return response()->json(['error' => 'Contractor is required'], 422);
-        }
-        // ✅ JOB BASED CONTRACTOR REPORT
-        $jobs = JobOrder::where('admin_or_user_id', $userId)
-            ->where('staff_type', 'contract')
-            ->whereBetween('job_date', [$start, $end])
-            ->orderBy('job_date')
-            ->get();
-        $report = [];
-        foreach ($jobs as $job) {
-            $report[] = [
-                'job_no' => $job->job_order_no,
-                'date' => \Carbon\Carbon::parse($job->job_date)->format('d-M-Y'),
-                'work_type' => $job->work_type ?? 'N/A',
-                'total_amount' => $job->total_amount,
-                'paid_amount' => $job->paid_amount,
-                'remaining_amount' => $job->remaining_amount,
-                'status' => ucfirst($job->status),
-            ];
-        }
-
-        return response()->json([
-            'report' => $report,
-            'totals' => [
-                'total_amount' => $jobs->sum('total_amount'),
-                'paid_amount' => $jobs->sum('paid_amount'),
-                'remaining_amount' => $jobs->sum('remaining_amount'),
-            ],
-        ]);
+    if (!$contractorId) {
+        return response()->json(['error' => 'Contractor is required'], 422);
     }
+
+    // ✅ Filter by contractor_id
+    $jobs = JobOrder::where('admin_or_user_id', $userId)
+        ->where('staff_type', 'contract')
+        ->where('staff_id', $contractorId)  // ✅ Add this filter
+        ->whereBetween('job_date', [$start, $end])
+        ->orderBy('job_date')
+        ->get();
+
+    $report = [];
+    foreach ($jobs as $job) {
+        // ✅ Parse work_type JSON and extract names
+        $workTypes = [];
+        if ($job->work_type) {
+            $decoded = json_decode($job->work_type, true);
+            if (is_array($decoded)) {
+                foreach ($decoded as $work) {
+                    if (isset($work['name'])) {
+                        $workTypes[] = $work['name'];
+                    }
+                }
+            }
+        }
+        
+        // ✅ Join work types with comma
+        $workTypeString = !empty($workTypes) ? implode(', ', $workTypes) : 'N/A';
+
+        $report[] = [
+            'job_no' => $job->job_order_no,
+            'date' => \Carbon\Carbon::parse($job->job_date)->format('d-M-Y'),
+            'work_type' => $workTypeString,  // ✅ Now it's comma separated
+            'total_amount' => $job->total_amount,
+            'paid_amount' => $job->paid_amount,
+            'remaining_amount' => $job->remaining_amount,
+            'status' => ucfirst($job->status),
+        ];
+    }
+
+    return response()->json([
+        'report' => $report,
+        'totals' => [
+            'total_amount' => $jobs->sum('total_amount'),
+            'paid_amount' => $jobs->sum('paid_amount'),
+            'remaining_amount' => $jobs->sum('remaining_amount'),
+        ],
+    ]);
+}
 
     public function staff_wise_report()
 {
