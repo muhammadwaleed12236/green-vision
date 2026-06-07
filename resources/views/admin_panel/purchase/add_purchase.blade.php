@@ -19,7 +19,7 @@
                             <strong>Success!</strong> {{ session('success') }}.
                         </div>
                     @endif
-                    <form action="{{ route('store-Purchase') }}" method="POST">
+                    <form action="{{ route('store-Purchase') }}" method="POST" id="purchaseForm">
                         @csrf
                         <div class="row mb-3">
                             <div class="col-md-4">
@@ -28,7 +28,7 @@
                                     value="{{ date('Y-m-d') }}">
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label">Party Name</label>
+                                <label class="form-label">Vendor Name</label>
                                 <select name="party_name" id="party_name" class="form-control vendor-select">
                                     <option value="" selected disabled>Choose One</option>
                                     @foreach($Vendors as $Vendor)
@@ -39,7 +39,7 @@
                                 </select>
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label">Party Code</label>
+                                <label class="form-label">Vendor Code</label>
                                 <input type="text" class="form-control party_code" name="party_code" readonly>
                             </div>
 
@@ -54,7 +54,7 @@
                                         <th>Measurement</th>
                                         <th>Rate</th>
                                         {{-- <th>Carton Qty</th> --}}
-                                        <th>Pcs</th>
+                                        <th>Feet (pcs)</th>
                                         <th>Gross Total</th>
                                         <th>Discount</th>
                                         <th>Amount</th>
@@ -98,58 +98,322 @@
         max-height: 220px;
         overflow-y: auto;
         width: 100%;
+        border-radius: 4px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
     }
 
     .autocomplete-item {
-        padding: 6px 8px;
+        padding: 8px 12px;
         cursor: pointer;
+        border-bottom: 1px solid #eee;
     }
 
+    .autocomplete-item:last-child {
+        border-bottom: none;
+    }
+
+    .autocomplete-item:hover,
     .autocomplete-item.active {
-        background: #f0f0f0;
+        background: #e9ecef;
     }
 
     .row-relative {
         position: relative;
+    }
+
+    /* Purchase Table Styling */
+    #purchaseTable {
+        width: 100%;
+        table-layout: fixed;
+    }
+
+    #purchaseTable thead th {
+        background: #f8f9fa;
+        font-weight: 600;
+        padding: 12px 8px;
+        white-space: nowrap;
+        vertical-align: middle;
+        font-size: 13px;
+    }
+
+    #purchaseTable tbody td {
+        padding: 8px 6px;
+        vertical-align: middle;
+    }
+
+    /* Column Widths */
+    #purchaseTable th:nth-child(1),
+    #purchaseTable td:nth-child(1) { width: 180px; } /* Item */
+
+    #purchaseTable th:nth-child(2),
+    #purchaseTable td:nth-child(2) { width: 100px; } /* Type */
+
+    #purchaseTable th:nth-child(3),
+    #purchaseTable td:nth-child(3) { width: 150px; } /* Measurement */
+
+    #purchaseTable th:nth-child(4),
+    #purchaseTable td:nth-child(4) { width: 90px; } /* Rate */
+
+    #purchaseTable th:nth-child(5),
+    #purchaseTable td:nth-child(5) { width: 90px; } /* Feet (pcs) */
+
+    #purchaseTable th:nth-child(6),
+    #purchaseTable td:nth-child(6) { width: 110px; } /* Gross Total */
+
+    #purchaseTable th:nth-child(7),
+    #purchaseTable td:nth-child(7) { width: 90px; } /* Discount */
+
+    #purchaseTable th:nth-child(8),
+    #purchaseTable td:nth-child(8) { width: 100px; } /* Amount */
+
+    #purchaseTable th:nth-child(9),
+    #purchaseTable td:nth-child(9) { width: 80px; } /* Action */
+
+    /* Input Styling in Table */
+    #purchaseTable .form-control {
+        width: 100% !important;
+        padding: 6px 8px;
+        font-size: 13px;
+        border-radius: 4px;
+    }
+
+    #purchaseTable .form-control:focus {
+        border-color: #80bdff;
+        box-shadow: 0 0 0 0.15rem rgba(0,123,255,.25);
+    }
+
+    #purchaseTable .form-control[readonly] {
+        background-color: #f8f9fa;
+    }
+
+    /* Delete Button */
+    #purchaseTable .remove-row {
+        padding: 4px 10px;
+        font-size: 12px;
+        white-space: nowrap;
+    }
+
+    /* Grand Total Row */
+    #purchaseTable tfoot td {
+        padding: 15px 8px;
+        background: #f8f9fa;
+    }
+
+    #purchaseTable tfoot #grandTotal {
+        font-size: 16px;
+        font-weight: 700;
+        text-align: center;
+    }
+
+    /* Hover effect on rows */
+    #purchaseTable tbody tr:hover {
+        background-color: #f5f5f5;
     }
 </style>
 
 <script>
     $(document).ready(function () {
 
+        // ========== PREVENT ENTER KEY FROM SUBMITTING FORM ==========
+        $('#purchaseForm').on('keydown', 'input, select', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                // Move to next input field
+                let inputs = $('#purchaseForm').find('input:visible, select:visible');
+                let currentIndex = inputs.index(this);
+                if (currentIndex < inputs.length - 1) {
+                    inputs.eq(currentIndex + 1).focus();
+                }
+                return false;
+            }
+        });
+
+        // ========== AJAX FORM SUBMISSION ==========
+        $('#purchaseForm').on('submit', function (e) {
+            e.preventDefault();
+
+            let form = $(this);
+            let submitBtn = form.find('button[type="submit"]');
+            let originalText = submitBtn.html();
+
+            // ========== CLIENT-SIDE VALIDATION ==========
+            let hasValidItem = false;
+            let errors = [];
+
+            $('#purchaseTable tbody tr').each(function () {
+                let row = $(this);
+                let itemName = row.find('.item-input').val().trim();
+                let pcs = parseInt(row.find('.pcx').val()) || 0;
+                let rate = parseInt(row.find('.rate').val()) || 0;
+
+                // If item has name, it must have feet/pcs
+                if (itemName && pcs <= 0) {
+                    errors.push('Item "' + itemName + '" requires Feet (pcs) value');
+                }
+
+                // Check if at least one valid item exists
+                if (itemName && pcs > 0 && rate > 0) {
+                    hasValidItem = true;
+                }
+            });
+
+            // Check if party is selected
+            if (!$('#party_name').val()) {
+                errors.push('Please select a Vendor');
+            }
+
+            // Check if at least one item exists
+            if (!hasValidItem) {
+                errors.push('At least one complete item is required (with Item Name, Rate, and Feet)');
+            }
+
+            // Show client-side errors
+            if (errors.length > 0) {
+                let errorHtml = '<ul style="text-align:left; margin:0; padding-left:20px;">';
+                errors.forEach(function(msg) {
+                    errorHtml += '<li>' + msg + '</li>';
+                });
+                errorHtml += '</ul>';
+
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Validation Error',
+                        html: errorHtml
+                    });
+                } else {
+                    alert('Validation Errors:\n' + errors.join('\n'));
+                }
+                return false;
+            }
+
+            // Disable button and show loading
+            submitBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Submitting...');
+
+            $.ajax({
+                url: form.attr('action'),
+                method: 'POST',
+                data: form.serialize(),
+                success: function (response) {
+                    submitBtn.prop('disabled', false).html(originalText);
+
+                    if (response.success) {
+                        // Show success message and redirect
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Success!',
+                                text: response.message || 'Purchase saved successfully!',
+                                timer: 1500,
+                                showConfirmButton: false
+                            }).then(() => {
+                                // Redirect to invoice
+                                if (response.redirect) {
+                                    window.location.href = response.redirect;
+                                }
+                            });
+                        } else {
+                            alert(response.message || 'Purchase saved successfully!');
+                            if (response.redirect) {
+                                window.location.href = response.redirect;
+                            }
+                        }
+                    }
+                },
+                error: function (xhr) {
+                    submitBtn.prop('disabled', false).html(originalText);
+
+                    if (xhr.status === 422) {
+                        // Validation errors
+                        let errors = xhr.responseJSON.errors;
+                        let errorHtml = '<ul style="text-align:left; margin:0; padding-left:20px;">';
+
+                        for (let field in errors) {
+                            errors[field].forEach(function(msg) {
+                                errorHtml += '<li>' + msg + '</li>';
+                            });
+                        }
+                        errorHtml += '</ul>';
+
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Validation Error',
+                                html: errorHtml
+                            });
+                        } else {
+                            let errorText = '';
+                            for (let field in errors) {
+                                errorText += errors[field].join('\n') + '\n';
+                            }
+                            alert('Validation Errors:\n' + errorText);
+                        }
+                    } else {
+                        // Server error
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error!',
+                                text: 'Something went wrong. Please try again.'
+                            });
+                        } else {
+                            alert('Something went wrong. Please try again.');
+                        }
+                    }
+                }
+            });
+        });
+
+        // ========== RESET FORM FUNCTION ==========
+        function resetForm() {
+            // Reset header fields
+            $('#purchase_date').val(new Date().toISOString().split('T')[0]);
+            $('#party_name').val('').trigger('change');
+            $('.party_code').val('');
+            $('#grandTotal').val('');
+
+            // Clear all rows and add fresh 5 rows
+            $('#purchaseTable tbody').empty();
+            for (let i = 0; i < 5; i++) {
+                $('#purchaseTable tbody').append(createRowHtml());
+            }
+        }
+
+        // Make reset function globally accessible
+        window.resetForm = resetForm;
+
+        // ========== ROW CREATION ==========
         function createRowHtml() {
             return `
     <tr class="purchase-row">
-        <td style="position:relative; min-width:185px;">
+        <td style="position:relative;">
             <input type="hidden" name="item_id[]" class="item-id">
             <input type="text" class="form-control item-input" name="item_name[]" autocomplete="off" placeholder="Type item name">
             <div class="autocomplete-list d-none"></div>
         </td>
 
-        <!-- TYPE - MUST HAVE name attribute -->
+        <!-- TYPE -->
         <td>
             <input type="text"
                    class="form-control product_mode"
                    name="product_mode[]"
-                   style="width:130px"
                    readonly>
         </td>
 
-        <!-- MEASUREMENT - MUST HAVE name attribute -->
+        <!-- MEASUREMENT -->
         <td>
             <input type="text"
                    class="form-control measurement"
                    name="measurement[]"
-                   style="width:170px"
                    readonly>
         </td>
 
         <td>
-            <input type="number" class="form-control rate" name="rate[]" min="0" style="width: 80px;">
+            <input type="number" class="form-control rate" name="rate[]" min="0">
         </td>
 
         <td>
-            <input type="number" class="form-control pcx" name="pcs[]" min="0" style="width: 80px;">
+            <input type="number" class="form-control pcx" name="pcs[]" min="0">
         </td>
 
         <td>
@@ -157,35 +421,51 @@
         </td>
 
         <td>
-            <input type="number" class="form-control discount" name="discount[]" min="0" style="width: 80px;">
+            <input type="number" class="form-control discount" name="discount[]" min="0">
         </td>
 
         <td>
-            <input type="number" class="form-control amount" name="amount[]" readonly style="width: 80px;">
+            <input type="number" class="form-control amount" name="amount[]" readonly>
         </td>
 
         <td>
-            <button type="button" class="btn btn-danger remove-row">Delete</button>
+            <button type="button" class="btn btn-danger btn-sm remove-row">Delete</button>
         </td>
     </tr>`;
         }
 
-        // initial rows
+        // Initial 5 rows
         for (let i = 0; i < 5; i++) {
             $('#purchaseTable tbody').append(createRowHtml());
         }
 
         function appendNewRow() {
             $('#purchaseTable tbody').append(createRowHtml());
+            // Scroll to new row
+            let newRow = $('#purchaseTable tbody tr').last();
+            newRow[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
 
-        // remove row
+        // Remove row
         $(document).on('click', '.remove-row', function () {
-            $(this).closest('tr').remove();
-            calculateGrandTotal();
+            let rowCount = $('#purchaseTable tbody tr').length;
+            if (rowCount > 1) {
+                $(this).closest('tr').remove();
+                calculateGrandTotal();
+            } else {
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Cannot Delete',
+                        text: 'At least one row must remain.',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                }
+            }
         });
 
-        // autocomplete search
+        // ========== AUTOCOMPLETE SEARCH ==========
         $(document).on('input', '.item-input', function () {
             let input = $(this);
             let row = input.closest('tr');
@@ -217,7 +497,14 @@
             });
         });
 
-        // select item
+        // Hide autocomplete when clicking outside
+        $(document).on('click', function (e) {
+            if (!$(e.target).closest('.item-input, .autocomplete-list').length) {
+                $('.autocomplete-list').addClass('d-none');
+            }
+        });
+
+        // Select item from autocomplete
         $(document).on('click', '.autocomplete-item', function () {
             let it = $(this).data('item');
             let row = $(this).closest('tr');
@@ -225,10 +512,10 @@
             row.find('.item-input').val(it.item_name);
             row.find('.item-id').val(it.id);
 
-            // TYPE - will now be submitted
+            // TYPE
             row.find('.product_mode').val(it.product_mode || '');
 
-            // MEASUREMENT FULL TEXT - will now be submitted
+            // MEASUREMENT
             if (it.height && it.width && it.area) {
                 row.find('.measurement')
                     .val(`${it.height} × ${it.width} = ${it.area} Sq.ft`);
@@ -238,8 +525,8 @@
                 row.find('.measurement').val('');
             }
 
-            // rate
-            row.find('.rate').val(parseInt(it.retail_price) || 0);
+            // Rate
+            row.find('.rate').val(parseInt(it.wholesale_price) || 0);
 
             row.find('.autocomplete-list').addClass('d-none');
 
@@ -247,7 +534,7 @@
             autoAddIfNeeded();
         });
 
-        // calculations (NO DECIMALS)
+        // ========== CALCULATIONS ==========
         $(document).on('input', '.rate, .pcx, .discount', function () {
             let row = $(this).closest('tr');
             calculateRow(row);
@@ -276,98 +563,58 @@
             $('#grandTotal').val(total);
         }
 
+        // ========== AUTO ADD ROW WHEN NEEDED ==========
+        function isRowFilled(row) {
+            let itemName = row.find('.item-input').val().trim();
+            let rate = parseInt(row.find('.rate').val()) || 0;
+            let pcs = parseInt(row.find('.pcx').val()) || 0;
+
+            // Row is considered filled if it has item name AND (rate OR pcs)
+            return itemName && (rate > 0 || pcs > 0);
+        }
+
+        function isRowEmpty(row) {
+            let itemName = row.find('.item-input').val().trim();
+            let rate = parseInt(row.find('.rate').val()) || 0;
+            let pcs = parseInt(row.find('.pcx').val()) || 0;
+
+            return !itemName && rate === 0 && pcs === 0;
+        }
+
         function autoAddIfNeeded() {
-            let lastRow = $('#purchaseTable tbody tr').last();
-            let hasData =
-                lastRow.find('.item-input').val().trim() ||
-                parseInt(lastRow.find('.rate').val()) > 0 ||
-                parseInt(lastRow.find('.pcx').val()) > 0;
+            let rows = $('#purchaseTable tbody tr');
+            let emptyRowExists = false;
 
-            if (hasData) {
-                let emptyExists = false;
-                $('#purchaseTable tbody tr').each(function () {
-                    let r = $(this);
-                    if (
-                        !r.find('.item-input').val().trim() &&
-                        !parseInt(r.find('.rate').val()) &&
-                        !parseInt(r.find('.pcx').val())
-                    ) {
-                        emptyExists = true;
-                    }
-                });
-
-                if (!emptyExists) {
-                    appendNewRow();
+            rows.each(function () {
+                if (isRowEmpty($(this))) {
+                    emptyRowExists = true;
+                    return false; // break loop
                 }
+            });
+
+            // If no empty row exists, add one
+            if (!emptyRowExists) {
+                appendNewRow();
             }
         }
 
-    });
-</script>
+        // Make functions globally accessible
+        window.createRowHtml = createRowHtml;
+        window.autoAddIfNeeded = autoAddIfNeeded;
 
-
-{{-- Place just before existing script tag --}}
-
-<script>
-    // repopulate rows from old input if validation failed
-    const oldItems = @json(old('item_name', []));
-    const oldRates = @json(old('rate', []));
-    const oldCartons = @json(old('product_mode', []));
-    const measurement = @json(old('measurement', []));
-    const oldPcs = @json(old('pcs', []));
-    const oldGross = @json(old('gross_total', []));
-    const oldDiscount = @json(old('discount', []));
-    const oldAmount = @json(old('amount', []));
-    const oldPcsCarton = @json(old('pcs_carton', []));
-
-    $(document).ready(function () {
-        // if old inputs exist, clear tbody and populate from old arrays
-        if (oldItems && oldItems.length > 0) {
-            $('#purchaseTable tbody').empty();
-            for (let i = 0; i < oldItems.length; i++) {
-                let html = createRowHtml();
-                $('#purchaseTable tbody').append(html);
-                let last = $('#purchaseTable tbody tr').last();
-                last.find('.item-input').val(oldItems[i] || '');
-                last.find('.rate').val(oldRates[i] ?? '');
-                last.find('.measurement').val(oldCartons[i] ?? '');
-                last.find('.pcx').val(oldPcs[i] ?? '');
-                last.find('.gross-total').val(oldGross[i] ?? '');
-                last.find('.discount').val(oldDiscount[i] ?? '');
-                last.find('.amount').val(oldAmount[i] ?? '');
-                last.find('.product_mode').val(oldPcsCarton[i] ?? '');
-            }
-            // after restoring old rows ensure an empty row exists at the end
-            autoAddIfNeeded();
-        }
     });
 
+    // ========== VENDOR SELECT CHANGE ==========
     $(document).on('change', '.vendor-select', function () {
         let partyCode = $(this).find(':selected').data('code') || '';
         $('.party_code').val(partyCode);
     });
 
-    // SweetAlert for errors
-    @if ($errors->any())
-        let errorList = [];
-        @foreach ($errors->all() as $err)
-            errorList.push(@json($err));
-        @endforeach
-
-        $(document).ready(function () {
-            let html = '<ul style="text-align:left;">';
-            errorList.forEach(function (e) { html += '<li>' + e + '</li>'; });
-            html += '</ul>';
-            // require SweetAlert2 library in layout, or use native alert as fallback
-            if (typeof Swal !== 'undefined') {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Validation error',
-                    html: html,
-                });
-            } else {
-                alert(errorList.join("\n"));
-            }
-        });
-    @endif
+    // ========== SELECT2 FOR VENDOR SEARCH ==========
+    $('.vendor-select').select2({
+        placeholder: 'Search and select vendor',
+        allowClear: true,
+        width: '100%'
+    });
 </script>
+

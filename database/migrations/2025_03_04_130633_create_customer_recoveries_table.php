@@ -13,9 +13,14 @@ return new class extends Migration
     {
         Schema::create('customer_recoveries', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('customer_ledger_id')->nullable();
+            $table->decimal('amount_paid', 15, 2)->default(0);
+            $table->string('salesman')->nullable();
+            $table->date('date')->nullable();
+            $table->string('remarks')->nullable();
+            $table->foreignId('admin_or_user_id')->constrained('users')->onDelete('cascade');
             $table->timestamps();
             $table->softDeletes();
-
         });
     }
 

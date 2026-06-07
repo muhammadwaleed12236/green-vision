@@ -13,7 +13,13 @@ return new class extends Migration
     {
         Schema::create('job_items', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('job_order_id')->nullable();
+            $table->unsignedBigInteger('product_id')->nullable();
+            $table->integer('quantity')->default(0);
+            $table->text('specifications')->nullable();
+            $table->foreignId('admin_or_user_id')->constrained('users')->onDelete('cascade');
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

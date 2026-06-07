@@ -51,7 +51,15 @@
                         <div class="col-md-3">
                             <div class="mb-3">
                                 <label class="form-label fw-bold">Customer Name:</label>
-                                <p class="mb-0">{{ $localSale->customer->customer_name ?? 'N/A' }}</p>
+                                <p class="mb-0">
+                                    @if ($localSale->party_type === 'customer')
+                                        {{ $localSale->customer->customer_name ?? 'N/A' }}
+                                    @elseif ($localSale->party_type === 'vendor')
+                                        {{ $localSale->vendor->Party_name ?? 'N/A' }}
+                                    @else
+                                        {{ $localSale->customer_shopname ?? 'Walk-in' }}
+                                    @endif
+                                </p>
                             </div>
                         </div>
 

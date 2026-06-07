@@ -13,7 +13,11 @@ return new class extends Migration
     {
         Schema::create('designations', function (Blueprint $table) {
             $table->id();
+            $table->string('designation_name')->unique();
+            $table->text('description')->nullable();
+            $table->foreignId('admin_or_user_id')->constrained('users')->onDelete('cascade');
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

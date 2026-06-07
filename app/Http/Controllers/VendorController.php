@@ -319,14 +319,18 @@ class VendorController extends Controller
             ]);
         }
 
-        // Step 3: Add to Expenses
+        // Step 3: Add to Expenses - First get or create BILTY expense category
+        $biltyExpense = \App\Models\Expense::firstOrCreate(
+            ['expense_name' => 'BILTY EXPENSES', 'admin_or_user_id' => Auth::id()],
+            ['description' => 'Bilty/Transport Expenses', 'amount' => 0, 'expense_date' => now()]
+        );
+
         AddExpense::create([
             'admin_or_user_id' => Auth::id(),
-            'expense_category' => 'BILTY EXPENSES',
-            'title' => $vendor_name,
+            'expense_id' => $biltyExpense->id,
             'amount' => $request->amount,
-            'date' => $request->date,
-            'description' => $request->description,
+            'expense_date' => $request->date,
+            'description' => $vendor_name . ' - ' . ($request->description ?? 'Bilty'),
         ]);
 
         return redirect()->back()->with('success', 'Vendor Builty added and ledger updated successfully.');

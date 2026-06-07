@@ -1,154 +1,217 @@
 @include('admin_panel.include.header_include')
 <style>
-    .wide-input {
-        min-width: 150px;
+    .info-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
     }
-
+    .info-card h5 {
+        margin: 0;
+        font-weight: 600;
+    }
+    .info-card p {
+        margin: 5px 0 0 0;
+        font-size: 14px;
+        opacity: 0.9;
+    }
     table input {
         font-size: 14px;
-        padding: 6px 10px;
+        padding: 8px 10px;
+    }
+    .table thead th {
+        background-color: #f1f4f6;
+        font-weight: 600;
+        color: #2c3e50;
+        border-bottom: 2px solid #dee2e6;
+    }
+    .return-qty {
+        background-color: #fff3cd;
+        font-weight: 600;
+    }
+    .return-amount {
+        background-color: #d1ecf1;
+        font-weight: 600;
+        color: #0c5460;
     }
 </style>
+
 <div class="main-wrapper">
     @include('admin_panel.include.navbar_include')
     @include('admin_panel.include.admin_sidebar_include')
 
     <div class="page-wrapper">
         <div class="content">
-            <div class="card p-4">
-                <h4 class="mb-4 text-center fw-bold text-primary">Purchase Return - Invoice #{{ $purchase->invoice_number }}</h4>
+            <div class="page-header">
+                <div class="page-title">
+                    <h4>Purchase Return</h4>
+                    <h6>Return items from purchase invoice</h6>
+                </div>
+            </div>
 
-                <form action="{{ route('purchase.return.store') }}" method="POST">
-                    @csrf
-                    <input type="hidden" name="purchase_id" value="{{ $purchase->id }}">
-                    <input type="hidden" name="invoice_number" value="{{ $purchase->invoice_number }}">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <form action="{{ route('purchase.return.store') }}" method="POST">
+                        @csrf
+                        <input type="hidden" name="purchase_id" value="{{ $purchase->id }}">
 
-                    <div class="row mb-3">
-                        <div class="col-md-3">
-                            <label class="form-label">Purchase Date</label>
-                            <input type="text" class="form-control wide-input" value="{{ $purchase->purchase_date }}" readonly>
+                        <!-- Info Card -->
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="info-card">
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <h5>{{ $purchase->invoice_number }}</h5>
+                                            <p>Invoice Number</p>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <h5>{{ $purchase->purchase_date }}</h5>
+                                            <p>Purchase Date</p>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <h5>{{ $purchase->vendor->Party_name ?? 'N/A' }}</h5>
+                                            <p>Vendor Name</p>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <h5>Rs. {{ number_format($purchase->grand_total, 0) }}</h5>
+                                            <p>Grand Total</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="col-md-3">
-                            <label class="form-label">Party Code</label>
-                            <input type="text" name="Party_code" class="form-control wide-input" value="{{ $purchase->vendor->Party_code }}" readonly>
+
+                        <input type="hidden" name="party_name" value="{{ $purchase->party_name }}">
+
+                        <div class="row mb-3">
+                            <div class="col-md-3">
+                                <label class="form-label fw-bold">Return Date <span class="text-danger">*</span></label>
+                                <input type="date" name="return_date" value="{{ date('Y-m-d') }}" class="form-control" required>
+                            </div>
                         </div>
-                        <div class="col-md-3">
-                            <label class="form-label">Party Name</label>
-                            <input type="text" class="form-control wide-input" name="party_name" value="{{ $purchase->party_name }}" readonly>
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label">Return Date</label>
-                            <input type="date" name="return_date" value="{{ date('Y-m-d') }}" class="form-control wide-input" >
-                        </div>
-                    </div>
 
                     <div class="table-responsive">
-                        <table class="table table-bordered align-middle text-center">
+                        <table class="table table-hover table-bordered">
                             <thead>
                                 <tr>
-                                    <th>Category</th>
-                                    <th>Subcategory</th>
-                                    <th>Item</th>
+                                    <th style="width: 35%">Item Name</th>
                                     <th>Rate</th>
+                                    <th>Discount</th>
                                     <th>Purchased Qty</th>
                                     <th>Return Qty</th>
-                                    <th>Pcs/Carton</th>
-                                    <th>Measurement</th> {{-- new --}}
                                     <th>Return Amount</th>
-                                    <th>Return Liters</th>
                                 </tr>
                             </thead>
                             <tbody>
-                               @foreach($purchase->item as $index => $item)
-<tr>
-    <td style="width: 160px;"><input type="text" name="category[]" class="form-control wide-input" value="{{ $purchase->category[$index] ?? '' }}" readonly></td>
-    <td style="width: 160px;"><input type="text" name="subcategory[]" class="form-control wide-input" value="{{ $purchase->subcategory[$index] ?? '' }}" readonly></td>
-    <td style="width: 160px;"><input type="text" name="item[]" class="form-control wide-input" value="{{ $item }}" readonly></td>
-    <td style="width: 160px;"><input type="text" name="rate[]" class="form-control wide-input rate" value="{{ $purchase->rate[$index] ?? 0 }}" readonly></td>
-    <td style="width: 160px;"><input type="text" name="carton_qty[]" class="form-control wide-input" value="{{ $purchase->carton_qty[$index] ?? 0 }}" readonly></td>
-
-    <td style="width: 160px;">
-        <input type="number"
-            name="return_qty[]"
-            class="form-control wide-input return-qty"
-            data-index="{{ $index }}"
-            data-rate="{{ $purchase->rate[$index] ?? 0 }}"
-            data-pcs="{{ $purchase->pcs_carton[$index] ?? 0 }}"
-            data-measurement="{{ $purchase->size[$index] ?? 0 }}"
-            max="{{ $purchase->carton_qty[$index] ?? 0 }}"
-            min="0"
-            value="0"
-            required>
-    </td>
-
-    <td style="width: 160px;">
-        <input type="text" class="form-control wide-input" value="{{ $purchase->pcs_carton[$index] ?? 0 }}" readonly>
-        <input type="hidden" name="pcs_carton[]" value="{{ $purchase->pcs_carton[$index] ?? 0 }}">
-    </td>
-
-    <!-- measurement (size) -->
-    <td style="width: 160px;">
-        <input type="text" class="form-control wide-input" value="{{ $purchase->size[$index] ?? '' }}" readonly>
-        <input type="hidden" name="size[]" value="{{ $purchase->size[$index] ?? '' }}">
-    </td>
-
-                                    <td style="width: 160px;">
-                                        <input type="text" name="return_amount[]"
-                                            class="form-control wide-input return-amount"
-                                            id="return-amount-{{ $index }}"
-                                            readonly>
-                                    </td>
-
-                                    <td style="width: 160px;">
-                                        <input type="text" name="return_liters[]"
-                                            class="form-control wide-input return-liters"
-                                            id="return-liters-{{ $index }}"
-                                            readonly>
-                                    </td>
-                                </tr>
-                                @endforeach
+                                @if(is_array($purchase->item))
+                                    @foreach($purchase->item as $index => $item)
+                                    <tr>
+                                        <td>
+                                            <input type="text" name="item[]" class="form-control-plaintext fw-bold" value="{{ $item }}" readonly>
+                                        </td>
+                                        <td>
+                                            <input type="number" name="rate[]" class="form-control-plaintext text-center rate" value="{{ $purchase->rate[$index] ?? 0 }}" readonly>
+                                        </td>
+                                        <td>
+                                            <input type="number" name="discount[]" class="form-control-plaintext text-center discount" value="{{ $purchase->discount[$index] ?? 0 }}" readonly>
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="badge bg-info purchased-qty" data-max="{{ $purchase->pcs[$index] ?? 0 }}">{{ $purchase->pcs[$index] ?? 0 }}</span>
+                                        </td>
+                                        <td>
+                                            <input type="number"
+                                                name="return_qty[]"
+                                                class="form-control return-qty text-center"
+                                                data-index="{{ $index }}"
+                                                data-max="{{ $purchase->pcs[$index] ?? 0 }}"
+                                                step="0.01"
+                                                min="0"
+                                                max="{{ $purchase->pcs[$index] ?? 0 }}"
+                                                placeholder="0">
+                                            <small class="text-danger error-msg d-none" id="error-{{ $index }}">Max: {{ $purchase->pcs[$index] ?? 0 }}</small>
+                                        </td>
+                                        <td>
+                                            <input type="text" name="return_amount[]"
+                                                class="form-control return-amount text-center"
+                                                id="return-amount-{{ $index }}"
+                                                readonly>
+                                        </td>
+                                    </tr>
+                                    @endforeach
+                                @endif
                             </tbody>
-
+                            <tfoot class="table-light">
+                                <tr>
+                                    <th colspan="5" class="text-end">Total Return Amount:</th>
+                                    <th class="text-center">
+                                        <input type="text" id="grand_total" class="form-control fw-bold text-danger text-center" readonly>
+                                    </th>
+                                </tr>
+                            </tfoot>
                         </table>
                     </div>
 
-                    <div class="d-flex justify-content-end mt-3">
-                        <button type="submit" class="btn btn-primary btn-lg">Submit Return</button>
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="{{ route('all-Purchases') }}" class="btn btn-secondary px-4">
+                            <i data-feather="arrow-left" class="me-1"></i> Back to Purchases
+                        </a>
+                        <button type="submit" class="btn btn-danger px-5 shadow">
+                            <i data-feather="rotate-ccw" class="me-1"></i> Submit Return
+                        </button>
+                    </div>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 </div>
+</div>
 
 @include('admin_panel.include.footer_include')
+
 <script>
-    document.querySelectorAll('.return-qty').forEach((input) => {
-        input.addEventListener('input', function () {
-            let index = this.dataset.index;
-            let rate = parseFloat(this.dataset.rate);
-            let pcs = parseFloat(this.dataset.pcs);
-            let measurementRaw = this.dataset.measurement.trim().toLowerCase(); // "700 ml" or "1 liter"
-            let qty = parseFloat(this.value) || 0;
+    document.addEventListener('input', function (e) {
+        if (e.target.classList.contains('return-qty')) {
+            let input = e.target;
+            let index = input.dataset.index;
+            let maxQty = parseFloat(input.dataset.max) || 0;
+            let row = input.closest('tr');
+            let errorMsg = document.getElementById(`error-${index}`);
 
-            // Return Amount
-            let amount = qty * rate;
-            document.getElementById(`return-amount-${index}`).value = amount.toFixed(2);
+            let rate = parseFloat(row.querySelector('.rate').value) || 0;
+            let discount = parseFloat(row.querySelector('.discount').value) || 0;
+            let purchasedQty = parseFloat(row.querySelector('.purchased-qty').dataset.max) || 1;
+            let returnQty = parseFloat(input.value) || 0;
 
-            // Convert measurement to liters
-            let measurementValue = 0;
-            if (measurementRaw.includes('ml')) {
-                measurementValue = parseFloat(measurementRaw) / 1000;
-            } else if (measurementRaw.includes('liter')) {
-                measurementValue = parseFloat(measurementRaw);
+            // Validation: Check if return qty exceeds purchased qty
+            if (returnQty > maxQty) {
+                input.classList.add('is-invalid');
+                errorMsg.classList.remove('d-none');
+                returnQty = maxQty;
+                input.value = maxQty;
             } else {
-                measurementValue = 0; // fallback
+                input.classList.remove('is-invalid');
+                errorMsg.classList.add('d-none');
             }
 
-            // Return Liters = return_qty * pcs_per_carton * measurement_in_liters
-            let total = qty * pcs * measurementValue;
-            let litersFormatted = (total % 1 === 0) ? total.toFixed(0) : total.toFixed(1);
-            document.getElementById(`return-liters-${index}`).value = litersFormatted;
-        });
+            // Calculate: (rate × purchased_qty - discount) / purchased_qty × return_qty
+            let grossTotal = rate * purchasedQty;
+            let netTotal = grossTotal - discount;
+            let effectiveRate = purchasedQty > 0 ? netTotal / purchasedQty : rate;
+            let returnAmount = returnQty * effectiveRate;
+
+            document.getElementById(`return-amount-${index}`).value = returnAmount.toFixed(2);
+
+            calculateGrandTotal();
+        }
     });
+
+    function calculateGrandTotal() {
+        let total = 0;
+        document.querySelectorAll('.return-amount').forEach(el => {
+            total += parseFloat(el.value) || 0;
+        });
+        document.getElementById('grand_total').value = 'Rs. ' + total.toLocaleString(undefined, {minimumFractionDigits: 2});
+    }
 </script>

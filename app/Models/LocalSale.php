@@ -18,9 +18,38 @@ class LocalSale extends Model
         return $this->belongsTo(Customer::class, 'customer_id');
     }
 
+    public function vendor()
+    {
+        return $this->belongsTo(Vendor::class, 'vendor_id');
+    }
+
     public function product()
     {
         return $this->belongsTo(Product::class, 'product_id');
+    }
+
+    // Get party name based on party type
+    public function getPartyNameAttribute()
+    {
+        if ($this->party_type === 'vendor' && $this->vendor) {
+            return $this->vendor->Party_name;
+        } elseif ($this->party_type === 'customer' && $this->customer) {
+            return $this->customer->customer_name ?? $this->customer->shop_name;
+        } else {
+            return $this->customer_shopname ?? 'Walk-in';
+        }
+    }
+
+    // Get party type display
+    public function getPartyTypeDisplayAttribute()
+    {
+        if ($this->party_type === 'vendor') {
+            return 'Vendor';
+        } elseif ($this->party_type === 'customer') {
+            return 'Customer';
+        } else {
+            return 'Walk-in';
+        }
     }
 
     // LocalSale Model mein yeh relationship add karo

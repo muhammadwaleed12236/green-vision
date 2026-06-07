@@ -13,7 +13,13 @@ return new class extends Migration
     {
         Schema::create('contractor_recoveries', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('contractor_ledger_id')->nullable();
+            $table->decimal('amount', 15, 2)->default(0);
+            $table->date('recovery_date')->nullable();
+            $table->string('remarks')->nullable();
+            $table->foreignId('admin_or_user_id')->constrained('users')->onDelete('cascade');
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

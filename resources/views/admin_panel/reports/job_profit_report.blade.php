@@ -94,15 +94,14 @@
                     </div>
 
                     {{-- TABLE --}}
-                    {{-- <div class="table-responsive">
+                    <div class="table-responsive">
                         <table class="table table-bordered">
                             <thead>
                                 <tr>
                                     <th>Job No</th>
-                                    <th>Staff</th>
+                                    <th>Date</th>
+                                    <th>Assigned To</th>
                                     <th>Job Amount</th>
-                                    <th>Total Items</th>
-                                    <th>Total Stock Out</th>
                                     <th>Job Profit</th>
                                 </tr>
                             </thead>
@@ -111,12 +110,12 @@
 
                             <tfoot>
                                 <tr>
-                                    <td colspan="5" class="text-end">Net Profit</td>
+                                    <td colspan="4" class="text-end">Net Profit</td>
                                     <td id="footerNetProfit">0</td>
                                 </tr>
                             </tfoot>
                         </table>
-                    </div> --}}
+                    </div>
 
                 </div>
             </div>
@@ -151,12 +150,11 @@
                     html += `
     <tr>
         <td>${job.job}</td>
+        <td>${job.date}</td>
         <td>${job.staff}</td>
         <td>${job.job_amount}</td>
-        <td>${job.total_items}</td>
-        <td>${job.stock_cost}</td>
-        <td class="${parseFloat(job.profit.replace(/,/g, '')) < 0 ? 'text-danger' : 'text-success'} fw-bold">
-            ${job.profit}
+        <td class="text-success fw-bold">
+            ${job.job_amount}
         </td>
     </tr>`;
                 });

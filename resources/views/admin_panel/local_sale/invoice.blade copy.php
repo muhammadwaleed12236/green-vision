@@ -29,15 +29,15 @@
                         <div class="d-flex align-items-center">
                             <img src="{{ url('small-logo.png') }}" alt="Logo" style="max-width:100px;">
                             <div class="ms-3">
-                                <h5 class="mb-0 fw-bold">Raj Glass</h5>
+                                <h5 class="mb-0 fw-bold">Green Vision</h5>
                                 <small class="text-muted">Glass & Aluminum Works</small>
                             </div>
                         </div>
 
                         <div class="text-center">
-                            <h6 class="fw-bold mb-1">Raj Glass</h6>
-                            <small>6-B Block-E, Latifabad No-08, Hyderabad</small><br>
-                            <small>0314-4021603 | 0334-2611233</small>
+                            <h6 class="fw-bold mb-1">Green Vision</h6>
+                            <small>Shop # 37/8 saddar cant, Hyderabad</small><br>
+                            <small>0300 2529972 | 0334-2611233</small>
                         </div>
 
                         <div class="text-end">
@@ -112,7 +112,7 @@
                     <!-- SIGNATURE -->
                     <div class="row mt-4">
                         <div class="col-6">
-                            <p class="fw-bold mb-0">For Raj Glass</p>
+                            <p class="fw-bold mb-0">For Green Vision</p>
                             <small>Authorized Signature</small>
                         </div>
                         <div class="col-6 text-end">

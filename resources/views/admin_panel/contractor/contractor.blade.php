@@ -28,29 +28,37 @@
                     <table class="table datanew">
                         <thead>
                             <tr>
-                                <th>#</th>
-                                <th>Name</th>
-                                <th>Address</th>
-                                <th>Phone</th>
-                                <th>Opening Balance</th>
+                                <th>id</th>
+                                <th>admin_or_user_id</th>
+                                <th>contractor_name</th>
+                                <th>phone_number</th>
+                                <th>address</th>
+                                <th>opening_balance</th>
+                                <th>created_at</th>
+                                <th>updated_at</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach($contractors as $key => $contractor)
                                 <tr>
-                                    <td>{{ $key + 1 }}</td>
+                                    <td>{{ $contractor->id }}</td>
+                                    <td>{{ $contractor->admin_or_user_id }}</td>
                                     <td>{{ $contractor->contractor_name }}</td>
-                                    <td>{{ $contractor->address }}</td>
                                     <td>{{ $contractor->phone_number }}</td>
+                                    <td>{{ $contractor->address }}</td>
                                     <td>{{ number_format($contractor->opening_balance) }}</td>
+                                    <td>{{ $contractor->created_at }}</td>
+                                    <td>{{ $contractor->updated_at }}</td>
                                     <td>
-                                        @if(Auth::check() && Auth::user()->usertype == 'admin')
+                                        <div class="d-flex gap-1">
                                             <button class="btn btn-sm btn-primary editContractorBtn"
                                                 data-id="{{ $contractor->id }}">Edit</button>
+                                            <button class="btn btn-sm btn-secondary copyContractorBtn" 
+                                                data-name="{{ $contractor->contractor_name }}">Copy</button>
                                             <button class="btn btn-sm btn-danger deleteContractorBtn"
                                                 data-id="{{ $contractor->id }}">Delete</button>
-                                        @endif
+                                        </div>
                                     </td>
                                 </tr>
                             @endforeach
@@ -195,6 +203,20 @@
         });
     });
 
+
+    $(document).on("click", ".copyContractorBtn", function() {
+        let name = $(this).data('name');
+        navigator.clipboard.writeText(name).then(() => {
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'success',
+                title: 'Name copied: ' + name,
+                showConfirmButton: false,
+                timer: 1500
+            });
+        });
+    });
 
     $(document).on("click", ".deleteContractorBtn", function (e) {
         e.preventDefault();

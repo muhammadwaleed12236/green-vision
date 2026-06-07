@@ -2,10 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Category;
 use App\Models\Product;
-use App\Models\Size;
-use App\Models\SubCategory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -18,64 +15,114 @@ class ProductController extends Controller
         }
         $user = Auth::user();
         if ($user->usertype === 'admin') {
-            $products = Product::where('admin_or_user_id', $user->id)->get();
-            $categories = Category::all();
-            $sizes = Size::all();
+            $products = Product::where('admin_or_user_id', $user->id)
+                              ->whereNull('deleted_at')
+                              ->get();
 
-            return view('admin_panel.product.add_product', compact('products', 'categories', 'sizes'));
+            return view('admin_panel.product.add_product', compact('products'));
         } elseif ($user->usertype === 'distributor') {
             $products = \App\Models\DistributorProduct::where('distributor_id', $user->user_id)->get();
-            $categories = Category::all();
-            $sizes = Size::all();
 
-            return view('admin_panel.product.distributor_product_stock', compact('products', 'categories', 'sizes'));
+            return view('admin_panel.product.distributor_product_stock', compact('products'));
         }
 
         return redirect()->back();
     }
 
-    public function fetchSubCategories(Request $request)
-    {
-        $subCategories = SubCategory::where('category_name', $request->category_id)->get();
-
-        return response()->json($subCategories);
-    }
+   
 
     public function store_product(Request $request)
     {
-        Product::create([
+        // dd($request->toArray());
+        // Validate the request
+        $request->validate([
+            'item_name' => 'required|string|max:255',
+            'product_mode' => 'required|in:simple,measurements',
+            'wholesale_price' => 'required|numeric|min:0',
+            'retail_price' => 'required|numeric|min:0',
+            'height' => 'nullable|numeric|min:0',
+            'width' => 'nullable|numeric|min:0',
+            'area' => 'nullable|numeric|min:0',
+        ]);
+
+        // Generate item code
+        $itemCode = Product::generateItemcodeNo();
+        
+        // Check if a soft-deleted product with this code exists
+        $existingProduct = Product::withTrashed()->where('item_code', $itemCode)->first();
+        
+        // Prepare data based on product mode
+        $data = [
             'admin_or_user_id' => Auth::id(),
-            'item_code' => Product::generateItemcodeNo(),
             'item_name' => $request->item_name,
-
             'product_mode' => $request->product_mode,
-
-            'height' => $request->height,
-            'width' => $request->width,
-            'area' => $request->area,
-
             'wholesale_price' => $request->wholesale_price,
             'retail_price' => $request->retail_price,
-        ]);
+        ];
+
+        // Set measurement fields based on product mode
+        if ($request->product_mode === 'measurements') {
+            $data['height'] = $request->height;
+            $data['width'] = $request->width;
+            $data['area'] = $request->area;
+        } else {
+            // For simple products, set measurement fields to null
+            $data['height'] = null;
+            $data['width'] = null;
+            $data['area'] = null;
+        }
+
+        // If soft-deleted product exists, restore and update it
+        if ($existingProduct && $existingProduct->trashed()) {
+            $existingProduct->restore();
+            $existingProduct->update($data);
+        } else {
+            // Create new product with item code
+            $data['item_code'] = $itemCode;
+            Product::create($data);
+        }
 
         return back()->with('success', 'Product added successfully');
     }
 
-    public function update_product(Request $request, $id)
+    public function update_product(Request $request)
     {
-        $product_id = $id;
-        Product::where('id', $product_id)->update([
-            'category' => $request->category,
-            'sub_category' => $request->sub_category,
-            'item_name' => $request->item_name,
-            'pcs_in_carton' => $request->pcs_in_carton,
-            'initial_stock' => $request->initial_stock,
-            'loose_pieces' => $request->loose_pieces,
-            'wholesale_price' => $request->wholesale_price,
-            'carton_quantity' => $request->carton_quantity,
-            'retail_price' => $request->retail_price,
-            'alert_quantity' => $request->alert_quantity,
+        // Validate the request
+        $request->validate([
+            'product_id' => 'required|exists:products,id',
+            'item_name' => 'required|string|max:255',
+            'product_mode' => 'required|in:simple,measurements',
+            'wholesale_price' => 'required|numeric|min:0',
+            'retail_price' => 'required|numeric|min:0',
+            'height' => 'nullable|numeric|min:0',
+            'width' => 'nullable|numeric|min:0',
+            'area' => 'nullable|numeric|min:0',
         ]);
+
+        // Get product ID from request
+        $id = $request->product_id;
+
+        // Prepare data based on product mode
+        $data = [
+            'item_name' => $request->item_name,
+            'product_mode' => $request->product_mode,
+            'wholesale_price' => $request->wholesale_price,
+            'retail_price' => $request->retail_price,
+        ];
+
+        // Set measurement fields based on product mode
+        if ($request->product_mode === 'measurements') {
+            $data['height'] = $request->height;
+            $data['width'] = $request->width;
+            $data['area'] = $request->area;
+        } else {
+            // For simple products, set measurement fields to null
+            $data['height'] = null;
+            $data['width'] = null;
+            $data['area'] = null;
+        }
+
+        Product::where('id', $id)->update($data);
 
         return redirect()->back()->with('success', 'Product updated successfully');
     }
@@ -84,10 +131,8 @@ class ProductController extends Controller
     {
         $product = Product::findOrFail($id);
         $products = Product::all();
-        $categories = Category::all();
-        $sizes = Size::all(); // Size table se sab sizes le rahe hain
 
-        return view('admin_panel.product.edit_product', compact('product', 'products', 'categories', 'sizes'));
+        return view('admin_panel.product.edit_product', compact('product', 'products'));
     }
 
     public function delete($id)

@@ -21,7 +21,7 @@ class ContractorRecovery extends Model
             'id',                    // Contractor table ki primary key
             'contractor_ledger_id',  // ContractorRecovery me foreign key
             'contractor_id'          // ContractorLedger me foreign key
-        );
+        )->withTrashed();
     }
 
     public function ledger()

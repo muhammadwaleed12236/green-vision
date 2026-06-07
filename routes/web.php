@@ -12,11 +12,13 @@ use App\Http\Controllers\GeneralReportController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\JobOrderController;
 use App\Http\Controllers\LocalSaleController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\PurchaseReturnController;
+use App\Http\Controllers\QATestController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SaleController;
 use App\Http\Controllers\SaleReturnController;
@@ -118,13 +120,20 @@ Route::delete('/delete-stockout', [StockOutController::class, 'delete_stockout']
 Route::delete('/delete-job-stockout', [StockOutController::class, 'delete_stockout'])->name('delete-job-stockout');
 Route::get('/stockout-details/{jobId}', [StockOutController::class, 'stockout_details'])->name('stockout-details');
 
+// Cash Book / Ledger
+Route::get('/cash-book', [App\Http\Controllers\CashBookController::class, 'index'])->name('cash-book');
+Route::get('/cash-book/history', [App\Http\Controllers\CashBookController::class, 'history'])->name('cash-book.history');
+Route::post('/cash-book/store', [App\Http\Controllers\CashBookController::class, 'store'])->name('cash-book.store');
+Route::post('/cash-book/update', [App\Http\Controllers\CashBookController::class, 'update'])->name('cash-book.update');
+Route::delete('/cash-book/delete/{id}', [App\Http\Controllers\CashBookController::class, 'delete'])->name('cash-book.delete');
+
 // Product
 Route::get('/product', [ProductController::class, 'product'])->name('product');
 Route::post('/store-product', [ProductController::class, 'store_product'])->name('store-product');
 Route::put('/product/update/{id}', [ProductController::class, 'update'])->name('product.update');
 Route::get('/fetch-subcategories', [ProductController::class, 'fetchSubCategories'])->name('fetch-subcategories');
 Route::get('/products/{id}/edit', [ProductController::class, 'edit'])->name('products.edit');
-Route::post('/product/update', [ProductController::class, 'update_product'])->name('product.update');
+Route::post('/product/update', [ProductController::class, 'update_product'])->name('product_update');
 Route::delete('/product/delete/{id}', [ProductController::class, 'delete'])->name('product.delete');
 
 // purchase
@@ -136,6 +145,7 @@ Route::get('/all-Purchases', [PurchaseController::class, 'all_Purchases'])->name
 Route::get('/purchase/invoice/{id}', [PurchaseController::class, 'purchaseInvoice'])->name('purchase.invoice');
 Route::get('/purchase/edit/{id}', [PurchaseController::class, 'purchaseedit'])->name('purchase.edit');
 Route::put('/purchase/update/{id}', [PurchaseController::class, 'update_purchase'])->name('update-Purchase');
+Route::delete('/purchase/delete/{id}', [PurchaseController::class, 'delete_purchase'])->name('purchase.delete');
 
 Route::get('/purchase-return/{id}', [PurchaseReturnController::class, 'showReturnForm'])->name('purchase.return.form');
 Route::post('/purchase-return/store', [PurchaseReturnController::class, 'store'])->name('purchase.return.store');
@@ -185,7 +195,7 @@ Route::post('/salesman/toggle-status', [SalesmanController::class, 'toggleStatus
 Route::get('/fetch-areas', [CustomerController::class, 'fetchAreas'])->name('fetch-areas');
 Route::get('/fetch-designation', [CustomerController::class, 'fetchdesignation'])->name('fetch-designation');
 Route::get('/fetch-areas-report', [CustomerController::class, 'fetch_areas_report'])->name('fetch-areas-report');
-Route::get('/job-orders', [JobOrderController::class, 'index'])->name('job-orders.index');
+\Route::get('/job-orders', [JobOrderController::class, 'index'])->name('job-orders.index');
 
 Route::get('/job-orders/get-sale-details/{id}', [JobOrderController::class, 'getSaleDetails'])->name('job-orders.sale-details');
 
@@ -194,6 +204,12 @@ Route::post('/job-orders/update', [JobOrderController::class, 'update'])->name('
 Route::get('/job-orders/{id}', [JobOrderController::class, 'show'])->name('job-orders.show');
 Route::delete('/job-orders/delete/{id}', [JobOrderController::class, 'delete'])->name('job-orders.delete');
 Route::post('/job-orders/status-update', [JobOrderController::class, 'toggleStatus'])->name('job-orders.toggle-status');
+Route::get('/job-orders/contractor-balance/{id}', [JobOrderController::class, 'getContractorBalance'])->name('job-orders.contractor-balance');
+
+// Job Assignments Management
+Route::get('/job-assignments', [JobOrderController::class, 'jobAssignments'])->name('job-assignments');
+Route::post('/job-assignments/update-status/{id}', [JobOrderController::class, 'updateJobStatus'])->name('job-assignments.update-status');
+Route::post('/sales/mark-completed/{id}', [JobOrderController::class, 'markSaleCompleted'])->name('sales.mark-completed');
 
 // designation
 Route::get('/designation', [SalesmanController::class, 'designation'])->name('designation');
@@ -226,12 +242,25 @@ Route::get('/fetch-areas', [CustomerController::class, 'fetchAreas'])->name('fet
 Route::get('/customer-ledger', [CustomerController::class, 'customer_ledger'])->name('customer-ledger');
 Route::post('/customer-recovery-store', [CustomerController::class, 'customer_recovery_store'])->name('customer-recovery-store');
 Route::get('/customer-recovery', [CustomerController::class, 'customer_recovery'])->name('customer-recovery');
+Route::get('/customer-payment-history', [CustomerController::class, 'getCustomerPaymentHistory'])->name('customer-payment-history');
 Route::get('/customer/edit/{id}', [CustomerController::class, 'getCustomerData'])->name('customer.edit');
 Route::put('/customer-recovery/{id}', [CustomerController::class, 'updateRecovery'])->name('customer_recovery.update');
 
 Route::get('/local-sale', [LocalSaleController::class, 'local_sale'])->name('local-sale');
 Route::post('/store-local-sale', [LocalSaleController::class, 'store_local_sale'])->name('store-local-sale');
 Route::get('/all-local-sale', [LocalSaleController::class, 'all_local_sale'])->name('all-local-sale');
+Route::get('/delivery-notifications', [LocalSaleController::class, 'deliveryNotifications'])->name('delivery-notifications');
+
+// Notifications Routes
+Route::prefix('notifications')->group(function () {
+    Route::get('/', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::get('/unread-count', [NotificationController::class, 'getUnreadCount'])->name('notifications.unread-count');
+    Route::get('/recent', [NotificationController::class, 'getRecent'])->name('notifications.recent');
+    Route::post('/mark-read/{id}', [NotificationController::class, 'markAsRead'])->name('notifications.mark-read');
+    Route::post('/mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('notifications.mark-all-read');
+    Route::delete('/delete/{id}', [NotificationController::class, 'delete'])->name('notifications.delete');
+});
+
 Route::get('/show-local-sale/{id}', [LocalSaleController::class, 'show_local_sale'])->name('show-local-sale');
 Route::get('/local/sale/invoice/{id}', [LocalSaleController::class, 'localsaleInvoice'])->name('local.sale.invoice');
 Route::get('/local/sale/delete/{id}', [LocalSaleController::class, 'delete_localsale'])->name('local.sale.delete');
@@ -252,7 +281,7 @@ Route::get('/job-profit-report/fetch', [GeneralReportController::class, 'fetch']
     ->name('job.profit.report.fetch');
 
 Route::get('/Customer-Ledger-Record', [ReportController::class, 'Customer_Ledger_Record'])->name('Customer-Ledger-Record');
-Route::get('/fetch-Customer-ledger', [ReportController::class, 'fetchCustomerledger'])->name('fetch-Customer-ledger');
+Route::get('/fetch-Customer-ledger', [ReportController::class, 'fetchCustomerLedger'])->name('fetch-Customer-ledger');
 
 Route::get('/stock-Record', [ReportController::class, 'stock_Record'])->name('stock-Record');
 Route::get('/get-items-report/{subcategory}', [ReportController::class, 'getItems'])->name('get.items.report');
@@ -279,11 +308,22 @@ Route::get('/staff-wise-report', [ReportController::class, 'staff_wise_report'])
 Route::post('/staff-weekly-history', [ReportController::class, 'staffWeeklyHistory'])
     ->name('staff.weekly.history');
 
+// QA Testing Routes
+Route::get('/qa-dashboard', [QATestController::class, 'dashboard'])->name('qa.dashboard');
+Route::get('/qa/test-purchase/{id}', [QATestController::class, 'testPurchaseFlow'])->name('qa.test.purchase');
+Route::get('/qa/health-check', [QATestController::class, 'quickHealthCheck'])->name('qa.health.check');
+
+// Get attendance data for week
+Route::post('/staff-weekly-attendance', [ReportController::class, 'getStaffWeeklyAttendance'])
+    ->name('staff.weekly.attendance');
+
 // Save weekly entry
-Route::post('/staff-weekly-save', [ReportController::class, 'staffWeeklySave'])
+Route::post('staff/weekly/save', [ReportController::class, 'saveStaffWeekly'])
     ->name('staff.weekly.save');
 
-Route::post('staff/weekly/save', [ReportController::class, 'saveStaffWeekly'])->name('staff.weekly.save');
+// Get all staff summary
+Route::get('/staff-all-summary', [ReportController::class, 'getAllStaffSummary'])
+    ->name('staff.all.summary');
 
 Route::get('/Area-wise-Customer-payments', [ReportController::class, 'Area_wise_Customer_payments'])->name('Area-wise-Customer-payments');
 Route::get('/receivable-report', [ReportController::class, 'fetchReceivableReport'])->name('fetch.receivable.report');
@@ -304,6 +344,26 @@ Route::get('/staff-attendance/edit/{id}', [StaffAttendenceController::class, 'ed
 Route::post('/staff-attendance/update', [StaffAttendenceController::class, 'update'])->name('staff-attendance.update');
 Route::delete('/staff-attendance/delete/{id}', [StaffAttendenceController::class, 'destroy'])->name('staff-attendance.delete');
 Route::get('/staff-attendance/history/{staffId}', [StaffAttendenceController::class, 'history'])->name('staff-attendance.history');
+Route::get('/staff-attendance/export-pdf', [StaffAttendenceController::class, 'exportPDF'])->name('staff-attendance.export-pdf');
+
+// Staff Advance Routes
+Route::get('/staff-advance', [App\Http\Controllers\StaffAdvanceController::class, 'index'])->name('staff-advance.index');
+Route::post('/staff-advance/store', [App\Http\Controllers\StaffAdvanceController::class, 'store'])->name('staff-advance.store');
+Route::get('/staff-advance/balance/{staffId}', [App\Http\Controllers\StaffAdvanceController::class, 'getBalance'])->name('staff-advance.balance');
+Route::post('/staff-advance/recover', [App\Http\Controllers\StaffAdvanceController::class, 'recover'])->name('staff-advance.recover');
+Route::delete('/staff-advance/delete/{id}', [App\Http\Controllers\StaffAdvanceController::class, 'destroy'])->name('staff-advance.delete');
+
+// Staff Ledger Route
+Route::get('/staff-ledger-view', [App\Http\Controllers\StaffAdvanceController::class, 'ledger'])->name('staff-ledger-view');
+
+// Staff Salary Payment Routes
+Route::get('/staff-salary', [App\Http\Controllers\StaffSalaryController::class, 'index'])->name('staff-salary.index');
+Route::get('/staff-salary/info/{staffId}', [App\Http\Controllers\StaffSalaryController::class, 'getInfo'])->name('staff-salary.info');
+Route::post('/staff-salary/store', [App\Http\Controllers\StaffSalaryController::class, 'store'])->name('staff-salary.store');
+Route::get('/staff-salary/receipt/{id}', [App\Http\Controllers\StaffSalaryController::class, 'receipt'])->name('staff-salary.receipt');
+Route::get('/staff-salary/{id}', [App\Http\Controllers\StaffSalaryController::class, 'show'])->name('staff-salary.show');
+Route::put('/staff-salary/{id}', [App\Http\Controllers\StaffSalaryController::class, 'update'])->name('staff-salary.update');
+Route::delete('/staff-salary/{id}', [App\Http\Controllers\StaffSalaryController::class, 'destroy'])->name('staff-salary.destroy');
 
 Route::get('/vendors-payments', [PaymentController::class, 'vendors_payments'])->name('vendors-payments');
 Route::post('/vendor-payment-store', [PaymentController::class, 'storeVendorPayment'])->name('vendor-payment-store');
@@ -316,6 +376,18 @@ Route::post('/customer-payment/store', [PaymentController::class, 'storeCustomer
 Route::get('customer/payment/receipt/{customer_id}/{amount}', [PaymentController::class, 'showCustomerPaymentReceipt'])->name('Customer.payment.receipt');
 
 Route::get('/staff-payments', [PaymentController::class, 'staff_payments'])->name('staff-payments');
+
+// Price List Routes (Protected)
+Route::middleware('auth')->group(function () {
+    Route::get('/price-list', [App\Http\Controllers\PriceListController::class, 'index'])->name('price-list.index');
+    Route::get('/price-list/get-all', [App\Http\Controllers\PriceListController::class, 'getAll'])->name('price-list.get-all');
+    Route::get('/price-list/headers', [App\Http\Controllers\PriceListController::class, 'getHeaders'])->name('price-list.headers');
+    Route::get('/price-list/quick-view', [App\Http\Controllers\PriceListController::class, 'quickView'])->name('price-list.quick-view');
+    Route::post('/price-list', [App\Http\Controllers\PriceListController::class, 'store'])->name('price-list.store');
+    Route::get('/price-list/{id}', [App\Http\Controllers\PriceListController::class, 'show'])->name('price-list.show');
+    Route::put('/price-list/{id}', [App\Http\Controllers\PriceListController::class, 'update'])->name('price-list.update');
+    Route::delete('/price-list/{id}', [App\Http\Controllers\PriceListController::class, 'destroy'])->name('price-list.destroy');
+});
 Route::get('/get-staff-balance/{id}', [PaymentController::class, 'getStaffBalance'])->name('get.staff.balance');
 Route::post('/staff-payment/store', [PaymentController::class, 'storeStaffPayment'])->name('staff.payment.store');
 Route::get('staff/payment/receipt/{staff_id}/{amount}', [PaymentController::class, 'showStaffPaymentReceipt'])->name('Staff.payment.receipt');
@@ -332,6 +404,27 @@ Route::get('/', function () {
 // Route::get('/dashboard', function () {
 //     return view('dashboard');
 // })->middleware(['auth', 'verified'])->name('dashboard');
+
+// Journal Voucher Routes
+Route::get('/journal-voucher', [App\Http\Controllers\JournalVoucherController::class, 'index'])->name('journal-voucher.index');
+Route::get('/journal-voucher/parties/{type}', [App\Http\Controllers\JournalVoucherController::class, 'getParties'])->name('journal-voucher.parties');
+Route::post('/journal-voucher/payment', [App\Http\Controllers\JournalVoucherController::class, 'storePayment'])->name('journal-voucher.payment');
+Route::post('/journal-voucher/receipt', [App\Http\Controllers\JournalVoucherController::class, 'storeReceipt'])->name('journal-voucher.receipt');
+Route::get('/journal-voucher/print/{id}', [App\Http\Controllers\JournalVoucherController::class, 'print'])->name('journal-voucher.print');
+Route::get('/journal-voucher/day-book', [App\Http\Controllers\JournalVoucherController::class, 'dayBook'])->name('journal-voucher.daybook');
+
+// ✅ Daily Closing Routes
+Route::get('/journal-voucher/daily-closing', [App\Http\Controllers\JournalVoucherController::class, 'dailyClosing'])->name('journal-voucher.daily-closing');
+Route::post('/journal-voucher/close-day', [App\Http\Controllers\JournalVoucherController::class, 'closeDayFinally'])->name('journal-voucher.close-day');
+Route::get('/journal-voucher/closing-history', [App\Http\Controllers\JournalVoucherController::class, 'closingHistory'])->name('journal-voucher.closing-history');
+Route::post('/journal-voucher/reopen-day', [App\Http\Controllers\JournalVoucherController::class, 'reopenDay'])->name('journal-voucher.reopen-day');
+
+Route::get('/journal-voucher/{id}', [App\Http\Controllers\JournalVoucherController::class, 'show'])->name('journal-voucher.show');
+Route::put('/journal-voucher/{id}', [App\Http\Controllers\JournalVoucherController::class, 'update'])->name('journal-voucher.update');
+Route::delete('/journal-voucher/{id}', [App\Http\Controllers\JournalVoucherController::class, 'destroy'])->name('journal-voucher.destroy');
+
+// Business Report Route
+Route::get('/business-report', [App\Http\Controllers\BusinessReportController::class, 'index'])->name('business-report.index');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

@@ -1,218 +1,365 @@
 @include('admin_panel.include.header_include')
 
-<div class="main-wrapper">
-@include('admin_panel.include.navbar_include')
-@include('admin_panel.include.admin_sidebar_include')
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
 
-<div class="page-wrapper">
-<div class="content">
+    body {
+        font-family: Arial, Helvetica, sans-serif;
+        background-color: #f5f5f5;
+    }
 
-{{-- ================= HEADER ================= --}}
-<div class="page-header mb-3 d-flex justify-content-between">
-    <div>
-        <h4>Job Order Details</h4>
-        <small class="text-muted">Invoice #{{ $sale->invoice_number }}</small>
+    .invoice-container {
+        max-width: 900px;
+        margin: 30px auto;
+        background: white;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .invoice-header {
+        border-bottom: 3px solid #000;
+        padding: 20px 30px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .company-logo h1 {
+        font-size: 28px;
+        font-weight: bold;
+        margin: 0;
+        color: #000;
+    }
+
+    .company-logo p {
+        font-size: 11px;
+        margin: 5px 0 0 0;
+        color: #666;
+    }
+
+    .invoice-title {
+        text-align: right;
+    }
+
+    .invoice-title h2 {
+        font-size: 24px;
+        font-weight: bold;
+        margin: 0;
+        color: #000;
+    }
+
+    .invoice-title p {
+        font-size: 12px;
+        margin: 3px 0;
+        color: #666;
+    }
+
+    .invoice-info-section {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        padding: 20px 30px;
+        border-bottom: 1px solid #ddd;
+    }
+
+    .info-block {
+        padding: 15px;
+        border: 1px solid #ddd;
+    }
+
+    .info-block-title {
+        font-size: 11px;
+        font-weight: bold;
+        text-transform: uppercase;
+        color: #000;
+        margin-bottom: 10px;
+        border-bottom: 1px solid #000;
+        padding-bottom: 5px;
+    }
+
+    .info-block p {
+        font-size: 12px;
+        margin: 5px 0;
+        color: #333;
+    }
+
+    .info-block strong {
+        color: #000;
+    }
+
+    .invoice-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 20px 0;
+    }
+
+    .invoice-table thead {
+        background-color: #000;
+        color: white;
+    }
+
+    .invoice-table th {
+        padding: 12px 10px;
+        font-size: 12px;
+        font-weight: bold;
+        text-align: left;
+        border: 1px solid #000;
+    }
+
+    .invoice-table td {
+        padding: 10px;
+        font-size: 12px;
+        border: 1px solid #ddd;
+        color: #333;
+    }
+
+    .invoice-table tbody tr:nth-child(even) {
+        background-color: #f9f9f9;
+    }
+
+    .summary-section {
+        display: grid;
+        grid-template-columns: 1fr 400px;
+        gap: 20px;
+        padding: 20px 30px;
+        border-top: 2px solid #000;
+    }
+
+    .ledger-section {
+        padding: 15px;
+        border: 1px solid #ddd;
+    }
+
+    .ledger-title {
+        font-size: 11px;
+        font-weight: bold;
+        text-transform: uppercase;
+        margin-bottom: 10px;
+        color: #000;
+        border-bottom: 1px solid #000;
+        padding-bottom: 5px;
+    }
+
+    .ledger-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        font-size: 12px;
+        border-bottom: 1px solid #eee;
+    }
+
+    .ledger-row:last-child {
+        border-bottom: none;
+        font-weight: bold;
+        color: #000;
+        border-top: 2px solid #000;
+        margin-top: 5px;
+        padding-top: 10px;
+    }
+
+    .totals-box {
+        border: 2px solid #000;
+        padding: 15px;
+    }
+
+    .total-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        font-size: 12px;
+        border-bottom: 1px solid #ddd;
+    }
+
+    .total-row.grand-total {
+        border-top: 2px solid #000;
+        margin-top: 10px;
+        padding-top: 12px;
+        font-size: 16px;
+        font-weight: bold;
+        color: #000;
+    }
+
+    .total-row.balance-due {
+        font-weight: bold;
+        color: #000;
+        font-size: 14px;
+    }
+
+    .signature-section {
+        display: flex;
+        justify-content: space-between;
+        padding: 40px 30px 20px 30px;
+        margin-top: 30px;
+    }
+
+    .signature-box {
+        text-align: center;
+        width: 200px;
+    }
+
+    .signature-line {
+        border-top: 1px solid #000;
+        margin-bottom: 5px;
+    }
+
+    .signature-label {
+        font-size: 11px;
+        color: #666;
+    }
+
+    .invoice-footer {
+        text-align: center;
+        padding: 15px;
+        background-color: #f5f5f5;
+        border-top: 1px solid #ddd;
+        font-size: 10px;
+        color: #666;
+    }
+
+    .terms-note {
+        font-size: 10px;
+        color: #999;
+        margin-top: 10px;
+        font-style: italic;
+    }
+
+    @media print {
+        body { background: white; }
+        .invoice-container { 
+            margin: 0; 
+            max-width: 100%; 
+            box-shadow: none;
+        }
+    }
+</style>
+
+<div class="invoice-container">
+    <div class="invoice-header">
+        <div class="company-logo">
+            <h1>Green Vision</h1>
+            <p>Glass & Building Materials</p>
+            <p>+92 311 7223 451 | +92 311 7223 442</p>
+        </div>
+        <div class="invoice-title">
+            <h2>SALES INVOICE</h2>
+            <p>Date: {{ \Carbon\Carbon::parse($sale->sale_date)->format('d-M-Y') }}</p>
+            <p>Time: {{ \Carbon\Carbon::parse($sale->sale_date)->format('h:i A') }}</p>
+        </div>
     </div>
 
-    <div class="d-flex gap-2">
-        <a href="{{ route('local.sale.invoice', $sale->id) }}" class="btn btn-secondary btn-sm">Print</a>
-        <a href="{{ route('local.sale.edit', $sale->id) }}" class="btn btn-primary btn-sm">Edit</a>
-        <a href="{{ route('all-local-sale') }}" class="btn btn-dark btn-sm">Back</a>
+    <div class="invoice-info-section">
+        <div class="info-block">
+            <div class="info-block-title">Bill To</div>
+            <p><strong>{{ $party->business_name ?? $party->name }}</strong></p>
+            <p>{{ !empty($party->address) ? $party->address : 'Address Not Provided' }}</p>
+            <p>Phone: {{ $party->phone ?: 'N/A' }}</p>
+        </div>
+        
+        <div class="info-block">
+            <div class="info-block-title">Invoice Details</div>
+            <p><strong>Invoice No:</strong> #{{ $sale->invoice_number }}</p>
+            <p><strong>Invoice Date:</strong> {{ date('d-M-Y', strtotime($sale->sale_date)) }}</p>
+            <p><strong>Delivery Date:</strong> {{ !empty($sale->delivery_date) ? date('d-M-Y', strtotime($sale->delivery_date)) : 'Not Scheduled' }}</p>
+        </div>
     </div>
-</div>
 
-{{-- ================= PARTY INFO ================= --}}
-<div class="card mb-3">
-<div class="card-body">
+    <div style="padding: 0 30px;">
+        <table class="invoice-table">
+            <thead>
+                <tr>
+                    <th style="text-align: center; width: 5%;">#</th>
+                    <th style="width: 45%;">Description</th>
+                    <th style="text-align: center; width: 10%;">Qty</th>
+                    <th style="text-align: center; width: 10%;">Sq.Ft</th>
+                    <th style="text-align: right; width: 15%;">Rate</th>
+                    <th style="text-align: right; width: 15%;">Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                @php
+                    $items = json_decode($sale->item) ?? [];
+                    $qtys = json_decode($sale->qty) ?? [];
+                    $manual_sqfts = json_decode($sale->manual_sqft) ?? [];
+                    $rates = json_decode($sale->rate) ?? [];
+                    $amounts = json_decode($sale->amount) ?? [];
+                @endphp
+                @foreach($items as $i => $item)
+                    @if(!empty($item))
+                    <tr>
+                        <td style="text-align: center;">{{ $loop->iteration }}</td>
+                        <td><strong>{{ $item }}</strong></td>
+                        <td style="text-align: center;">{{ $qtys[$i] ?? '1' }}</td>
+                        <td style="text-align: center;">{{ !empty($manual_sqfts[$i]) ? $manual_sqfts[$i] : '-' }}</td>
+                        <td style="text-align: right;">{{ number_format((float)($rates[$i] ?? 0), 2) }}</td>
+                        <td style="text-align: right;"><strong>{{ number_format((float)($amounts[$i] ?? 0), 2) }}</strong></td>
+                    </tr>
+                    @endif
+                @endforeach
+            </tbody>
+        </table>
+    </div>
 
-<table class="table table-sm mb-0">
-<tr>
-    <th width="160">Date</th>
-    <td>{{ \Carbon\Carbon::parse($sale->Date)->format('d-m-Y') }}</td>
-</tr>
-<tr>
-    <th>Party Type</th>
-    <td>{{ ucfirst($sale->party_type) }}</td>
-</tr>
-<tr>
-    <th>Party Name</th>
-    <td>
-        {{ $sale->customer->shop_name
-            ?? $sale->customer_shopname
-            ?? 'Walk-in Customer' }}
-    </td>
-</tr>
-<tr>
-    <th>Phone</th>
-    <td>{{ $sale->customer_phone ?? '-' }}</td>
-</tr>
-<tr>
-    <th>Address</th>
-    <td>{{ $sale->customer_address ?? '-' }}</td>
-</tr>
-</table>
+    <div class="summary-section">
+        <div class="ledger-section">
+            <div class="ledger-title">Account Statement</div>
+            <div class="ledger-row">
+                <span>{{ $ledger_info->label_prev }}</span>
+                <span>RS {{ number_format($ledger_info->previous_balance, 2) }}</span>
+            </div>
+            <div class="ledger-row">
+                <span>Current Invoice Amount</span>
+                <span>{{ $ledger_info->operator }} {{ number_format($sale->remaining_amount, 2) }}</span>
+            </div>
+            <div class="ledger-row">
+                <span>{{ $ledger_info->label_curr }} (CLOSING)</span>
+                <span>RS {{ number_format($ledger_info->current_balance, 2) }}</span>
+            </div>
+            <p class="terms-note">* Goods once sold will not be returned. Payment terms apply.</p>
+        </div>
 
-</div>
-</div>
+        <div class="totals-box">
+            <div class="total-row">
+                <span>Sub Total</span>
+                <span>{{ number_format($sale->grand_total, 2) }}</span>
+            </div>
+            @if($sale->discount_value > 0)
+            <div class="total-row">
+                <span>Discount</span>
+                <span>- {{ number_format($sale->discount_value, 2) }}</span>
+            </div>
+            @endif
+            <div class="total-row grand-total">
+                <span>Net Total</span>
+                <span>RS {{ number_format($sale->net_amount, 2) }}</span>
+            </div>
+            <div class="total-row">
+                <span>Advance Paid</span>
+                <span>{{ number_format($sale->advance_amount, 2) }}</span>
+            </div>
+            <div class="total-row balance-due">
+                <span>Balance Due</span>
+                <span>RS {{ number_format($sale->remaining_amount, 2) }}</span>
+            </div>
+        </div>
+    </div>
 
-{{-- ================= ITEMS ================= --}}
-@php
-    $items   = json_decode($sale->item, true) ?? [];
-    $heights = json_decode($sale->height, true) ?? [];
-    $widths  = json_decode($sale->width, true) ?? [];
-    $units   = json_decode($sale->unit, true) ?? [];
-    $qtys    = json_decode($sale->qty, true) ?? [];
-    $amounts = json_decode($sale->amount, true) ?? [];
-@endphp
+    <div class="signature-section">
+        <div class="signature-box">
+            <div class="signature-line"></div>
+            <div class="signature-label">Customer Signature</div>
+        </div>
+        <div class="signature-box">
+            <div class="signature-line"></div>
+            <div class="signature-label">Authorized Signature</div>
+        </div>
+    </div>
 
-<div class="card mb-3">
-<div class="card-header fw-bold">Job Items</div>
-
-<div class="table-responsive">
-<table class="table table-bordered text-center mb-0">
-<thead class="table-light">
-<tr>
-    <th>#</th>
-    <th>Item</th>
-    <th>Height</th>
-    <th>Width</th>
-    <th>Unit</th>
-    <th>Qty</th>
-    <th>Total</th>
-</tr>
-</thead>
-
-<tbody>
-@forelse ($items as $i => $item)
-<tr>
-    <td>{{ $i + 1 }}</td>
-    <td>{{ $item }}</td>
-    <td>{{ $heights[$i] ?? '-' }}</td>
-    <td>{{ $widths[$i] ?? '-' }}</td>
-    <td>{{ strtoupper($units[$i] ?? '-') }}</td>
-    <td>{{ $qtys[$i] ?? 1 }}</td>
-    <td class="fw-bold">{{ number_format($amounts[$i] ?? 0, 2) }}</td>
-</tr>
-@empty
-<tr>
-    <td colspan="7" class="text-muted">No Items Found</td>
-</tr>
-@endforelse
-</tbody>
-</table>
-</div>
-</div>
-
-{{-- ================= PAYMENT ================= --}}
-<div class="card mb-3">
-<div class="card-header fw-bold">Payment Summary</div>
-
-<div class="card-body">
-<table class="table table-sm mb-0">
-<tr>
-    <th width="200">Grand Total</th>
-    <td>{{ number_format($sale->grand_total, 2) }}</td>
-</tr>
-<tr>
-    <th>Discount</th>
-    <td>{{ number_format($sale->discount_value, 2) }}</td>
-</tr>
-<tr>
-    <th>Advance</th>
-    <td>{{ number_format($sale->advance_amount ?? 0, 2) }}</td>
-</tr>
-<tr>
-    <th>Remaining</th>
-    <td class="fw-bold">{{ number_format($sale->remaining_amount ?? 0, 2) }}</td>
-</tr>
-</table>
-</div>
-</div>
-
-{{-- ================= ASSIGN JOB ================= --}}
-<div class="card mb-3">
-<div class="card-header fw-bold d-flex justify-content-between">
-    <span>Job Assignment</span>
-    <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#assignJobModal">
-        Assign Job
-    </button>
-</div>
-
-<div class="card-body p-0">
-<table class="table table-bordered mb-0 text-center">
-<thead class="table-light">
-<tr>
-    <th>Worker</th>
-    <th>Type</th>
-    <th>Amount</th>
-    <th>Status</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-    <td colspan="4" class="text-muted">No workers assigned yet</td>
-</tr>
-</tbody>
-</table>
-</div>
-</div>
-
-{{-- ================= ASSIGN MODAL ================= --}}
-<div class="modal fade" id="assignJobModal">
-<div class="modal-dialog modal-md">
-<div class="modal-content">
-
-<div class="modal-header">
-    <h5 class="modal-title">Assign Job</h5>
-    <button class="btn-close" data-bs-dismiss="modal"></button>
-</div>
-
-<div class="modal-body">
-
-<div class="mb-3 p-2 bg-light border rounded">
-    <strong>Job No:</strong> {{ $sale->invoice_number }} <br>
-    <strong>Net Amount:</strong> {{ number_format($sale->net_amount,2) }}
-</div>
-
-<div class="mb-3">
-    <label>Worker</label>
-    <select class="form-control" id="workerType">
-        <option value="">Select</option>
-        <option value="salary">Ali (Salary)</option>
-        <option value="contractor">Ahmed (Contractor)</option>
-    </select>
-</div>
-
-<div class="mb-3 d-none" id="jobAmountBox">
-    <label>Contractor Amount</label>
-    <input type="number" class="form-control">
-</div>
-
-<div class="mb-3">
-    <label>Notes</label>
-    <textarea class="form-control" rows="2"></textarea>
-</div>
-
-</div>
-
-<div class="modal-footer">
-    <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-    <button class="btn btn-primary">Assign</button>
-</div>
-
-</div>
-</div>
-</div>
-
-</div>
-</div>
+    <div class="invoice-footer">
+        <p>Powered by ProWave Software Solutions | Contact: 0317-3836223</p>
+    </div>
 </div>
 
 @include('admin_panel.include.footer_include')
-
-<script>
-document.getElementById('workerType')?.addEventListener('change', function () {
-    document.getElementById('jobAmountBox')
-        .classList.toggle('d-none', this.value !== 'contractor');
-});
-</script>

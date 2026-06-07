@@ -18,4 +18,9 @@ class Vendor extends Model
     {
         return $this->hasMany(VendorBuilty::class, 'vendor_id');
     }
+
+    public function ledger()
+    {
+        return $this->hasOne(VendorLedger::class, 'vendor_id')->latest();
+    }
 }

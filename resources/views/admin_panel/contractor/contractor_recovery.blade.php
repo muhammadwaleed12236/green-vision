@@ -38,11 +38,11 @@
                                 @foreach($Recoveries as $key => $recovery)
                                     <tr id="recovery-row-{{ $recovery->id }}">
                                         <td>{{ $key + 1 }}</td>
-                                        <td>{{ $recovery->date }}</td>
+                                        <td>{{ $recovery->recovery_date }}</td>
                                         <td>{{ $recovery->contractor->contractor_name ?? 'N/A' }}</td>
-                                        <td>{{ $recovery->contractor->phone_number ?? 'N/A' }}</td>
+                                        <td>{{ $recovery->contractor->phone ?? 'N/A' }}</td>
                                         <td>{{ $recovery->contractor->address ?? 'N/A' }}</td>
-                                        <td class="amount_paid">{{ number_format($recovery->amount_paid, 0) }}</td>
+                                        <td class="amount_paid">{{ number_format($recovery->amount, 0) }}</td>
                                         <td class="remarks">{{ $recovery->remarks }}</td>
                                         <td>
                                             <button type="button" class="btn btn-sm btn-primary text-white"
@@ -80,7 +80,7 @@
                                                                 <div class="mb-3">
                                                                     <label class="form-label">Current Amount Paid</label>
                                                                     <input type="text" class="form-control"
-                                                                        value="{{ number_format($recovery->amount_paid, 0) }}"
+                                                                        value="{{ number_format($recovery->amount, 0) }}"
                                                                         readonly>
                                                                 </div>
 

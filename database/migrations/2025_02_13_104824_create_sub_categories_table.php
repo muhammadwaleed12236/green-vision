@@ -13,6 +13,10 @@ return new class extends Migration
     {
         Schema::create('sub_categories', function (Blueprint $table) {
             $table->id();
+            $table->string('sub_category_name');
+            $table->string('category_name')->nullable();
+            $table->foreignId('admin_or_user_id')->constrained('users')->onDelete('cascade');
+            $table->text('description')->nullable();
             $table->timestamps();
             $table->softDeletes();
 

@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Welcome - Raj Glass Software</title>
+    <title>Welcome - Green Vision Software</title>
     <!-- Google Fonts (Poppins for modern design) -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <!-- Bootstrap 4 CSS -->
@@ -105,7 +105,7 @@
         <div class="welcome-content">
             <!-- Logo -->
             <img src="welcome-logo.png" alt="Logo" class="logo">
-            <h1>Welcome to Raj Glass Software</h1>
+            <h1>Welcome to Green Vision Software</h1>
             <!-- Buttons -->
             <div class="welcome-buttons">
                 @if (Route::has('login'))

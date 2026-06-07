@@ -13,6 +13,12 @@ return new class extends Migration
     {
         Schema::create('vendor_builties', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('vendor_id')->constrained('vendors')->onDelete('cascade');
+            $table->string('builty_number')->unique();
+            $table->date('builty_date')->nullable();
+            $table->string('destination')->nullable();
+            $table->text('remarks')->nullable();
+            $table->foreignId('admin_or_user_id')->constrained('users')->onDelete('cascade');
             $table->timestamps();
             $table->softDeletes();
 

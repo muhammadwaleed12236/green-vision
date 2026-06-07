@@ -16,12 +16,14 @@ use App\Models\StaffRecovery;
 use App\Models\Vendor;
 use App\Models\VendorLedger;
 use App\Models\VendorPayment;
+use App\Traits\AutoJournalVoucher;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class PaymentController extends Controller
 {
+    use AutoJournalVoucher;
     public function vendors_payments()
     {
         $Vendors = Vendor::all(['id', 'Party_name']);
@@ -62,13 +64,24 @@ class PaymentController extends Controller
         }
 
         // Save the payment
-        VendorPayment::create([
+        $vendorPayment = VendorPayment::create([
             'admin_or_user_id' => auth()->id(),
             'vendor_id' => $vendorId,
             'amount_paid' => $request->amount,
             'payment_date' => $request->date,
             'description' => $request->detail,
         ]);
+
+        // 🔥 Create Journal Voucher Entry
+        $vendor = Vendor::find($vendorId);
+        $this->createVendorPaymentJournal(
+            $vendorId,
+            $vendor->Party_name,
+            $request->amount,
+            $request->date,
+            $request->detail ?: "Payment to vendor {$vendor->Party_name}",
+            $vendorPayment->id
+        );
 
         // Redirect to receipt page (like distributor)
         return redirect()->route('Vendor.payment.receipt', [

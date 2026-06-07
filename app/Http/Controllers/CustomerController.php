@@ -10,12 +10,14 @@ use App\Models\CustomerLedger;
 use App\Models\CustomerRecovery;
 use App\Models\Salesman;
 use App\Models\User;
+use App\Traits\AutoJournalVoucher;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class CustomerController extends Controller
 {
+    use AutoJournalVoucher;
     public function index()
     {
         if (Auth::check()) {
@@ -164,21 +166,33 @@ class CustomerController extends Controller
     public function customer_recovery_store(Request $request)
     {
         $ledger = CustomerLedger::find($request->ledger_id);
-        $ledger->previous_balance -= $request->amount_paid;
+
+        // Only update closing_balance (previous_balance should remain unchanged)
         $ledger->closing_balance -= $request->amount_paid;
         $ledger->save();
 
         $userId = Auth::id();
 
-        // Store recovery record (Optional)
-        CustomerRecovery::create([
+        // Store recovery record (salesman removed - not needed for simplified system)
+        $customerRecovery = CustomerRecovery::create([
             'admin_or_user_id' => $userId,
             'customer_ledger_id' => $ledger->id,
             'amount_paid' => $request->amount_paid,
-            'salesman' => $request->salesman,
+            'salesman' => null, // Salesman field removed from simplified system
             'date' => $request->date,
             'remarks' => $request->remarks,
         ]);
+
+        // 🔥 Create Journal Voucher Entry for Customer Payment
+        $customer = $ledger->customer; // Assuming relationship exists
+        $this->createCustomerPaymentJournal(
+            $customer->id,
+            $customer->customer_name,
+            $request->amount_paid,
+            $request->date,
+            $request->remarks ?: "Payment received from customer {$customer->customer_name}",
+            $customerRecovery->id
+        );
 
         return response()->json([
             'success' => true,
@@ -363,5 +377,38 @@ class CustomerController extends Controller
         ]);
 
         return redirect()->route('customer-recovery')->with('success', 'Distributor recovery updated successfully.');
+    }
+
+    public function getCustomerPaymentHistory(Request $request)
+    {
+        $customerId = $request->customer_id;
+
+        // Get ledger for this customer
+        $ledger = CustomerLedger::where('customer_id', $customerId)->first();
+
+        if (!$ledger) {
+            return response()->json([
+                'success' => false,
+                'payments' => []
+            ]);
+        }
+
+        // Get all payment records for this ledger
+        $payments = CustomerRecovery::where('customer_ledger_id', $ledger->id)
+            ->orderBy('date', 'desc')
+            ->get()
+            ->map(function($payment) {
+                return [
+                    'date' => \Carbon\Carbon::parse($payment->date)->format('d M Y'),
+                    'amount_paid' => $payment->amount_paid,
+                    'remarks' => $payment->remarks,
+                    'created_at' => \Carbon\Carbon::parse($payment->created_at)->format('d M Y h:i A'),
+                ];
+            });
+
+        return response()->json([
+            'success' => true,
+            'payments' => $payments
+        ]);
     }
 }

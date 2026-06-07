@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('usertype')->default('admin');
+            $table->string('identify')->nullable(); // admin, distributor, salesman identifier
             $table->string('password');
             $table->rememberToken();
             $table->timestamps();

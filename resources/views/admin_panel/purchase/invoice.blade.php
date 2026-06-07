@@ -13,13 +13,13 @@
 {{-- ================= HEADER ================= --}}
 <div class="row align-items-center mb-3" style="border-bottom:3px solid #000">
     <div class="col-md-4 d-flex align-items-center">
-        <img src="{{ url('small-logo.png') }}" style="max-width:90px">
-        <h5 class="fw-bold ms-2">Raj Glass</h5>
+        {{-- <img src="{{ url('small-logo.png') }}" style="max-width:90px"> --}}
+        <h5 class="fw-bold ms-2">Green Vision</h5>
     </div>
     <div class="col-md-4 text-center">
-        <h6 class="fw-bold mb-0">Raj Glass</h6>
-        <small>Latifabad No.08 Hyderabad</small><br>
-        <small>0314-4021603</small>
+        <h6 class="fw-bold mb-0">Green Vision</h6>
+        <small>New Faran Hotel،, Sydena Tahir Saifuddin Road, Saddar, Hyderabad, 71110</small><br>
+        <small>0300 2529972</small>
     </div>
     <div class="col-md-4 text-end">
         <h6 class="fw-bold">PURCHASE INVOICE</h6>
@@ -43,8 +43,8 @@
 <thead class="table-light text-center">
 <tr>
     <th>Item</th>
-    <th>Carton</th>
-    <th>Pcs</th>
+    <th>UOM</th>
+    <th>Feet (Pcs)</th>
     <th>Rate</th>
     <th>Amount</th>
 </tr>
@@ -53,17 +53,18 @@
 <tbody>
 @foreach(json_decode($purchase->item) as $i => $item)
 <tr>
-    <td>{{ $item }}</td>
+    <td class="text-center">{{ $item }}</td>
     <td class="text-center">{{ json_decode($purchase->product_mode)[$i] ?? 0 }}</td>
-    <td class="text-center">{{ json_decode($purchase->measurement)[$i] ?? 0 }}</td>
-    <td class="text-end">{{ number_format(json_decode($purchase->rate)[$i] ?? 0,2) }}</td>
-    <td class="text-end">{{ number_format(json_decode($purchase->amount)[$i] ?? 0,2) }}</td>
+    <td class="text-center">{{ json_decode($purchase->pcs)[$i] ?? 0 }}</td>
+    <td class="text-center">{{ number_format(json_decode($purchase->rate)[$i] ?? 0,2) }}</td>
+    <td class="text-center">{{ number_format(json_decode($purchase->amount)[$i] ?? 0,2) }}</td>
 </tr>
 @endforeach
 </tbody>
 </table>
 
 {{-- ================= TOTALS ================= --}}
+
 <table class="table table-bordered w-50 ms-auto">
 {{-- <tr>
     <th class="text-end">Opening Balance</th>
@@ -86,9 +87,12 @@
 {{-- ================= FOOTER ================= --}}
 <div class="row mt-4">
     <div class="col-md-6">
+            <span class="ms-1"> ________________</span> <br>
         <strong>Receiver Signature</strong>
     </div>
     <div class="col-md-6 text-end">
+            <span class="text-end"> ________________ </span><br
+
         <strong>Authorized Signature</strong>
     </div>
 </div>

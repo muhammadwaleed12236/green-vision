@@ -13,6 +13,11 @@ return new class extends Migration
     {
         Schema::create('areas', function (Blueprint $table) {
             $table->id();
+            $table->string('area_name');
+            $table->string('area_code')->nullable();
+            $table->foreignId('city_id')->constrained('cities')->onDelete('cascade');
+            $table->text('description')->nullable();
+            $table->foreignId('admin_or_user_id')->constrained('users')->onDelete('cascade');
             $table->timestamps();
             $table->softDeletes();
         });

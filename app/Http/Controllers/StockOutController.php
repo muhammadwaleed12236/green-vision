@@ -16,17 +16,19 @@ class StockOutController extends Controller
         if (Auth::id()) {
             $userId = Auth::id();
 
-            // Add initial_stock to the query
-            $products = Product::select('id', 'item_name', 'height', 'width', 'initial_stock')
-                ->get();
+            // Use current initial_stock as available stock (already adjusted by purchases/stockouts)
+            $products = Product::select('id', 'item_name', 'height', 'width', 'initial_stock')->get();
+            foreach ($products as $product) {
+                $product->available_stock = $product->initial_stock ?? 0;
+            }
 
-            // ✅ FIX: Add ->with('customer') here
-            $localSales = LocalSale::with('customer')
-                ->select('id', 'invoice_number', 'customer_id')
+            // ✅ Eager load customer AND vendor
+            $localSales = LocalSale::with(['customer', 'vendor'])
+                ->select('id', 'invoice_number', 'customer_id', 'vendor_id', 'party_type', 'customer_shopname')
                 ->orderBy('created_at', 'desc')
                 ->get();
 
-            $stockOuts = StockOut::with(['product', 'localSale.customer'])
+            $stockOuts = StockOut::with(['product', 'localSale.customer', 'localSale.vendor'])
                 ->orderBy('created_at', 'desc')
                 ->get();
 
@@ -59,16 +61,22 @@ class StockOutController extends Controller
                     continue;
                 }
 
+                $productId = intval($product['product_id']);
                 $openingStock = floatval($product['current_stock']);
                 $usedStock = floatval($product['used_stock']);
 
                 // ✅ CORRECT FORMULA: Opening - Used = Closing (Remaining)
                 $closingStock = $openingStock - $usedStock;
 
+                // ✅ Ensure closing stock is not negative
+                if ($closingStock < 0) {
+                    $closingStock = 0;
+                }
+
                 // Save stock out record
                 StockOut::create([
                     'admin_or_user_id' => $userId,
-                    'product_id' => $product['product_id'],
+                    'product_id' => $productId,
                     'local_sales_id' => $request->local_sales_id,
                     'current_stock' => $openingStock,    // Opening Stock
                     'close_stock' => $closingStock,      // Closing Stock (Remaining)
@@ -78,7 +86,7 @@ class StockOutController extends Controller
                 ]);
 
                 // ✅ Update product's initial_stock with CLOSING stock (remaining stock)
-                $productModel = Product::find($product['product_id']);
+                $productModel = Product::find($productId);
                 if ($productModel) {
                     // Closing stock becomes the new opening stock for next time
                     $productModel->initial_stock = $closingStock;
@@ -136,11 +144,11 @@ class StockOutController extends Controller
     public function stockout_details($jobId)
     {
         if (Auth::id()) {
-            $stockOuts = StockOut::with(['product', 'localSale.customer'])
+            $stockOuts = StockOut::with(['product', 'localSale.customer', 'localSale.vendor'])
                 ->where('local_sales_id', $jobId)
                 ->get();
 
-            $localSale = LocalSale::with('customer')->find($jobId);
+            $localSale = LocalSale::with(['customer', 'vendor'])->find($jobId);
 
             return view('admin_panel.stockOut.stockout_details', [
                 'stockOuts' => $stockOuts,

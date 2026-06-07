@@ -20,7 +20,7 @@ class ContractorController extends Controller
         }
 
         $userId = Auth::id();
-        $contractors = Contractor::where('admin_or_user_id', $userId)->get();
+        $contractors = Contractor::all();
 
         return view('admin_panel.contractor.contractor', compact('contractors'));
     }
@@ -37,7 +37,7 @@ class ContractorController extends Controller
         $contractor = Contractor::create([
             'admin_or_user_id' => $userId,
             'contractor_name' => $request->contractor_name,
-            'phone_number' => $request->phone_number,
+            'phone' => $request->phone_number,
             'address' => $request->address,
             'opening_balance' => $request->opening_balance ?? 0,
             'created_at' => Carbon::now(),
@@ -126,13 +126,10 @@ class ContractorController extends Controller
         }
 
         $userId = Auth::id();
-        $ContractorLedgers = ContractorLedger::where('admin_or_user_id', $userId)
-            ->with('contractor')
+        $ContractorLedgers = ContractorLedger::with('contractor')
             ->get();
 
-        $Salesmans = Salesman::where('admin_or_user_id', $userId)
-            ->where('designation', 'Saleman')
-            ->get();
+        $Salesmans = Salesman::where('designation', 'Saleman')->get();
 
         return view('admin_panel.contractor.contractor_ledger', compact('ContractorLedgers', 'Salesmans'));
     }
@@ -140,25 +137,40 @@ class ContractorController extends Controller
     // Store contractor recovery
     public function contractor_recovery_store(Request $request)
     {
-        $ledger = ContractorLedger::find($request->ledger_id);
-        $ledger->previous_balance -= $request->amount_paid;
-        $ledger->closing_balance -= $request->amount_paid;
-        $ledger->save();
+        try {
+            $ledger = ContractorLedger::find($request->ledger_id);
 
-        $userId = Auth::id();
+            if (!$ledger) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Ledger not found'
+                ]);
+            }
 
-        ContractorRecovery::create([
-            'admin_or_user_id' => $userId,
-            'contractor_ledger_id' => $ledger->id,
-            'amount_paid' => $request->amount_paid,
-            'date' => $request->date,
-            'remarks' => $request->remarks,
-        ]);
+            $ledger->previous_balance = $ledger->closing_balance;
+            $ledger->closing_balance -= $request->amount_paid;
+            $ledger->save();
 
-        return response()->json([
-            'success' => true,
-            'new_closing_balance' => number_format($ledger->closing_balance, 0),
-        ]);
+            $userId = Auth::id();
+
+            ContractorRecovery::create([
+                'admin_or_user_id' => $userId,
+                'contractor_ledger_id' => $ledger->id,
+                'amount' => $request->amount_paid,
+                'recovery_date' => $request->date,
+                'remarks' => $request->remarks,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'new_closing_balance' => number_format($ledger->closing_balance, 0),
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ]);
+        }
     }
 
     // Show contractor recovery list
@@ -169,13 +181,10 @@ class ContractorController extends Controller
         }
 
         $userId = Auth::id();
-        $Recoveries = ContractorRecovery::where('admin_or_user_id', $userId)
-            ->with('contractor')
+        $Recoveries = ContractorRecovery::with('contractor')
             ->get();
 
-        $Salesmans = Salesman::where('admin_or_user_id', $userId)
-            ->where('designation', 'Saleman')
-            ->get();
+        $Salesmans = Salesman::where('designation', 'Saleman')->get();
 
         return view('admin_panel.contractor.contractor_recovery', compact('Recoveries', 'Salesmans'));
     }
@@ -200,22 +209,22 @@ class ContractorController extends Controller
         $adjustAmount = $request->adjust_amount;
 
         if ($request->adjust_type === 'plus') {
-            $new_amount_paid = $recovery->amount_paid + $adjustAmount;
+            $new_amount = $recovery->amount + $adjustAmount;
             $ledger->closing_balance -= $adjustAmount;
         } else {
-            $new_amount_paid = $recovery->amount_paid - $adjustAmount;
+            $new_amount = $recovery->amount - $adjustAmount;
             $ledger->closing_balance += $adjustAmount;
         }
 
-        $new_amount_paid = max(0, $new_amount_paid);
+        $new_amount = max(0, $new_amount);
         $ledger->closing_balance = max(0, $ledger->closing_balance);
 
         $ledger->save();
 
         $recovery->update([
-            'amount_paid' => $new_amount_paid,
+            'amount' => $new_amount,
             'remarks' => $request->remarks,
-            'date' => $request->date,
+            'recovery_date' => $request->date,
         ]);
 
         return redirect()->route('contractor-recovery')->with('success', 'Contractor recovery updated successfully.');

@@ -39,7 +39,7 @@ class PurchaseController extends Controller
     {
         $q = $request->get('q', null);
 
-        $query = Product::query()->select('id', 'item_name', 'size', 'pcs_in_carton', 'retail_price', 'product_mode', 'height', 'width', 'area');
+        $query = Product::query()->select('id', 'item_name', 'retail_price', 'wholesale_price', 'product_mode', 'height', 'width', 'area');
 
         if ($q === null || $q === '') {
             $items = $query->orderBy('item_name')->limit(200)->get();
@@ -135,13 +135,13 @@ class PurchaseController extends Controller
             $product->carton_quantity += $cartonQty;
             $totalPiecesAdded = ($cartonQty * $pcsInCarton) + $pcsQty;
             $product->initial_stock += $totalPiecesAdded;
-            
+
             // ✅ UPDATE SQUARE FOOTAGE IF PRODUCT HAS AREA
             if ($product->area && $product->area > 0) {
                 $addedSqft = $totalPiecesAdded * $product->area;
                 $product->total_sqft = ($product->total_sqft ?? 0) + $addedSqft;
             }
-            
+
             $product->wholesale_price = $rate;
             $product->save();
         }
@@ -354,13 +354,13 @@ class PurchaseController extends Controller
 
                 $product->carton_quantity = $new_carton_quantity;
                 $product->initial_stock = $new_initial_stock;
-                
+
                 // ✅ UPDATE SQUARE FOOTAGE IF PRODUCT HAS AREA
                 if ($product->area && $product->area > 0) {
                     $addedSqft = $totalPiecesAdded * $product->area;
                     $product->total_sqft = ($product->total_sqft ?? 0) + $addedSqft;
                 }
-                
+
                 $product->wholesale_price = $rate;
                 $product->save();
             }

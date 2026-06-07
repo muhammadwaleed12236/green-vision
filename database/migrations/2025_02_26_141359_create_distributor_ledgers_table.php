@@ -13,9 +13,12 @@ return new class extends Migration
     {
         Schema::create('distributor_ledgers', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('distributor_id')->constrained('distributors')->onDelete('cascade');
+            $table->decimal('previous_balance', 15, 2)->default(0);
+            $table->decimal('closing_balance', 15, 2)->default(0);
+            $table->foreignId('admin_or_user_id')->constrained('users')->onDelete('cascade');
             $table->timestamps();
             $table->softDeletes();
-
         });
     }
 

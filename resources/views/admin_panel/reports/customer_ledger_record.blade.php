@@ -40,12 +40,12 @@
 
                             <div class="col-md-6">
                                 <label class="fw-bold">Start Date</label>
-                                <input type="date" id="start_date" name="start_date" class="form-control bg-light">
+                                <input type="date" id="start_date" name="start_date" class="form-control bg-light" value="{{ date('Y-m-01') }}">
                             </div>
 
                             <div class="col-md-6">
                                 <label class="fw-bold">End Date</label>
-                                <input type="date" id="end_date" name="end_date" class="form-control bg-light">
+                                <input type="date" id="end_date" name="end_date" class="form-control bg-light" value="{{ date('Y-m-d') }}">
                             </div>
                         </div>
                         <div class="d-flex justify-content-between align-items-center gap-4 mt-4">
@@ -53,7 +53,7 @@
                                 Search
                             </button>
 
-                            <button id="downloadPdf" class="btn btn-danger btn-lg">
+                            <button id="downloadPdf" class="btn btn-danger btn-lg d-none">
                                 Download PDF
                             </button>
                         </div>
@@ -152,26 +152,26 @@
 
 <script>
     function formatDate(dateString) {
+        if (!dateString) return "N/A";
         const date = new Date(dateString);
+        if (isNaN(date.getTime())) return "Invalid Date";
         const day = String(date.getDate()).padStart(2, '0');
-        const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are zero-based
+        const month = String(date.getMonth() + 1).padStart(2, '0');
         const year = date.getFullYear();
         return `${day}/${month}/${year}`;
     }
 
-    $(document).ready(function () {
-
-
-        $('#Customer').change(function () {
+    $(document).ready(function() {
+        // Customer Select Change
+        $('#Customer').change(function() {
             var selected = $(this).find(':selected');
-            $('#contact').val(selected.data('contact'));
-            $('#city').val(selected.data('city'));
-            $('#area').val(selected.data('area'));
+            $('#contact').val(selected.data('contact') || '');
+            $('#city').val(selected.data('city') || '');
+            $('#area').val(selected.data('area') || '');
         });
 
-
-
-        $('#searchLedger').click(function () {
+        // Search Ledger
+        $('#searchLedger').click(function() {
             var CustomerId = $('#Customer').val();
             let startDate = $('#start_date').val();
             let endDate = $('#end_date').val();
@@ -181,6 +181,10 @@
                 return;
             }
 
+            // Hide previous results
+            $('#ledgerResult').hide();
+            $('#downloadPdf').addClass('d-none');
+
             $.ajax({
                 url: "{{ route('fetch-Customer-ledger') }}",
                 type: "GET",
@@ -189,166 +193,216 @@
                     start_date: startDate,
                     end_date: endDate
                 },
-                success: function (response) {
-                    const startDateObj = new Date(response.startDate);
-                    const endDateObj = new Date(response.endDate);
-                    // Format dates to 'dd/mm/yyyy'
-                    const formattedStartDate = formatDate(response.startDate);
-                    const formattedEndDate = formatDate(response.endDate);
-
-                    $('#ledgerResult').show();
-                    $('#CustomerName').text($('#Customer option:selected').text()); // Customer name show karein
-                    $('#startDate').text(formattedStartDate || "N/A");
-                    $('#endDate').text(formattedEndDate || "N/A");
+                success: function(response) {
+                    // Update Header Info
+                    $('#CustomerName').text($('#Customer option:selected').text());
+                    $('#startDate').text(formatDate(response.startDate));
+                    $('#endDate').text(formatDate(response.endDate));
 
                     let openingBalance = parseFloat(response.opening_balance) || 0;
                     let balance = openingBalance;
-                    let totalDebit = 0,
-                        totalCredit = 0;
-                    let ledgerHTML = "";
-
+                    let totalDebit = 0;
+                    let totalCredit = 0;
                     let allEntries = [];
 
-                    // ✅ Opening Balance Entry
-                    ledgerHTML += `
-                <tr>
-                    <td>${response.start_date || "N/A"}</td>
-                    <td>-</td>
-                    <td class="fw-bold">Opening Balance</td>
-                    <td>-</td>
-                    <td>-</td>
-                    <td class="fw-bold text-primary">Rs. ${balance.toFixed(2)}</td>
-                </tr>
-            `;
+                    // Collect Entries
+                    // 1. Sales & Advances
+                    if (Array.isArray(response.local_sales)) {
+                        response.local_sales.forEach(entry => {
+                            allEntries.push({
+                                date: entry.created_at,
+                                type: 'sale',
+                                invoice_number: entry.invoice_number,
+                                amount: parseFloat(entry.net_amount) || 0
+                            });
 
-                    // ✅ Sales Entries (local_sales)
-                    response.local_sales.forEach(entry => {
-                        allEntries.push({
-                            date: entry.Date,
-                            type: 'sale',
-                            invoice_number: entry.invoice_number,
-                            salesman: entry.Saleman,
-                            amount: parseFloat(entry.net_amount) || 0
+                            let advance = parseFloat(entry.advance_amount) || 0;
+                            if (advance > 0) {
+                                allEntries.push({
+                                    date: entry.created_at,
+                                    type: 'advance',
+                                    invoice_number: entry.invoice_number,
+                                    amount: advance
+                                });
+                            }
                         });
-                    });
+                    }
 
-                    // ✅ Recovery Entries
-                    response.recoveries.forEach(entry => {
-                        allEntries.push({
-                            date: entry.date,
-                            type: 'recovery',
-                            salesman: entry.salesman,
-                            remarks: entry.remarks,
-                            amount: parseFloat(entry.amount_paid) || 0
+                    // 2. Recoveries
+                    if (Array.isArray(response.recoveries)) {
+                        response.recoveries.forEach(entry => {
+                            allEntries.push({
+                                date: entry.date,
+                                type: 'recovery',
+                                salesman: entry.salesman,
+                                remarks: entry.remarks,
+                                amount: parseFloat(entry.amount_paid) || 0
+                            });
                         });
-                    });
+                    }
 
-                    response.sale_returns.forEach(entry => {
-                        allEntries.push({
-                            date: entry.created_at,
-                            type: 'sale_return',
-                            invoice_number: entry.invoice_number,
-                            amount: parseFloat(entry.total_return_amount) || 0
+                    // 2.1 Journal Receipts (Vendor pays us)
+                    if (Array.isArray(response.receipts)) {
+                        response.receipts.forEach(entry => {
+                            allEntries.push({
+                                date: entry.voucher_date,
+                                type: 'journal_receipt',
+                                remarks: entry.remarks || 'Customer Receipt Voucher',
+                                amount: parseFloat(entry.credit_amount) || 0
+                            });
                         });
-                    });
+                    }
 
-                    // ✅ Sort Entries by Date (Sales pehle, Recovery baad me agar date same ho)
+                    // 3. Returns
+                    if (Array.isArray(response.sale_returns)) {
+                        response.sale_returns.forEach(entry => {
+                            allEntries.push({
+                                date: entry.created_at,
+                                type: 'sale_return',
+                                reason: entry.reason || 'Sale Return',
+                                amount: parseFloat(entry.return_amount) || 0
+                            });
+                        });
+                    }
+
+                    // Sort Entries
                     allEntries.sort((a, b) => {
                         let dateA = new Date(a.date);
                         let dateB = new Date(b.date);
                         if (dateA - dateB === 0) {
-                            const typeOrder = {
-                                'sale': 1,
-                                'sale_return': 2,
-                                'recovery': 3
-                            };
-                            return typeOrder[a.type] - typeOrder[b.type];
+                            const typeOrder = { 'sale': 1, 'advance': 2, 'sale_return': 3, 'recovery': 4 };
+                            return (typeOrder[a.type] || 5) - (typeOrder[b.type] || 5);
                         }
                         return dateA - dateB;
                     });
 
-                    // ✅ Maintain Correct Ledger Balance
+                    // Build HTML
+                    let ledgerHTML = `
+                        <tr>
+                            <td>${formatDate(response.startDate)}</td>
+                            <td>-</td>
+                            <td class="fw-bold">Opening Balance</td>
+                            <td>-</td>
+                            <td>-</td>
+                            <td class="fw-bold text-primary">Rs. ${openingBalance.toFixed(2)}</td>
+                        </tr>
+                    `;
+
                     allEntries.forEach(entry => {
+                        let rowHtml = '';
                         if (entry.type === 'sale') {
                             let debit = entry.amount;
                             totalDebit += debit;
                             balance += debit;
-                            ledgerHTML += `
-            <tr>
-                <td>${formatDate(entry.date)}</td>
-                <td>${entry.invoice_number}</td>
-                <td>To Sale A/c (${entry.salesman})</td>
-                <td>Rs. ${debit.toFixed(2)}</td>
-                <td>-</td>
-                <td class="fw-bold ${balance < 0 ? 'text-danger' : 'text-success'}">Rs. ${balance.toFixed(2)}</td>
-            </tr>
-        `;
+                            rowHtml = `
+                                <tr>
+                                    <td>${formatDate(entry.date)}</td>
+                                    <td>${entry.invoice_number || '-'}</td>
+                                    <td>To Sale A/c</td>
+                                    <td>Rs. ${debit.toFixed(2)}</td>
+                                    <td>-</td>
+                                    <td class="fw-bold ${balance < 0 ? 'text-danger' : 'text-success'}">Rs. ${balance.toFixed(2)}</td>
+                                </tr>`;
                         } else if (entry.type === 'recovery') {
                             let credit = entry.amount;
                             totalCredit += credit;
                             balance -= credit;
-                            ledgerHTML += `
-            <tr>
-                <td>${formatDate(entry.date)}</td>
-                <td>-</td>
-                <td> ${entry.remarks} </td>
-                <td>-</td>
-                <td>Rs. ${credit.toFixed(2)}</td>
-                <td class="fw-bold ${balance < 0 ? 'text-danger' : 'text-success'}">Rs. ${balance.toFixed(2)}</td>
-            </tr>
-        `;
+                            rowHtml = `
+                                <tr>
+                                    <td>${formatDate(entry.date)}</td>
+                                    <td>-</td>
+                                    <td>${entry.remarks || 'Recovery'}</td>
+                                    <td>-</td>
+                                    <td>Rs. ${credit.toFixed(2)}</td>
+                                    <td class="fw-bold ${balance < 0 ? 'text-danger' : 'text-success'}">Rs. ${balance.toFixed(2)}</td>
+                                </tr>`;
+                        } else if (entry.type === 'journal_receipt') {
+                            let credit = entry.amount;
+                            totalCredit += credit;
+                            balance -= credit;
+                            rowHtml = `
+                                <tr style="background:#e3f2fd;">
+                                    <td>${formatDate(entry.date)}</td>
+                                    <td>-</td>
+                                    <td class="text-success fw-bold">Receipt Voucher<br><small class="text-muted">${entry.remarks || ''}</small></td>
+                                    <td>-</td>
+                                    <td class="text-success fw-bold">Rs. ${credit.toFixed(2)}</td>
+                                    <td class="fw-bold ${balance < 0 ? 'text-danger' : 'text-success'}">Rs. ${balance.toFixed(2)}</td>
+                                </tr>`;
                         } else if (entry.type === 'sale_return') {
                             let credit = entry.amount;
                             totalCredit += credit;
                             balance -= credit;
-                            ledgerHTML += `
-        <tr>
-            <td>${formatDate(entry.date)}</td>
-            <td>${entry.invoice_number}</td>
-            <td class="text-danger fw-bold">Sale Return</td>
-            <td>-</td>
-            <td class="text-danger fw-bold">Rs. ${credit.toFixed(2)}</td>
-            <td class="fw-bold ${balance < 0 ? 'text-danger' : 'text-success'}">Rs. ${balance.toFixed(2)}</td>
-        </tr>
-    `;
+                            rowHtml = `
+                                <tr>
+                                    <td>${formatDate(entry.date)}</td>
+                                    <td>-</td>
+                                    <td class="text-danger fw-bold">Sale Return: ${entry.reason || 'N/A'}</td>
+                                    <td>-</td>
+                                    <td class="text-danger fw-bold">Rs. ${credit.toFixed(2)}</td>
+                                    <td class="fw-bold ${balance < 0 ? 'text-danger' : 'text-success'}">Rs. ${balance.toFixed(2)}</td>
+                                </tr>`;
+                        } else if (entry.type === 'advance') {
+                            let credit = entry.amount;
+                            totalCredit += credit;
+                            balance -= credit;
+                            rowHtml = `
+                                <tr>
+                                    <td>${formatDate(entry.date)}</td>
+                                    <td>${entry.invoice_number || '-'}</td>
+                                    <td class="text-success fw-bold">Advance Payment (Cash)</td>
+                                    <td>-</td>
+                                    <td class="text-success fw-bold">Rs. ${credit.toFixed(2)}</td>
+                                    <td class="fw-bold ${balance < 0 ? 'text-danger' : 'text-success'}">Rs. ${balance.toFixed(2)}</td>
+                                </tr>`;
                         }
+                        ledgerHTML += rowHtml;
                     });
 
-                    // ✅ Update Totals
+                    // Render
                     $('#ledgerData').html(ledgerHTML);
                     $('#openingBalance').text(`Rs. ${openingBalance.toFixed(2)}`);
                     $('#totalDebit').text(`Rs. ${totalDebit.toFixed(2)}`);
                     $('#totalCredit').text(`Rs. ${totalCredit.toFixed(2)}`);
-
-                    // Closing balance directly from API response
                     $('#closingBalance').text(`Rs. ${parseFloat(response.closing_balance).toFixed(2)}`);
+
+                    $('#ledgerResult').show();
+                    $('#downloadPdf').removeClass('d-none');
+                },
+                error: function(xhr) {
+                    console.error(xhr);
+                    let errorMsg = 'Error fetching ledger data.';
+                    
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        errorMsg = xhr.responseJSON.message;
+                        if (xhr.responseJSON.line) {
+                            errorMsg += '\nLine: ' + xhr.responseJSON.line;
+                        }
+                        if (xhr.responseJSON.file) {
+                            errorMsg += '\nFile: ' + xhr.responseJSON.file;
+                        }
+                    } else if (xhr.responseText) {
+                        errorMsg += '\n' + xhr.responseText.substring(0, 200);
+                    }
+                    
+                    alert(errorMsg);
                 }
             });
         });
 
-    });
-</script>
-<script>
-    document.getElementById("downloadPdf").addEventListener("click", function () {
-        const element = document.querySelector(".ledger-container");
-
-        html2canvas(element).then(canvas => {
-            const imgData = canvas.toDataURL("image/png");
-            const pdf = new jspdf.jsPDF("p", "mm", "a4");
-
-            const imgProps = pdf.getImageProperties(imgData);
-            const pdfWidth = pdf.internal.pageSize.getWidth();
-            const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-
-            pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
-            pdf.save("Customer-Ledger.pdf");
+        // PDF Download
+        $('#downloadPdf').click(function(e) {
+            e.preventDefault();
+            const element = document.querySelector(".ledger-container");
+            html2canvas(element).then(canvas => {
+                const imgData = canvas.toDataURL("image/png");
+                const pdf = new jspdf.jsPDF("p", "mm", "a4");
+                const imgProps = pdf.getImageProperties(imgData);
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+                pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+                pdf.save("Customer-Ledger.pdf");
+            });
         });
-    });
-
-    // Show PDF button only when result appears
-    $('#searchLedger').click(function () {
-        setTimeout(() => {
-            $('#downloadPdf').removeClass('d-none');
-        }, 500);
     });
 </script>

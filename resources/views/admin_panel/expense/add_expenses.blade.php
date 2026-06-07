@@ -30,7 +30,6 @@
                                 <tr>
                                     <th>#</th>
                                     <th>Date</th>
-                                    <th>Title</th>
                                     <th>Category</th>
                                     <th>Description</th>
                                     <th>Amount</th>
@@ -39,27 +38,39 @@
                             </thead>
                             <tbody>
                                 @foreach($expenses as $key => $expense)
-                                    <tr>
+                                    @php
+                                        $isJobAssignment = strpos($expense->description, 'Job Assignment #') !== false;
+                                    @endphp
+                                    <tr class="{{ $isJobAssignment ? 'table-warning' : '' }}">
                                         <td>{{ $key + 1 }}</td>
-                                        <td>{{ \Carbon\Carbon::parse($expense->date)->format('d/m/Y') }}</td>
-                                        <td>{{ $expense->title }}</td>
-                                        <td>{{ $expense->expense_category }}</td>
-                                        <td>{{ $expense->description }}</td>
-                                        <td>{{ $expense->amount }}</td>
+                                        <td>{{ \Carbon\Carbon::parse($expense->expense_date)->format('d/m/Y') }}</td>
                                         <td>
-                                            <button class="btn btn-sm btn-primary editExpenseBtn"
-                                                data-id="{{ $expense->id }}"
-                                                data-category="{{ $expense->expense_category }}"
-                                                data-title="{{ $expense->title }}" data-amount="{{ $expense->amount }}"
-                                                data-date="{{ $expense->date }}"
-                                                data-description="{{ $expense->description }}" data-bs-toggle="modal"
-                                                data-bs-target="#editExpenseModal">
-                                                Edit
-                                            </button>
+                                            {{ $expense->expenseCategory->expense_name ?? 'N/A' }}
+                                            @if($isJobAssignment)
+                                                <span class="badge bg-info ms-1">Auto-Generated</span>
+                                            @endif
+                                        </td>
+                                        <td>{{ $expense->description }}</td>
+                                        <td>{{ number_format($expense->amount) }}</td>
+                                        <td>
+                                            @if($isJobAssignment)
+                                                <span class="text-muted small">
+                                                    <i class="fas fa-lock me-1"></i>Protected Entry
+                                                </span>
+                                            @else
+                                                <button class="btn btn-sm btn-primary editExpenseBtn"
+                                                    data-id="{{ $expense->id }}"
+                                                    data-category="{{ $expense->expenseCategory->expense_name ?? '' }}"
+                                                    data-amount="{{ $expense->amount }}"
+                                                    data-date="{{ $expense->expense_date }}"
+                                                    data-description="{{ $expense->description }}" data-bs-toggle="modal"
+                                                    data-bs-target="#editExpenseModal">
+                                                    Edit
+                                                </button>
 
-                                            <button class="btn btn-sm btn-danger deleteExpenseBtn"
-                                                data-id="{{ $expense->id }}">Delete</button>
-
+                                                <button class="btn btn-sm btn-danger deleteExpenseBtn"
+                                                    data-id="{{ $expense->id }}">Delete</button>
+                                            @endif
                                         </td>
                                     </tr>
                                 @endforeach
@@ -90,13 +101,13 @@
                         <select class="form-control" name="expense_category" required>
                             <option value="">Select Category</option>
                             @foreach($expenseCategories as $category)
-                                <option value="{{ $category->expense_category }}">{{ $category->expense_category }}</option>
+                                <option value="{{ $category->expense_name }}">{{ $category->expense_name }}</option>
                             @endforeach
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Title</label>
-                        <input type="text" class="form-control" name="title" required>
+                        <label class="form-label">Title/Description</label>
+                        <input type="text" class="form-control" name="title" placeholder="Enter description">
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Amount</label>
@@ -135,13 +146,9 @@
                         <select class="form-control" id="edit_expense_category" name="expense_category" required>
                             <option value="">Select Category</option>
                             @foreach($expenseCategories as $category)
-                                <option value="{{ $category->expense_category }}">{{ $category->expense_category }}</option>
+                                <option value="{{ $category->expense_name }}">{{ $category->expense_name }}</option>
                             @endforeach
                         </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Title</label>
-                        <input type="text" class="form-control" id="edit_expense_title" name="title" required>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Amount</label>

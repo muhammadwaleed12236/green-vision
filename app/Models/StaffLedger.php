@@ -14,11 +14,16 @@ class StaffLedger extends Model
 
     public function salesman()
     {
-        return $this->belongsTo(Salesman::class, 'saleman_id');
+        return $this->belongsTo(Salesman::class, 'staff_id');
+    }
+
+    public function staff()
+    {
+        return $this->belongsTo(Salesman::class, 'staff_id');
     }
 
     public function contractor()
     {
-        return $this->belongsTo(Contractor::class, 'saleman_id');
+        return $this->belongsTo(Contractor::class, 'staff_id');
     }
 }

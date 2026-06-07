@@ -52,10 +52,9 @@ class SalesmanController extends Controller
             // 👇 Staff Ledger Create (Customer ki tarah)
             \App\Models\StaffLedger::create([
                 'admin_or_user_id' => $userId,
-                'saleman_id' => $salesman->id,
-                'opening_balance' => $request->salary ?? 0, // Salary ko opening balance bana do
-                'previous_balance' => $request->salary ?? 0,
-                'closing_balance' => $request->salary ?? 0,
+                'staff_id' => $salesman->id,
+                'previous_balance' => 0,
+                'closing_balance' => 0,
                 'created_at' => now(),
             ]);
 
@@ -213,15 +212,34 @@ class SalesmanController extends Controller
         $userId = Auth::id();
 
         if ($authUser->usertype === 'admin') {
-            $StaffLedgers = \App\Models\StaffLedger::where('admin_or_user_id', $userId)
-                ->with('salesman')
+            // Get latest ledger entry for each staff
+            $StaffLedgers = DB::table('staff_ledgers as sl')
+                ->join('sales_mens as sm', 'sl.staff_id', '=', 'sm.id')
+                ->where('sl.admin_or_user_id', $userId)
+                ->whereNotNull('sm.name')
+                ->select(
+                    'sl.id',
+                    'sl.staff_id',
+                    'sm.name as staff_name',
+                    'sm.designation',
+                    'sm.phone',
+                    'sl.previous_balance',
+                    'sl.closing_balance',
+                    'sl.created_at'
+                )
+                ->whereIn('sl.id', function($query) use ($userId) {
+                    $query->select(DB::raw('MAX(id)'))
+                          ->from('staff_ledgers')
+                          ->where('admin_or_user_id', $userId)
+                          ->groupBy('staff_id');
+                })
                 ->get();
         } else {
             $StaffLedgers = collect();
         }
 
         $Salesmans = Salesman::where('admin_or_user_id', $userId)
-            ->where('designation', 'Saleman')
+            ->whereNotNull('name')
             ->get();
 
         return view('admin_panel.salesmen.salemen_ladger', compact('StaffLedgers', 'Salesmans'));

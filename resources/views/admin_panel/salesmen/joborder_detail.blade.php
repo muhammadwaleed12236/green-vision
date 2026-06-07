@@ -10,7 +10,7 @@
             <div class="page-header">
                 <div class="page-title">
                     <h4>Job Order Detail</h4>
-                    <h6>Job No: {{ $job->job_order_no }}</h6>
+                    <h6>Job No: {{ $job->job_order_number }}</h6>
                 </div>
                 <div>
                     <a href="{{ route('job-orders.index') }}" class="btn btn-secondary btn-sm">
@@ -25,8 +25,19 @@
                     <div class="row g-3">
                         <div class="col-md-3">
                             <label class="fw-semibold">Job Date</label>
-                           <div>{{ \Carbon\Carbon::parse($job->job_date)->format('d-m-Y') }}</div>
+                           <div>{{ \Carbon\Carbon::parse($job->order_date)->format('d-M-Y') }}</div>
+                        </div>
 
+                        <div class="col-md-3">
+                            <label class="fw-semibold">Contractor / Staff</label>
+                            <div>
+                                @if($job->staff_type === 'contract')
+                                    <span class="text-warning fw-bold">{{ $job->contractor->contractor_name ?? 'N/A' }}</span>
+                                    <div class="small text-muted">{{ $job->contractor->phone_number ?? '' }}</div>
+                                @else
+                                    <span class="text-success fw-bold">In-House</span>
+                                @endif
+                            </div>
                         </div>
 
                         <div class="col-md-3">

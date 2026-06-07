@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Models\LocalSale;
 
 class HomeController extends Controller
 {
@@ -21,10 +22,9 @@ class HomeController extends Controller
                 // Dashboard Statistics
                 $stats = $this->getAdminStats();
 
-                // dd($stats);
                 return view('admin_panel.dashboard', compact('stats', 'userId'));
             } elseif ($usertype == 'local_salesman') {
-                return view('local_salesman_panel.dashboard', [
+                return view('salesman_panel.dashboard', [
                     'userId' => $userId,
                 ]);
             } else {
@@ -36,109 +36,146 @@ class HomeController extends Controller
     private function getAdminStats()
     {
         // Total Purchase Due
-        $totalPurchaseDue = DB::table('purchases')
-            ->sum(DB::raw('grand_total - gross_total'));
+        $totalPurchaseDue = \App\Models\VendorLedger::sum('closing_balance');
 
-        // Total local_sales Due
-        $totallocal_salesDue = DB::table('local_sales')
-            ->sum(DB::raw('grand_total - net_amount'));
+        // Total Sales Due
+        $totalSalesDue = \App\Models\CustomerLedger::sum('closing_balance');
 
-        //         $totallocal_salesDue = DB::table('local_sales')
-        // ->whereRaw('net_amount > grand_total')
-        // ->sum(DB::raw('net_amount - grand_total'));
+        // Total Sale Revenue (Net Amount AFTER discount - EXCLUDING DELETED)
+        $totalSaleAmount = LocalSale::sum('net_amount');
 
-        // Total Sale Amount
-        $totalSaleAmount = DB::table('local_sales')->sum('net_amount');
+        // Total Stock Investment
+        $totalStockInvestment = \App\Models\Purchase::sum('grand_total');
 
-        // Total Purchase Amount
-        $totalPurchaseAmount = DB::table('purchases')->sum('grand_total');
+        // Total Contractor Costs (from job_orders table - contractor and vendor assignments)
+        $totalContractorCosts = \App\Models\JobOrder::whereIn('assignee_type', ['contractor', 'vendor'])
+            ->whereNull('deleted_at')
+            ->sum('total_amount');
 
-        // Total Expenses
-        $totalExpenses = DB::table('add_expenses')->sum('amount');
+        // Total Job Costs (same as contractor costs for backward compatibility)
+        $totalJobCosts = $totalContractorCosts;
+
+        // Total Other Expenses (EXCLUDING job assignment expenses)
+        $totalExpenses = \App\Models\AddExpense::whereHas('expense', function($query) {
+                $query->where('expense_name', 'NOT LIKE', '%Job Assignment%');
+            })
+            ->sum('amount');
+
 
         // Counts
-        $customersCount = DB::table('customers')->count();
-        $vendorsCount = DB::table('vendors')->count();
-        $purchaseInvoiceCount = DB::table('purchases')->count();
-        $local_salesInvoiceCount = DB::table('local_sales')->count();
-        $productsCount = DB::table('products')->count();
-        $staffCount = DB::table('sales_mens')->count();
+        $customersCount = \App\Models\Customer::count();
+        $vendorsCount = \App\Models\Vendor::count();
+        $purchaseInvoiceCount = \App\Models\Purchase::count();
+        $local_salesInvoiceCount = LocalSale::count();
+        $productsCount = \App\Models\Product::count();
+        $staffCount = \App\Models\Salesman::count();
 
-        // Monthly local_sales & Purchase Data (Last 12 Months)
+        // Monthly Sales & Purchases (Last 12 Months) - Using net_amount for accurate revenue
         $monthlylocal_sales = DB::table('local_sales')
             ->select(
                 DB::raw('MONTH(created_at) as month'),
                 DB::raw('YEAR(created_at) as year'),
-                DB::raw('SUM(grand_total) as total')
+                DB::raw('SUM(net_amount) as total')
             )
+            ->whereNull('deleted_at')
             ->where('created_at', '>=', now()->subMonths(12))
             ->groupBy('year', 'month')
             ->orderBy('year', 'asc')
             ->orderBy('month', 'asc')
             ->get();
+
 
         $monthlyPurchases = DB::table('purchases')
             ->select(
                 DB::raw('MONTH(created_at) as month'),
                 DB::raw('YEAR(created_at) as year'),
-                DB::raw('SUM(gross_total) as total')
+                DB::raw('SUM(grand_total) as total')
             )
+            ->whereNull('deleted_at')
             ->where('created_at', '>=', now()->subMonths(12))
             ->groupBy('year', 'month')
             ->orderBy('year', 'asc')
             ->orderBy('month', 'asc')
             ->get();
 
-        // Top Selling Products
-        $topProducts = DB::table('job_items')
-            ->join('products', 'job_items.item_id', '=', 'products.id')
-            ->select(
-                'products.item_name',
-                DB::raw('SUM(job_items.qty) as items_quantity'),
-                DB::raw('SUM(job_items.total) as total_revenue')
-            )
-            ->groupBy('products.id', 'products.item_name')
-            ->orderBy('total_revenue', 'desc')
-            ->limit(5)
-            ->get();
+        // =========================
+        // Top Selling Items & Products
+        // =========================
+        $allSales = LocalSale::whereNull('deleted_at')->get();
+        $totals = [];
 
-        // Recent local_sales
-        $recentlocal_sales = DB::table('local_sales')
-            ->join('customers', 'local_sales.customer_id', '=', 'customers.id')
-            ->select('local_sales.*', 'customers.customer_name as customer_name')
-            ->orderBy('local_sales.created_at', 'desc')
+        foreach ($allSales as $sale) {
+            $items = json_decode($sale->item, true);       // e.g., ["glass", "almonium"]
+            $amounts = json_decode($sale->amount, true);   // e.g., [1500, 10.42]
+
+            if (!$items || !$amounts) continue;
+
+            foreach ($items as $index => $itemName) {
+                if (!isset($totals[$itemName])) {
+                    $totals[$itemName] = [
+                        'total_sales' => 0,
+                        'total_qty' => 0
+                    ];
+                }
+
+                $totals[$itemName]['total_sales'] += $amounts[$index] ?? 0;
+
+                // Optionally sum quantity if qty array exists
+                $qtys = json_decode($sale->qty, true); // assuming qty column has array
+                $totals[$itemName]['total_qty'] += $qtys[$index] ?? 0;
+            }
+        }
+
+        // Sort by total_sales descending
+        uasort($totals, function ($a, $b) {
+            return $b['total_sales'] <=> $a['total_sales'];
+        });
+
+        // Top 6 Selling Items
+        $topSellingItems = collect(array_slice($totals, 0, 6, true))->map(function ($data, $itemName) {
+            return [
+                'item_name' => $itemName,
+                'total_sales' => $data['total_sales'],
+                'total_qty' => $data['total_qty'],
+            ];
+        });
+
+        // Top Products for chart (top 5)
+        $topProducts = $topSellingItems->take(5);
+
+        // =========================
+        // Recent Sales
+        // =========================
+        $recentlocal_sales = LocalSale::leftJoin('customers', 'local_sales.customer_id', '=', 'customers.id')
+            ->select('local_sales.*', DB::raw('COALESCE(customers.customer_name, local_sales.customer_shopname, "Walk-in Customer") as customer_name'))
+            ->orderBy('local_sales.id', 'desc')
             ->limit(10)
             ->get();
 
-        // Top Selling Items (Simple - No categories needed)
-        $topSellingItems = DB::table('job_items')
-            ->select(
-                'item_name',
-                DB::raw('SUM(total) as total_sales')
-            )
-            ->whereNotNull('item_name')
-            ->groupBy('item_name')
-            ->orderBy('total_sales', 'desc')
-            ->limit(6)
-            ->get();
-
-        // Payment Status Distribution
+        // =========================
+        // Payment Status
+        // =========================
         $paymentStatus = [
-            'paid' => DB::table('local_sales')->where('job_status', 'paid')->count(),
-            'unpaid' => DB::table('local_sales')->where('job_status', 'unpaid')->count(),
-            'pending' => DB::table('local_sales')->where('job_status', 'pending')->count(),
+            'paid' => LocalSale::where('job_status', 'paid')->count(),
+            'unpaid' => LocalSale::where('job_status', 'unpaid')->count(),
+            'pending' => LocalSale::where('job_status', 'pending')->count(),
         ];
 
-        // Net Profit Calculation
-        $netProfit = $totalSaleAmount - $totalPurchaseAmount - $totalExpenses;
+        // =========================
+        // Net Profit
+        // =========================
+        $netProfit = $totalSaleAmount - $totalJobCosts - $totalExpenses;
 
         return [
             'totalPurchaseDue' => $totalPurchaseDue,
-            'totallocal_salesDue' => $totallocal_salesDue,
+            'totalSalesDue' => $totalSalesDue,
             'totalSaleAmount' => $totalSaleAmount,
-            'totalPurchaseAmount' => $totalPurchaseAmount,
+            'totalStockInvestment' => $totalStockInvestment,
+            'totalJobCosts' => $totalJobCosts,
+            'totalContractorCosts' => $totalContractorCosts,
             'totalExpenses' => $totalExpenses,
             'netProfit' => $netProfit,
+
             'customersCount' => $customersCount,
             'vendorsCount' => $vendorsCount,
             'purchaseInvoiceCount' => $purchaseInvoiceCount,

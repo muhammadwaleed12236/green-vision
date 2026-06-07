@@ -13,6 +13,11 @@ return new class extends Migration
     {
         Schema::create('vendor_ledgers', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('vendor_id')->constrained('vendors')->onDelete('cascade');
+            $table->decimal('opening_balance', 15, 2)->default(0);
+            $table->decimal('previous_balance', 15, 2)->default(0);
+            $table->decimal('closing_balance', 15, 2)->default(0);
+            $table->foreignId('admin_or_user_id')->constrained('users')->onDelete('cascade');
             $table->timestamps();
             $table->softDeletes();
         });

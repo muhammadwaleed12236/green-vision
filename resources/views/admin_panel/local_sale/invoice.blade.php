@@ -1,158 +1,395 @@
-@include('admin_panel.include.header_include')
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice #{{ $sale->invoice_number }}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-<div class="main-wrapper">
-    @include('admin_panel.include.navbar_include')
-    @include('admin_panel.include.admin_sidebar_include')
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background-color: #fff;
+            padding: 20px;
+        }
 
-    <div class="page-wrapper">
-        <div class="content">
+        .invoice-container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border: 1px solid #000;
+        }
 
-            <!-- ACTION BUTTONS -->
-            <div class="d-flex justify-content-end gap-2 mb-2 no-print" style="max-width:1100px; margin:auto;">
-                <a href="{{ route('local-sale') }}" class="btn btn-secondary">
-                    <i class="fa fa-arrow-left"></i> Back
-                </a>
+        .invoice-header {
+            border-bottom: 3px solid #000;
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
 
-                <button onclick="printInvoice()" class="btn btn-danger">
-                    <i class="fa fa-print"></i> Print
-                </button>
-            </div>
+        .company-logo h1 {
+            font-size: 28px;
+            font-weight: bold;
+            margin: 0;
+            color: #000;
+        }
 
-            <!-- INVOICE CARD -->
-            <div class="card p-3" id="invoiceCard" style="max-width:1100px; margin:auto;">
-                <div class="card-body">
+        .company-logo p {
+            font-size: 11px;
+            margin: 5px 0 0 0;
+            color: #666;
+        }
 
-                    <!-- HEADER -->
-                    <div class="d-flex justify-content-between align-items-center mb-2"
-                        style="border-bottom:3px solid #000; padding-bottom:8px;">
+        .invoice-title {
+            text-align: right;
+        }
 
-                        <div class="d-flex align-items-center">
-                            <img src="{{ url('small-logo.png') }}" alt="Logo" style="max-width:100px;">
-                            <div class="ms-3">
-                                <h5 class="mb-0 fw-bold">Raj Glass</h5>
-                                <small class="text-muted">Glass & Aluminum Works</small>
-                            </div>
-                        </div>
+        .invoice-title h2 {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 0;
+            color: #000;
+        }
 
-                        <div class="text-center">
-                            <h6 class="fw-bold mb-1">Raj Glass</h6>
-                            <small>6-B Block-E, Latifabad No-08, Hyderabad</small><br>
-                            <small>0314-4021603 | 0334-2611233</small>
-                        </div>
+        .invoice-title p {
+            font-size: 12px;
+            margin: 3px 0;
+            color: #666;
+        }
 
-                        <div class="text-end">
-                            <h6 class="fw-bold mb-1">Job Order Invoice</h6>
-                            <small>Job No: <strong>{{ $sale->invoice_number }}</strong></small><br>
-                            <small>Date: <strong>{{ $sale->Date }}</strong></small>
-                        </div>
-                    </div>
+        .invoice-info-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            padding: 20px 30px;
+            border-bottom: 1px solid #ddd;
+        }
 
-                    <!-- CUSTOMER INFO -->
-                    <div class="row my-3 mx-1" style="border:2px solid #000; padding:12px;">
-                        <div class="col-md-6">
-                            <p class="mb-1"><strong>Client Name:</strong> {{ $sale->customer->customer_name ?? 'N/A' }}</p>
-                            {{-- <p class="mb-1"><strong>Area:</strong> {{ $sale->customer_area ?? 'N/A' }}</p> --}}
-                            <p class="mb-0"><strong>Mobile:</strong> {{ $sale->customer_phone ?? 'N/A' }}</p>
-                        </div>
-                    </div>
+        .info-block {
+            padding: 15px;
+            border: 1px solid #ddd;
+        }
 
-                    <!-- ITEMS TABLE -->
-                    @php
-                        $items = json_decode($sale->item) ?? [];
-                        $amounts = json_decode($sale->amount) ?? [];
-                    @endphp
+        .info-block-title {
+            font-size: 11px;
+            font-weight: bold;
+            text-transform: uppercase;
+            color: #000;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #000;
+            padding-bottom: 5px;
+        }
 
-                    <div class="table-responsive">
-                        <table class="table table-bordered table-sm">
-                            <thead class="table-light text-center">
-                                <tr>
-                                    <th width="8%">#</th>
-                                    <th>Description</th>
-                                    <th width="20%">Amount</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($items as $i => $item)
-                                    <tr>
-                                        <td class="text-center">{{ $i + 1 }}</td>
-                                        <td>{{ $item }}</td>
-                                        <td class="text-end">{{ number_format($amounts[$i] ?? 0, 2) }}</td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
+        .info-block p {
+            font-size: 12px;
+            margin: 5px 0;
+            color: #333;
+        }
 
-                            <!-- TOTALS -->
-                            <tfoot>
-                                <tr>
-                                    <td colspan="2" class="text-end fw-bold">Gross Total</td>
-                                    <td class="text-end fw-bold">{{ number_format($sale->grand_total,2) }}</td>
-                                </tr>
-                                <tr>
-                                    <td colspan="2" class="text-end fw-bold">Discount</td>
-                                    <td class="text-end">{{ number_format($sale->discount_value ?? 0,2) }}</td>
-                                </tr>
-                                <tr class="table-light">
-                                    <td colspan="2" class="text-end fw-bold">Net Amount</td>
-                                    <td class="text-end fw-bold">{{ number_format($sale->net_amount,2) }}</td>
-                                </tr>
-                                <tr>
-                                    <td colspan="2" class="text-end fw-bold">Advance</td>
-                                    <td class="text-end">{{ number_format($sale->advance_amount ?? 0,2) }}</td>
-                                </tr>
-                                <tr>
-                                    <td colspan="2" class="text-end fw-bold">Remaining</td>
-                                    <td class="text-end fw-bold text-danger">
-                                        {{ number_format($sale->remaining_amount ?? 0,2) }}
-                                    </td>
-                                </tr>
-                            </tfoot>
-                        </table>
-                    </div>
+        .info-block strong {
+            color: #000;
+        }
 
-                    <!-- SIGNATURE -->
-                    <div class="row mt-4">
-                        <div class="col-6">
-                            <p class="fw-bold mb-0">For Raj Glass</p>
-                            <small>Authorized Signature</small>
-                        </div>
-                        <div class="col-6 text-end">
-                            <div style="border-bottom:1px solid #000; width:220px; height:60px; display:inline-block;"></div>
-                        </div>
-                    </div>
+        .invoice-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
 
-                    <!-- FOOTER -->
-                    <div class="text-center mt-4" style="border-top:2px solid #000; padding-top:6px;">
-                        <small class="fw-bold">
-                            Developed by ProWave Software Solutions<br>
-                            📞 0317-3836223 | 0317-3859647
-                        </small>
-                    </div>
+        .invoice-table thead {
+            background-color: #000;
+            color: white;
+        }
 
-                </div>
-            </div>
+        .invoice-table th {
+            padding: 12px 10px;
+            font-size: 12px;
+            font-weight: bold;
+            text-align: left;
+            border: 1px solid #000;
+        }
 
+        .invoice-table td {
+            padding: 10px;
+            font-size: 12px;
+            border: 1px solid #ddd;
+            color: #333;
+        }
+
+        .invoice-table tbody tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        .summary-section {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 20px;
+            padding: 20px 30px;
+            border-top: 2px solid #000;
+        }
+
+        .ledger-section {
+            padding: 15px;
+            border: 1px solid #ddd;
+        }
+
+        .ledger-title {
+            font-size: 11px;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            color: #000;
+            border-bottom: 1px solid #000;
+            padding-bottom: 5px;
+        }
+
+        .ledger-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            font-size: 12px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .ledger-row:last-child {
+            border-bottom: none;
+            font-weight: bold;
+            color: #000;
+            border-top: 2px solid #000;
+            margin-top: 5px;
+            padding-top: 10px;
+        }
+
+        .totals-box {
+            border: 2px solid #000;
+            padding: 15px;
+        }
+
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            font-size: 12px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .total-row.grand-total {
+            border-top: 2px solid #000;
+            margin-top: 10px;
+            padding-top: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            color: #000;
+        }
+
+        .total-row.balance-due {
+            font-weight: bold;
+            color: #000;
+            font-size: 14px;
+        }
+
+        .signature-section {
+            display: flex;
+            justify-content: space-between;
+            padding: 40px 30px 20px 30px;
+            margin-top: 30px;
+        }
+
+        .signature-box {
+            text-align: center;
+            width: 200px;
+        }
+
+        .signature-line {
+            border-top: 1px solid #000;
+            margin-bottom: 5px;
+        }
+
+        .signature-label {
+            font-size: 11px;
+            color: #666;
+        }
+
+        .invoice-footer {
+            text-align: center;
+            padding: 15px;
+            background-color: #f5f5f5;
+            border-top: 1px solid #ddd;
+            font-size: 10px;
+            color: #666;
+        }
+
+        .terms-note {
+            font-size: 10px;
+            color: #999;
+            margin-top: 10px;
+            font-style: italic;
+        }
+
+        .print-button {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 12px 24px;
+            background-color: #000;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        .print-button:hover {
+            background-color: #333;
+        }
+
+        @media print {
+            body { padding: 0; }
+            .invoice-container { 
+                border: none;
+                max-width: 100%; 
+            }
+            .print-button {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="invoice-container">
+    <div class="invoice-header">
+        <div class="company-logo">
+            <h1>Green Vision</h1>
+            <p>Glass & Building Materials</p>
+            <p>+92 311 7223 451 | +92 311 7223 442</p>
         </div>
+        <div class="invoice-title">
+            <h2>SALES INVOICE</h2>
+            <p>Date: {{ \Carbon\Carbon::parse($sale->sale_date)->format('d-M-Y') }}</p>
+            <p>Time: {{ \Carbon\Carbon::parse($sale->sale_date)->format('h:i A') }}</p>
+        </div>
+    </div>
+
+    <div class="invoice-info-section">
+        <div class="info-block">
+            <div class="info-block-title">Bill To</div>
+            <p><strong>{{ $party->business_name ?? $party->name }}</strong></p>
+            <p>{{ !empty($party->address) ? $party->address : 'Address Not Provided' }}</p>
+            <p>Phone: {{ $party->phone ?: 'N/A' }}</p>
+        </div>
+        
+        <div class="info-block">
+            <div class="info-block-title">Invoice Details</div>
+            <p><strong>Invoice No:</strong> #{{ $sale->invoice_number }}</p>
+            <p><strong>Invoice Date:</strong> {{ date('d-M-Y', strtotime($sale->sale_date)) }}</p>
+            <p><strong>Delivery Date:</strong> {{ !empty($sale->delivery_date) ? date('d-M-Y', strtotime($sale->delivery_date)) : 'Not Scheduled' }}</p>
+        </div>
+    </div>
+
+    <div style="padding: 0 30px;">
+        <table class="invoice-table">
+            <thead>
+                <tr>
+                    <th style="text-align: center; width: 5%;">#</th>
+                    <th style="width: 45%;">Description</th>
+                    <th style="text-align: center; width: 10%;">Qty</th>
+                    <th style="text-align: center; width: 10%;">Sq.Ft</th>
+                    <th style="text-align: right; width: 15%;">Rate</th>
+                    <th style="text-align: right; width: 15%;">Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                @php
+                    $items = json_decode($sale->item) ?? [];
+                    $qtys = json_decode($sale->qty) ?? [];
+                    $manual_sqfts = json_decode($sale->manual_sqft) ?? [];
+                    $rates = json_decode($sale->rate) ?? [];
+                    $amounts = json_decode($sale->amount) ?? [];
+                @endphp
+                @foreach($items as $i => $item)
+                    @if(!empty($item))
+                    <tr>
+                        <td style="text-align: center;">{{ $loop->iteration }}</td>
+                        <td><strong>{{ $item }}</strong></td>
+                        <td style="text-align: center;">{{ $qtys[$i] ?? '1' }}</td>
+                        <td style="text-align: center;">{{ !empty($manual_sqfts[$i]) ? $manual_sqfts[$i] : '-' }}</td>
+                        <td style="text-align: right;">{{ number_format((float)($rates[$i] ?? 0), 2) }}</td>
+                        <td style="text-align: right;"><strong>{{ number_format((float)($amounts[$i] ?? 0), 2) }}</strong></td>
+                    </tr>
+                    @endif
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+
+    <div class="summary-section">
+        <div class="ledger-section">
+            <div class="ledger-title">Account Statement</div>
+            <div class="ledger-row">
+                <span>{{ $ledger_info->label_prev }}</span>
+                <span>RS {{ number_format($ledger_info->previous_balance, 2) }}</span>
+            </div>
+            <div class="ledger-row">
+                <span>Current Invoice Amount</span>
+                <span>{{ $ledger_info->operator }} {{ number_format($sale->remaining_amount, 2) }}</span>
+            </div>
+            <div class="ledger-row">
+                <span>{{ $ledger_info->label_curr }} (CLOSING)</span>
+                <span>RS {{ number_format($ledger_info->current_balance, 2) }}</span>
+            </div>
+            <p class="terms-note">* Goods once sold will not be returned. Payment terms apply.</p>
+        </div>
+
+        <div class="totals-box">
+            <div class="total-row">
+                <span>Sub Total</span>
+                <span>{{ number_format($sale->grand_total, 2) }}</span>
+            </div>
+            @if($sale->discount_value > 0)
+            <div class="total-row">
+                <span>Discount</span>
+                <span>- {{ number_format($sale->discount_value, 2) }}</span>
+            </div>
+            @endif
+            <div class="total-row grand-total">
+                <span>Net Total</span>
+                <span>RS {{ number_format($sale->net_amount, 2) }}</span>
+            </div>
+            <div class="total-row">
+                <span>Advance Paid</span>
+                <span>{{ number_format($sale->advance_amount, 2) }}</span>
+            </div>
+            <div class="total-row balance-due">
+                <span>Balance Due</span>
+                <span>RS {{ number_format($sale->remaining_amount, 2) }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="signature-section">
+        <div class="signature-box">
+            <div class="signature-line"></div>
+            <div class="signature-label">Customer Signature</div>
+        </div>
+        <div class="signature-box">
+            <div class="signature-line"></div>
+            <div class="signature-label">Authorized Signature</div>
+        </div>
+    </div>
+
+    <div class="invoice-footer">
+        <p>Powered by ProWave Software Solutions | Contact: 0317-3836223</p>
     </div>
 </div>
 
-@include('admin_panel.include.footer_include')
+<button class="print-button" onclick="window.print()">Print Invoice</button>
 
-<!-- PRINT STYLE -->
-<style>
-    #invoiceCard { font-family: Arial, sans-serif; font-size:13px; }
-
-    @media print {
-        body * { visibility: hidden; }
-        #invoiceCard, #invoiceCard * { visibility: visible; }
-        #invoiceCard { position:absolute; left:0; top:0; width:100%; }
-        .no-print { display:none !important; }
-        table { border-collapse: collapse; }
-        th, td { border:1px solid #000 !important; }
-    }
-</style>
-
-<script>
-    function printInvoice(){
-        window.print();
-    }
-</script>
+</body>
+</html>

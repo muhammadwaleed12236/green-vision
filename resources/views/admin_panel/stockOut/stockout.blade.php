@@ -56,7 +56,18 @@
                                                 {{ $firstItem->localSale->invoice_number ?? 'N/A' }}
                                             </span>
                                         </td>
-                                        <td>{{ $firstItem->localSale->customer->customer_name }}</td>
+                                        <td>
+                                            @php
+                                                $ls = $firstItem->localSale;
+                                                if ($ls->party_type === 'customer') {
+                                                    echo $ls->customer->customer_name ?? 'N/A';
+                                                } elseif ($ls->party_type === 'vendor') {
+                                                    echo $ls->vendor->Party_name ?? 'N/A';
+                                                } else {
+                                                    echo $ls->customer_shopname ?? 'Walk-in';
+                                                }
+                                            @endphp
+                                        </td>
                                         <td><span class="badge bg-info">{{ $itemCount }} Items</span></td>
                                         <td>
                                             <span class="badge bg-danger">
@@ -103,10 +114,18 @@
                             <select class="form-control" name="local_sales_id" id="add_local_sales_id" required>
                                 <option value="">Select Job Number</option>
                                 @foreach($localSales as $sale)
-                                    <option value="{{ $sale->id }}"
-    data-customer="{{ $sale->customer->customer_name ?? ($sale->customer->shop_name ?? 'N/A') }}">
-    {{ $sale->invoice_number }} - {{ $sale->customer->customer_name ?? ($sale->customer->shop_name ?? 'N/A') }}
-</option>
+                                    @php
+                                        if ($sale->party_type === 'customer') {
+                                            $partyName = $sale->customer->customer_name ?? 'N/A';
+                                        } elseif ($sale->party_type === 'vendor') {
+                                            $partyName = $sale->vendor->Party_name ?? 'N/A';
+                                        } else {
+                                            $partyName = $sale->customer_shopname ?? 'Walk-in';
+                                        }
+                                    @endphp
+                                    <option value="{{ $sale->id }}" data-customer="{{ $partyName }}">
+                                        {{ $sale->invoice_number }} - {{ $partyName }}
+                                    </option>
                                 @endforeach
                             </select>
                         </div>
@@ -139,9 +158,9 @@
                                                 <option value="{{ $product->id }}"
                                                     data-height="{{ $product->height ?? '' }}"
                                                     data-width="{{ $product->width ?? '' }}"
-                                                    data-stock="{{ $product->initial_stock ?? 0 }}">
-                                                    {{ $product->item_name }} @if($product->initial_stock) (Stock:
-                                                    {{ $product->initial_stock }}) @endif
+                                                    data-stock="{{ $product->available_stock ?? 0 }}">
+                                                    {{ $product->item_name }} @if(isset($product->available_stock)) (Stock:
+                                                    {{ $product->available_stock }}) @endif
                                                 </option>
                                             @endforeach
                                         </select>
@@ -246,8 +265,8 @@
                             <option value="{{ $product->id }}"
                                 data-height="{{ $product->height ?? '' }}"
                                 data-width="{{ $product->width ?? '' }}"
-                                data-stock="{{ $product->initial_stock ?? 0 }}">
-                                {{ $product->item_name }} @if($product->initial_stock) (Stock: {{ $product->initial_stock }}) @endif
+                                data-stock="{{ $product->available_stock ?? 0 }}">
+                                {{ $product->item_name }} @if(isset($product->available_stock)) (Stock: {{ $product->available_stock }}) @endif
                             </option>
                         @endforeach
                     </select>

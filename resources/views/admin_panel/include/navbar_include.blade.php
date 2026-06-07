@@ -1,7 +1,7 @@
 <div class="header">
 	<div class="header-left active">
 		<a href="#" class="logo">
-			<h3>RAJ GLASS</h3>
+			<h6>Prowave Technologies</h6>
 		</a>
 		<a href="#" class="logo-small">
 			<img src="{{ url('logo.jpeg') }}" alt="">
@@ -18,6 +18,79 @@
 	</a>
 
 	<ul class="nav user-menu">
+		<!-- Delivery Notifications -->
+		<li class="nav-item dropdown">
+			<a href="javascript:void(0);" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">
+				<i class="fa fa-bell" style="font-size: 24px; color: #ff9f43;"></i>
+				@php
+					$upcomingDeliveries = \App\Models\LocalSale::whereNotNull('delivery_date')
+						->whereNotIn('job_status', ['completed', 'ready'])
+						->where('admin_or_user_id', Auth::id())
+						->get()
+						->filter(function($sale) {
+							$deliveryDate = \Carbon\Carbon::parse($sale->delivery_date);
+							$notifyDate = $deliveryDate->subDays($sale->notify_days_before ?? 2);
+							return \Carbon\Carbon::now()->greaterThanOrEqualTo($notifyDate);
+						});
+					$notificationCount = $upcomingDeliveries->count();
+				@endphp
+				@if($notificationCount > 0)
+					<span class="badge bg-danger" style="position: absolute; top: 5px; right: 5px; font-size: 10px; padding: 2px 6px; border-radius: 10px;">
+						{{ $notificationCount }}
+					</span>
+				@endif
+			</a>
+			<div class="dropdown-menu dropdown-menu-end" style="min-width: 350px; max-height: 400px; overflow-y: auto;">
+				<div class="dropdown-header bg-primary text-white">
+					<strong><i class="fa fa-truck me-2"></i>Upcoming Deliveries</strong>
+				</div>
+				@if($notificationCount > 0)
+					@foreach($upcomingDeliveries as $sale)
+						@php
+							$deliveryDate = \Carbon\Carbon::parse($sale->delivery_date);
+							$daysLeft = \Carbon\Carbon::now()->diffInDays($deliveryDate, false);
+							$isOverdue = $daysLeft < 0;
+							$customerName = $sale->customer ? $sale->customer->customer_name : ($sale->customer_shopname ?? 'Walk-in');
+						@endphp
+						<a href="{{ route('all-local-sale') }}" class="dropdown-item {{ $isOverdue ? 'bg-danger text-white' : '' }}">
+							<div class="d-flex justify-content-between align-items-start">
+								<div>
+									<strong>{{ $sale->invoice_number }}</strong><br>
+									<small>{{ $customerName }}</small><br>
+									<small class="text-muted">
+										<i class="fa fa-calendar"></i> {{ $deliveryDate->format('d M Y') }}
+									</small>
+								</div>
+								<div class="text-end">
+									@if($isOverdue)
+										<span class="badge bg-white text-danger">
+											<i class="fa fa-exclamation-triangle"></i> Overdue
+										</span>
+									@elseif($daysLeft == 0)
+										<span class="badge bg-warning text-dark">
+											<i class="fa fa-clock"></i> Today
+										</span>
+									@else
+										<span class="badge bg-info">
+											{{ abs($daysLeft) }} days left
+										</span>
+									@endif
+								</div>
+							</div>
+						</a>
+						<hr class="dropdown-divider my-1">
+					@endforeach
+					<a href="{{ route('delivery-notifications') }}" class="dropdown-item text-center text-primary">
+						<strong>View All Notifications</strong>
+					</a>
+				@else
+					<div class="dropdown-item text-center text-muted">
+						<i class="fa fa-check-circle me-2"></i>No pending deliveries
+					</div>
+				@endif
+			</div>
+		</li>
+
 		<li class="nav-item">
 			<h5 class="mt-3">
 				@if(auth()->check())

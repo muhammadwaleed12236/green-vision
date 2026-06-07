@@ -49,7 +49,7 @@
 
                                     <td>
                                         @if($p->product_mode == 'measurements')
-                                            {{ $p->height }} × {{ $p->width }} = {{ $p->area }} Sq.ft
+                                            {{ number_format($p->height, 2) }} × {{ number_format($p->width, 2) }} = {{ number_format($p->area, 2) }} Sq.ft
                                         @else
                                             —
                                         @endif
@@ -57,19 +57,19 @@
 
                                     <td>
                                         @if($p->product_mode == 'measurements')
-                                            {{ $p->wholesale_price }} × {{ $p->area }}
-                                            = <b>{{ $p->wholesale_price * $p->area }}</b>
+                                            {{ number_format($p->wholesale_price, 2) }} × {{ number_format($p->area, 2) }}
+                                            = <b>{{ number_format($p->wholesale_price * $p->area, 2) }}</b>
                                         @else
-                                            {{ $p->wholesale_price }}
+                                            {{ number_format($p->wholesale_price, 2) }}
                                         @endif
                                     </td>
 
                                     <td>
                                         @if($p->product_mode == 'measurements')
-                                            {{ $p->retail_price }} × {{ $p->area }}
-                                            = <b>{{ $p->retail_price * $p->area }}</b>
+                                            {{ number_format($p->retail_price, 2) }} × {{ number_format($p->area, 2) }}
+                                            = <b>{{ number_format($p->retail_price * $p->area, 2) }}</b>
                                         @else
-                                            {{ $p->retail_price }}
+                                            {{ number_format($p->retail_price, 2) }}
                                         @endif
                                     </td>
                                     <td>
@@ -102,7 +102,7 @@
     </div>
 </div>
 
-{{-- ADD PRODUCT MODAL --}}
+<!-- {{-- ADD PRODUCT MODAL --}} -->
 <div class="modal fade" id="addProductModal">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -117,13 +117,13 @@
 
                 <div class="modal-body">
 
-                    {{-- ITEM NAME --}}
+                    <!-- {{-- ITEM NAME --}} -->
                     <div class="mb-3">
                         <label class="form-label">Item Name</label>
                         <input type="text" class="form-control" name="item_name" required>
                     </div>
 
-                    {{-- PRODUCT MODE --}}
+                    <!-- {{-- PRODUCT MODE --}} -->
                     <div class="mb-3">
                         <label class="form-label">Product Mode</label>
                         <select class="form-control" name="product_mode" id="productMode">
@@ -132,16 +132,16 @@
                         </select>
                     </div>
 
-                    {{-- SIMPLE MODE --}}
+                    <!-- {{-- SIMPLE MODE  --}} -->
                     <div id="simpleFields">
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label>Purchase Price</label>
-                                <input type="number" step="0.01" class="form-control" name="wholesale_price">
+                                <input type="number" step="0.01" class="form-control" name="wholesale_price" id="simple_wholesale_price" required>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label>Sale Price</label>
-                                <input type="number" step="0.01" class="form-control" name="retail_price">
+                                <input type="number" step="0.01" class="form-control" name="retail_price" id="simple_retail_price" required>
                             </div>
                         </div>
                     </div>
@@ -207,7 +207,7 @@
 <div class="modal fade" id="editProductModal">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <form method="POST" action="{{ route('product.update') }}">
+            <form method="POST" action="" id="editProductForm">
                 @csrf
                 <input type="hidden" name="product_id" id="edit_product_id">
 
@@ -237,11 +237,11 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label>Purchase Price</label>
-                                <input type="number" step="0.01" class="form-control" name="wholesale_price" id="edit_wholesale_simple">
+                                <input type="number" step="0.01" class="form-control" name="wholesale_price" id="edit_wholesale_simple" required>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label>Sale Price</label>
-                                <input type="number" step="0.01" class="form-control" name="retail_price" id="edit_retail_simple">
+                                <input type="number" step="0.01" class="form-control" name="retail_price" id="edit_retail_simple" required>
                             </div>
                         </div>
                     </div>
@@ -324,14 +324,33 @@
         );
     }
 
+    // Initialize: Disable measurement fields by default (simple mode is default)
+    $(document).ready(function() {
+        $('#height, #width, #wholesale_price, #retail_price').prop('disabled', true);
+        $('#area').prop('disabled', true);
+    });
+
     $('#productMode').on('change', function () {
         if (this.value === 'measurements') {
             $('#measurementFields').show();
             $('#simpleFields').hide();
             resetMeasurementFields();
+            
+            // Disable simple fields so they don't submit
+            $('#simple_wholesale_price, #simple_retail_price').prop('disabled', true).removeAttr('required');
+            
+            // Enable and require measurement fields (area is readonly but must be enabled to submit)
+            $('#height, #width, #wholesale_price, #retail_price, #area').prop('disabled', false);
+            $('#height, #width, #wholesale_price, #retail_price').attr('required', true);
         } else {
             $('#measurementFields').hide();
             $('#simpleFields').show();
+            
+            // Enable and require simple fields
+            $('#simple_wholesale_price, #simple_retail_price').prop('disabled', false).attr('required', true);
+            
+            // Disable measurement fields so they don't submit
+            $('#height, #width, #wholesale_price, #retail_price, #area').prop('disabled', true).removeAttr('required');
         }
     });
 
@@ -348,6 +367,9 @@
         let wholesale = $(this).data("wholesale");
         let retail = $(this).data("retail");
 
+        // Set the form action URL with the product ID
+        $("#editProductForm").attr("action", "{{ url('/product/update') }}");
+        
         $("#edit_product_id").val(id);
         $("#edit_item_name").val(name);
         $("#edit_productMode").val(mode);
@@ -362,6 +384,12 @@
             $("#edit_wholesale_price").val(wholesale);
             $("#edit_retail_price").val(retail);
 
+            // Disable simple fields
+            $('#edit_wholesale_simple, #edit_retail_simple').prop('disabled', true).removeAttr('required');
+            // Enable measurement fields (area is readonly but must be enabled to submit)
+            $('#edit_height, #edit_width, #edit_wholesale_price, #edit_retail_price, #edit_area').prop('disabled', false);
+            $('#edit_height, #edit_width, #edit_wholesale_price, #edit_retail_price').attr('required', true);
+
             calculateEditMeasurement();
         } else {
             $('#edit_measurementFields').hide();
@@ -369,6 +397,11 @@
 
             $("#edit_wholesale_simple").val(wholesale);
             $("#edit_retail_simple").val(retail);
+
+            // Enable simple fields
+            $('#edit_wholesale_simple, #edit_retail_simple').prop('disabled', false).attr('required', true);
+            // Disable measurement fields
+            $('#edit_height, #edit_width, #edit_wholesale_price, #edit_retail_price, #edit_area').prop('disabled', true).removeAttr('required');
         }
     });
 
@@ -376,9 +409,20 @@
         if (this.value === 'measurements') {
             $('#edit_measurementFields').show();
             $('#edit_simpleFields').hide();
+            
+            // Disable simple fields
+            $('#edit_wholesale_simple, #edit_retail_simple').prop('disabled', true).removeAttr('required');
+            // Enable measurement fields (area is readonly but must be enabled to submit)
+            $('#edit_height, #edit_width, #edit_wholesale_price, #edit_retail_price, #edit_area').prop('disabled', false);
+            $('#edit_height, #edit_width, #edit_wholesale_price, #edit_retail_price').attr('required', true);
         } else {
             $('#edit_measurementFields').hide();
             $('#edit_simpleFields').show();
+            
+            // Enable simple fields
+            $('#edit_wholesale_simple, #edit_retail_simple').prop('disabled', false).attr('required', true);
+            // Disable measurement fields
+            $('#edit_height, #edit_width, #edit_wholesale_price, #edit_retail_price, #edit_area').prop('disabled', true).removeAttr('required');
         }
     });
 

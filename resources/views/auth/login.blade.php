@@ -157,7 +157,7 @@
     </style>
     <div class="wrapper">
         <div style="width:100%; text-align:center;">
-            <h2> Raj Glass Login</h2>
+            <h2> Green Vision Login</h2>
             {{-- <img src="logo.jpeg" alt="image" style="width: 250px;"> --}}
 
         </div>

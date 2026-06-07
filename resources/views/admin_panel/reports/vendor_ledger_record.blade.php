@@ -39,12 +39,12 @@
 
                             <div class="col-md-6">
                                 <label class="fw-bold">Start Date</label>
-                                <input type="date" id="start_date" name="start_date" class="form-control bg-light">
+                                <input type="date" id="start_date" name="start_date" class="form-control bg-light" value="{{ date('Y-m-01') }}">
                             </div>
 
                             <div class="col-md-6">
                                 <label class="fw-bold">End Date</label>
-                                <input type="date" id="end_date" name="end_date" class="form-control bg-light">
+                                <input type="date" id="end_date" name="end_date" class="form-control bg-light" value="{{ date('Y-m-d') }}">
                             </div>
                         </div>
                         <div class="d-flex justify-content-between align-items-center gap-4 mt-4">
@@ -75,22 +75,23 @@
                                         <th>Date</th>
                                         <th>INV-No</th>
                                         <th>Description</th>
-                                        <th>Debit</th>
-                                        <th>Credit</th>
+                                        <th>Items</th>
+                                        <th>Bill & Receipts (Add)</th>
+                                        <th>Paid & Sales (Less)</th>
                                         <th>Balance</th>
                                     </tr>
                                     <tr>
-                                        <td colspan="5" class="opening-balance">Opening Balance:</td>
-                                        <td id="openingBalance">Rs. 0</td>
+                                        <td colspan="6" class="text-end fw-bold">Opening Balance:</td>
+                                        <td id="openingBalance" class="fw-bold">Rs. 0</td>
                                     </tr>
                                 </thead>
                                 <tbody id="ledgerData"></tbody>
                                 <tfoot>
                                     <tr>
-                                        <td colspan="3"><strong>Totals:</strong></td>
-                                        <td id="totalDebit">0</td>
-                                        <td id="totalCredit">0</td>
-                                        <td id="closingBalance">0</td>
+                                        <td colspan="4" class="text-end fw-bold">Totals:</td>
+                                        <td id="totalDebit" class="fw-bold">0</td>
+                                        <td id="totalCredit" class="fw-bold">0</td>
+                                        <td id="closingBalance" class="fw-bold">0</td>
                                     </tr>
                                 </tfoot>
                             </table>
@@ -98,6 +99,24 @@
                     </div>
 
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Items Modal -->
+<div class="modal fade" id="itemsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="itemsModalLabel">Items</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="itemsContent">
+                <!-- Items will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
@@ -180,19 +199,32 @@
                             date: entry.date,
                             type: 'purchase',
                             invoice_number: entry.invoice_number,
-                            amount: parseFloat(entry.net_amount)
+                            amount: parseFloat(entry.net_amount),
+                            items: entry.items || null
                         });
                     });
 
-                    // ✅ recoveries Entries
+                    // ✅ Payment Entries (Journal Vouchers + Vendor Payments)
                     response.recoveries.forEach(entry => {
                         allEntries.push({
                             date: entry.payment_date,
-                            type: 'recovery',
-                            salesman: entry.description,
-                            amount: parseFloat(entry.amount_paid) || 0
+                            type: 'payment',
+                            salesman: entry.remarks,
+                            amount: parseFloat(entry.amount) || 0
                         });
                     });
+
+                    // ✅ Receipt Entries (From Journal Vouchers when Vendor pays us)
+                    if (response.receipts) {
+                        response.receipts.forEach(entry => {
+                            allEntries.push({
+                                date: entry.receipt_date,
+                                type: 'receipt',
+                                remarks: entry.remarks || 'Receipt Voucher',
+                                amount: parseFloat(entry.amount) || 0
+                            });
+                        });
+                    }
 
 
                     // ✅ Recovery Entries
@@ -215,6 +247,54 @@
                         });
                     });
 
+                    // ✅ Job Orders assigned to Vendor (Debit = total_amount assigned, Credit = paid_amount)
+                    if (response.job_orders) {
+                        response.job_orders.forEach(entry => {
+                            // Job Assign Entry (Debit - we owe vendor)
+                            if (parseFloat(entry.total_amount) > 0) {
+                                allEntries.push({
+                                    date: entry.order_date,
+                                    type: 'job_assigned',
+                                    job_number: entry.job_order_number,
+                                    description: entry.description || 'Job Assigned to Vendor',
+                                    status: entry.assignment_status,
+                                    amount: parseFloat(entry.total_amount)
+                                });
+                            }
+                            // Job Payment Entry (Credit - we paid vendor)
+                            if (parseFloat(entry.paid_amount) > 0) {
+                                allEntries.push({
+                                    date: entry.order_date,
+                                    type: 'job_payment',
+                                    job_number: entry.job_order_number,
+                                    description: 'Job Payment - ' + (entry.description || entry.job_order_number),
+                                    amount: parseFloat(entry.paid_amount)
+                                });
+                            }
+                        });
+                    }
+
+                    // ✅ Local Sales Entries
+                    if (response.local_sales) {
+                        response.local_sales.forEach(entry => {
+                            allEntries.push({
+                                date: entry.Date,
+                                type: 'sale',
+                                invoice_number: entry.invoice_number,
+                                amount: parseFloat(entry.net_amount)
+                            });
+
+                            if (parseFloat(entry.advance_amount) > 0) {
+                                allEntries.push({
+                                    date: entry.Date,
+                                    type: 'sale_advance',
+                                    invoice_number: entry.invoice_number,
+                                    amount: parseFloat(entry.advance_amount)
+                                });
+                            }
+                        });
+                    }
+
                     // ✅ Sort Entries by Date (Sales pehle, Recovery baad me agar date same ho)
                     allEntries.sort((a, b) => {
                         let dateA = new Date(a.date);
@@ -231,16 +311,18 @@
                             let debit = entry.amount;
                             totalDebit += debit;
                             balance += debit;
+                            let itemsHTML = entry.items ? '<button class="btn btn-sm btn-info show-items-btn" data-inv="' + entry.invoice_number + '" data-type="purchase" style="cursor:pointer;">View Items</button>' : '-';
                             ledgerHTML += `
         <tr>
             <td>${formatDate(entry.date)}</td>
             <td>${entry.invoice_number}</td>
             <td>To Purchase A/c</td>
+            <td>${itemsHTML}</td>
             <td>Rs. ${debit.toFixed(2)}</td>
             <td>-</td>
-            <td class="fw-bold ${balance < 0 ? 'text-danger' : 'text-success'}">Rs. ${balance.toFixed(2)}</td>
+            <td class="fw-bold ${balance < 0 ? 'text-danger' : 'text-success'}">Rs. ${Math.abs(balance).toFixed(2)} ${balance > 0 ? 'Cr' : (balance < 0 ? 'Dr' : '')}</td>
         </tr>`;
-                        } else if (entry.type === 'recovery') {
+                        } else if (entry.type === 'payment') {
                             let credit = entry.amount;
                             totalCredit += credit;
                             balance -= credit;
@@ -248,12 +330,27 @@
 <tr>
     <td>${formatDate(entry.date)}</td>
     <td>-</td>
-    <td>${entry.salesman}</td>
+    <td>Vendor Payment<br><small class="text-muted">${entry.salesman || ''}</small></td>
+    <td>-</td>
     <td>-</td>
     <td>Rs. ${credit.toFixed(2)}</td>
-    <td class="fw-bold ${balance < 0 ? 'text-danger' : 'text-success'}">Rs. ${balance.toFixed(2)}</td>
+    <td class="fw-bold ${balance < 0 ? 'text-danger' : 'text-success'}">Rs. ${Math.abs(balance).toFixed(2)} ${balance > 0 ? 'Cr' : (balance < 0 ? 'Dr' : '')}</td>
 </tr>
 `;
+                        } else if (entry.type === 'receipt') {
+                            let debit = entry.amount;
+                            totalDebit += debit;
+                            balance += debit; // Receipt means Vendor gives us money, decreases their Dr balance (adds to it)
+                            ledgerHTML += `
+        <tr style="background:#e3f2fd;">
+            <td>${formatDate(entry.date)}</td>
+            <td>-</td>
+            <td>Vendor Receipt (Received from Vendor)<br><small class="text-muted">${entry.remarks || ''}</small></td>
+            <td>-</td>
+            <td class="text-success fw-bold">Rs. ${debit.toFixed(2)}</td>
+            <td>-</td>
+            <td class="fw-bold ${balance < 0 ? 'text-danger' : 'text-success'}">Rs. ${Math.abs(balance).toFixed(2)} ${balance > 0 ? 'Cr' : (balance < 0 ? 'Dr' : '')}</td>
+        </tr>`;
                         } else if (entry.type === 'builty') {
                             let debit = entry.amount;
                             totalDebit += debit;
@@ -263,9 +360,10 @@
         <td>${formatDate(entry.date)}</td>
         <td>-</td>
         <td>${entry.description ?? 'Vendor Builty Entry'}</td>
+        <td>-</td>
         <td>Rs. ${debit.toFixed(2)}</td>
         <td>-</td>
-        <td class="fw-bold ${balance < 0 ? 'text-danger' : 'text-success'}">Rs. ${balance.toFixed(2)}</td>
+        <td class="fw-bold ${balance < 0 ? 'text-danger' : 'text-success'}">Rs. ${Math.abs(balance).toFixed(2)} ${balance > 0 ? 'Cr' : (balance < 0 ? 'Dr' : '')}</td>
     </tr>`;
                         } else if (entry.type === 'return') {
                             let credit = entry.amount;
@@ -277,8 +375,69 @@
             <td>${entry.invoice_number}</td>
             <td>Purchase Return</td>
             <td>-</td>
+            <td>-</td>
             <td>Rs. ${credit.toFixed(2)}</td>
-            <td class="fw-bold ${balance < 0 ? 'text-danger' : 'text-success'}">Rs. ${balance.toFixed(2)}</td>
+            <td class="fw-bold ${balance < 0 ? 'text-danger' : 'text-success'}">Rs. ${Math.abs(balance).toFixed(2)} ${balance > 0 ? 'Cr' : (balance < 0 ? 'Dr' : '')}</td>
+        </tr>`;
+                        } else if (entry.type === 'sale') {
+                            let credit = entry.amount;
+                            totalCredit += credit;
+                            balance -= credit;
+                            ledgerHTML += `
+        <tr>
+            <td>${formatDate(entry.date)}</td>
+            <td>${entry.invoice_number}</td>
+            <td>Local Sale</td>
+            <td><button class="btn btn-sm btn-info show-items-btn" data-inv="${entry.invoice_number}" data-type="sale" style="cursor:pointer;">View Items</button></td>
+            <td>-</td>
+            <td>Rs. ${credit.toFixed(2)}</td>
+            <td class="fw-bold ${balance < 0 ? 'text-danger' : 'text-success'}">Rs. ${Math.abs(balance).toFixed(2)} ${balance > 0 ? 'Cr' : (balance < 0 ? 'Dr' : '')}</td>
+        </tr>`;
+                        } else if (entry.type === 'sale_advance') {
+                            let debit = entry.amount;
+                            totalDebit += debit;
+                            balance += debit; // We got paid by vendor, decreases their Dr balance (adds to it)
+                            ledgerHTML += `
+        <tr style="background:#e3f2fd;">
+            <td>${formatDate(entry.date)}</td>
+            <td>${entry.invoice_number}</td>
+            <td>Advance Received via Local Sale</td>
+            <td>-</td>
+            <td>Rs. ${debit.toFixed(2)}</td>
+            <td>-</td>
+            <td class="fw-bold ${balance < 0 ? 'text-danger' : 'text-success'}">Rs. ${Math.abs(balance).toFixed(2)} ${balance > 0 ? 'Cr' : (balance < 0 ? 'Dr' : '')}</td>
+        </tr>`;
+                        } else if (entry.type === 'job_assigned') {
+                            let debit = entry.amount;
+                            totalDebit += debit;
+                            balance += debit;
+                            let statusBadge = '';
+                            if (entry.status === 'completed') statusBadge = '<span class="badge bg-success ms-1">Completed</span>';
+                            else if (entry.status === 'in_progress') statusBadge = '<span class="badge bg-warning ms-1">In Progress</span>';
+                            else statusBadge = '<span class="badge bg-secondary ms-1">Pending</span>';
+                            ledgerHTML += `
+        <tr style="background:#fff8e1;">
+            <td>${formatDate(entry.date)}</td>
+            <td>${entry.job_number || '-'}</td>
+            <td>Job Assigned to Vendor ${statusBadge}<br><small class="text-muted">${entry.description || ''}</small></td>
+            <td>-</td>
+            <td>Rs. ${debit.toFixed(2)}</td>
+            <td>-</td>
+            <td class="fw-bold ${balance < 0 ? 'text-danger' : 'text-success'}">Rs. ${Math.abs(balance).toFixed(2)} ${balance > 0 ? 'Cr' : (balance < 0 ? 'Dr' : '')}</td>
+        </tr>`;
+                        } else if (entry.type === 'job_payment') {
+                            let credit = entry.amount;
+                            totalCredit += credit;
+                            balance -= credit;
+                            ledgerHTML += `
+        <tr style="background:#e8f5e9;">
+            <td>${formatDate(entry.date)}</td>
+            <td>${entry.job_number || '-'}</td>
+            <td>Job Payment Paid<br><small class="text-muted">${entry.description || ''}</small></td>
+            <td>-</td>
+            <td>-</td>
+            <td>Rs. ${credit.toFixed(2)}</td>
+            <td class="fw-bold ${balance < 0 ? 'text-danger' : 'text-success'}">Rs. ${Math.abs(balance).toFixed(2)} ${balance > 0 ? 'Cr' : (balance < 0 ? 'Dr' : '')}</td>
         </tr>`;
                         }
 
@@ -286,14 +445,66 @@
 
 
                     // ✅ Update Totals
-                    // ✅ Update Totals
                     $('#ledgerData').html(ledgerHTML);
-                    $('#openingBalance').text(`Rs. ${openingBalance.toFixed(2)}`);
+                    
+                    let ob = parseFloat(openingBalance);
+                    let cb = parseFloat(response.closing_balance);
+                    
+                    $('#openingBalance').text(`Rs. ${Math.abs(ob).toFixed(2)} ${ob > 0 ? 'Cr' : (ob < 0 ? 'Dr' : '')}`);
                     $('#totalDebit').text(`Rs. ${totalDebit.toFixed(2)}`);
                     $('#totalCredit').text(`Rs. ${totalCredit.toFixed(2)}`);
 
                     // Closing balance directly from API response
-                    $('#closingBalance').text(`Rs. ${parseFloat(response.closing_balance).toFixed(2)}`);
+                    $('#closingBalance').text(`Rs. ${Math.abs(cb).toFixed(2)} ${cb > 0 ? 'Cr' : (cb < 0 ? 'Dr' : '')}`);
+
+                    // Store data for items modal
+                    window.allItemsData = {};
+                    
+                    // Store local sales items
+                    response.local_sales.forEach(sale => {
+                        window.allItemsData[sale.invoice_number] = { type: 'sale', items: JSON.parse(sale.item || '[]') };
+                    });
+                    
+                    // Store purchase items
+                    response.purchases.forEach(purchase => {
+                        if (purchase.items) {
+                            window.allItemsData[purchase.invoice_number] = { type: 'purchase', items: JSON.parse(purchase.items || '[]') };
+                        }
+                    });
+
+                    // Add click handler for items button
+                    $(document).on('click', '.show-items-btn', function() {
+                        let invNum = $(this).data('inv');
+                        let data = window.allItemsData[invNum];
+                        if (data && data.items) {
+                            let itemsHTML = '<ul class="list-group">';
+                            data.items.forEach(item => {
+                                itemsHTML += '<li class="list-group-item"><strong>' + item + '</strong></li>';
+                            });
+                            itemsHTML += '</ul>';
+                            $('#itemsModalLabel').text('Items for Invoice: ' + invNum);
+                            $('#itemsContent').html(itemsHTML);
+                            $('#itemsModal').modal('show');
+                        }
+                    });
+                },
+                error: function(xhr) {
+                    console.error(xhr);
+                    let errorMsg = 'Error fetching ledger data.';
+                    
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        errorMsg = xhr.responseJSON.message;
+                        if (xhr.responseJSON.line) {
+                            errorMsg += '\nLine: ' + xhr.responseJSON.line;
+                        }
+                        if (xhr.responseJSON.file) {
+                            errorMsg += '\nFile: ' + xhr.responseJSON.file;
+                        }
+                    } else if (xhr.responseText) {
+                        errorMsg += '\n' + xhr.responseText.substring(0, 200);
+                    }
+                    
+                    alert(errorMsg);
                 }
             });
         });

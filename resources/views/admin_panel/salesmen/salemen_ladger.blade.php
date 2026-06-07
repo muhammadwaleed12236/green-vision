@@ -36,14 +36,14 @@
                                 @foreach($StaffLedgers as $key => $ledger)
                                     <tr>
                                         <td>{{ $key + 1 }}</td>
-                                        <td>{{  $ledger->salesman->name ?? $ledger->contractor->contractor_name ?? 'N/A'  }}</td>
-                                        <td>{{ number_format($ledger->opening_balance, 0) }}</td>
-                                        <td>{{ number_format($ledger->previous_balance, 0) }}</td>
-                                        <td>{{ number_format($ledger->closing_balance, 0) }}</td>
+                                        <td>{{ $ledger->staff_name ?? 'N/A' }}</td>
+                                        <td>0</td>
+                                        <td>{{ number_format($ledger->previous_balance ?? 0, 0) }}</td>
+                                        <td>{{ number_format($ledger->closing_balance ?? 0, 0) }}</td>
                                         <td>
                                             <button class="btn btn-sm btn-primary paymentBtn" data-id="{{ $ledger->id }}"
-                                                data-name="{{  $ledger->salesman->name ?? $ledger->contractor->contractor_name ?? 'N/A'  }}"
-                                                data-balance="{{ $ledger->closing_balance }}" data-bs-toggle="modal"
+                                                data-name="{{ $ledger->staff_name ?? 'N/A' }}"
+                                                data-balance="{{ $ledger->closing_balance ?? 0 }}" data-bs-toggle="modal"
                                                 data-bs-target="#paymentModal">
                                                 Add Payment
                                             </button>

@@ -12,12 +12,12 @@
                     <div class="row mb-2 align-items-center pt-2 pb-2" style="border-bottom: 3px solid #000;">
                         <div class="col-md-4 d-flex align-items-center">
                             <img src="{{ url('small-logo.png') }}" alt="Logo" style="max-width: 120px;">
-                            <h4 class="fw-bold ms-3" style="font-size: 16px;">Raj Glass</h4>
+                            <h4 class="fw-bold ms-3" style="font-size: 16px;">Green Vision</h4>
                         </div>
                         <div class="col-md-4 text-center">
-                            <h5 class="font-weight-bold">Raj Glass</h5>
+                            <h5 class="font-weight-bold">Green Vision</h5>
                             <p class="mb-1" style="line-height: 1;">6-B Block-E, Latifabad No. 08, Hyderabad</p>
-                            <p class="mb-0" style="line-height: 1;">Phone: 0314-4021603 / 0334-2611233</p>
+                            <p class="mb-0" style="line-height: 1;">Phone: 0300 2529972 / 0334-2611233</p>
                         </div>
                         <div class="col-md-4 text-end">
                             <h4 class="fw-bold">Glass Works</h4>
@@ -136,7 +136,7 @@
                     <!-- Footer Section -->
                     <div class="row">
                         <div class="col-md-12 text-start">
-                            <h5 class="fw-bold">For Raj Glass Signature</h5>
+                            <h5 class="fw-bold">For Green Vision Signature</h5>
                             <p>Data Feeder Hyderabad</p>
                         </div>
                     </div>

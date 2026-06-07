@@ -131,111 +131,221 @@ class ReportController extends Controller
 
     public function fetchVendorLedger(Request $request)
     {
-        $vendorId = $request->input('Vendor_id');
-        $startDate = $request->input('start_date').' 00:00:00';
-        $endDate = $request->input('end_date').' 23:59:59';
+        try {
+            $vendorId = $request->input('Vendor_id');
+            $startDate = $request->input('start_date').' 00:00:00';
+            $endDate = $request->input('end_date').' 23:59:59';
 
-        // ---- Get Base Opening from Vendor Ledger ----
-        $ledger = DB::table('vendor_ledgers')
-            ->where('vendor_id', $vendorId)
-            ->select('opening_balance')
-            ->first();
+            // ---- Get Base Opening from Vendor Ledger ----
+            $ledger = DB::table('vendor_ledgers')
+                ->where('vendor_id', $vendorId)
+                ->select('opening_balance')
+                ->first();
 
-        $baseOpening = $ledger->opening_balance ?? 0;
+            $baseOpening = $ledger ? ($ledger->opening_balance ?? 0) : 0;
 
-        // ---- Transactions Before Start Date ----
-        $previousPurchases = DB::table('purchases')
-            ->where('party_name', $vendorId)
-            ->where('purchase_date', '<', $startDate)
-            ->sum('grand_total');
+            // ---- Transactions Before Start Date ----
+            $previousPurchases = DB::table('purchases')
+                ->where('party_name', $vendorId)
+                ->where('purchase_date', '<', $startDate)
+                ->sum('grand_total');
 
-        $previousPayments = DB::table('vendor_payments')
-            ->where('vendor_id', $vendorId)
-            ->where('payment_date', '<', $startDate)
-            ->sum('amount_paid');
+            $previousVendorPayments = DB::table('vendor_payments')
+                ->where('vendor_id', $vendorId)
+                ->where('payment_date', '<', $startDate)
+                ->sum('amount');
 
-        $previousReturnsRaw = DB::table('purchase_returns')
-            ->where('party_name', $vendorId)
-            ->where('return_date', '<', $startDate)
-            ->get();
+            $previousJournalPayments = DB::table('journal_vouchers')
+                ->where('party_type', 'vendor')
+                ->where('party_id', $vendorId)
+                ->where('voucher_type', 'payment')
+                ->where('voucher_date', '<', $startDate)
+                ->sum('debit_amount');
 
-        $previousReturns = 0;
-        foreach ($previousReturnsRaw as $return) {
-            $amountArray = json_decode($return->return_amount, true);
-            $previousReturns += collect($amountArray)->sum();
-        }
+            $previousPayments = $previousVendorPayments + $previousJournalPayments;
 
-        $previousBuilties = DB::table('vendor_builties')
-            ->where('vendor_id', $vendorId)
-            ->where('date', '<', $startDate)
-            ->sum('amount');
+            $previousJournalReceipts = DB::table('journal_vouchers')
+                ->where('party_type', 'vendor')
+                ->where('party_id', $vendorId)
+                ->where('voucher_type', 'receipt')
+                ->where('voucher_date', '<', $startDate)
+                ->sum('credit_amount');
 
-        // ✅ Opening Balance = BaseOpening + Purchases + Builties − (Payments + Returns)
-        $openingBalance = $baseOpening + ($previousPurchases + $previousBuilties) - ($previousPayments + $previousReturns);
+            $previousReturnsRaw = DB::table('purchase_returns')
+                ->where('party_name', $vendorId)
+                ->where('return_date', '<', $startDate)
+                ->get();
 
-        // ---- Current Period Transactions ----
-        $recoveries = DB::table('vendor_payments')
-            ->where('vendor_id', $vendorId)
-            ->whereBetween('payment_date', [$startDate, $endDate])
-            ->select('id', 'amount_paid', 'description', 'payment_date')
-            ->get();
+            $previousReturns = 0;
+            foreach ($previousReturnsRaw as $return) {
+                $amountArray = json_decode($return->return_amount, true);
+                $previousReturns += collect($amountArray)->sum();
+            }
 
-        $purchases = DB::table('purchases')
-            ->where('party_name', $vendorId)
-            ->whereBetween('purchase_date', [$startDate, $endDate])
-            ->select('id', 'invoice_number', 'purchase_date', 'grand_total')
-            ->get()
-            ->map(function ($purchase) {
-                return [
-                    'invoice_number' => $purchase->invoice_number,
-                    'date' => $purchase->purchase_date,
-                    'grand_total' => $purchase->grand_total,
-                    'net_amount' => $purchase->grand_total,
+            // Vendor builties feature incomplete - table has no amount column
+            // $previousBuilties = DB::table('vendor_builties')
+            //     ->where('vendor_id', $vendorId)
+            //     ->where('date', '<', $startDate)
+            //     ->sum('amount');
+            $previousBuilties = 0;
+
+            $previousSales = DB::table('local_sales')
+                ->where('vendor_id', $vendorId)
+                ->where('created_at', '<', $startDate)
+                ->sum('net_amount');
+
+            $previousSalesAdvances = DB::table('local_sales')
+                ->where('vendor_id', $vendorId)
+                ->where('created_at', '<', $startDate)
+                ->sum('advance_amount');
+
+            // Job Orders before Start Date (vendor assigned jobs - Debit = total_amount, Credit = paid_amount)
+            $previousJobOrders = DB::table('job_orders')
+                ->where('vendor_id', $vendorId)
+                ->where('assignee_type', 'vendor')
+                ->whereNotNull('vendor_id')
+                ->whereNull('deleted_at')
+                ->where('order_date', '<', $request->input('start_date'))
+                ->sum('total_amount');
+
+            $previousJobPaidAmounts = DB::table('job_orders')
+                ->where('vendor_id', $vendorId)
+                ->where('assignee_type', 'vendor')
+                ->whereNotNull('vendor_id')
+                ->whereNull('deleted_at')
+                ->where('order_date', '<', $request->input('start_date'))
+                ->sum('paid_amount');
+
+            // ✅ Opening Balance = BaseOpening + Purchases + Builties + JobOrders + VendorReceipts + SalesAdvances − (Payments + Returns + LocalSales + JobPaidAmounts)
+            $openingBalance = $baseOpening
+                + $previousPurchases
+                + $previousBuilties
+                + $previousJobOrders
+                + $previousJournalReceipts
+                + $previousSalesAdvances
+                - ($previousPayments + $previousReturns + $previousSales + $previousJobPaidAmounts);
+
+            // ---- Current Period Transactions ----
+            $recoveries = DB::table('vendor_payments')
+                ->where('vendor_id', $vendorId)
+                ->whereBetween('payment_date', [$startDate, $endDate])
+                ->select('id', 'amount', 'remarks', 'payment_date')
+                ->get();
+
+            $journalRecoveries = DB::table('journal_vouchers')
+                ->where('party_type', 'vendor')
+                ->where('party_id', $vendorId)
+                ->where('voucher_type', 'payment')
+                ->whereBetween('voucher_date', [$startDate, $endDate])
+                ->select('id', 'debit_amount as amount', 'narration as remarks', 'voucher_date as payment_date')
+                ->get();
+
+            $recoveries = $recoveries->concat($journalRecoveries);
+
+            $journalReceipts = DB::table('journal_vouchers')
+                ->where('party_type', 'vendor')
+                ->where('party_id', $vendorId)
+                ->where('voucher_type', 'receipt')
+                ->whereBetween('voucher_date', [$startDate, $endDate])
+                ->select('id', 'credit_amount as amount', 'narration as remarks', 'voucher_date as receipt_date')
+                ->get();
+
+            $purchases = DB::table('purchases')
+                ->where('party_name', $vendorId)
+                ->whereBetween('purchase_date', [$startDate, $endDate])
+                ->select('id', 'invoice_number', 'purchase_date', 'grand_total', 'item')
+                ->get()
+                ->map(function ($purchase) {
+                    return [
+                        'invoice_number' => $purchase->invoice_number,
+                        'date' => $purchase->purchase_date,
+                        'grand_total' => $purchase->grand_total,
+                        'net_amount' => $purchase->grand_total,
+                        'items' => $purchase->item,
+                    ];
+                });
+
+            $returnsRaw = DB::table('purchase_returns')
+                ->where('party_name', $vendorId)
+                ->whereBetween('return_date', [$startDate, $endDate])
+                ->get();
+
+            $returns = [];
+            $currentReturns = 0;
+            foreach ($returnsRaw as $return) {
+                $amountArray = json_decode($return->return_amount, true);
+                $amountSum = collect($amountArray)->sum();
+                $currentReturns += $amountSum;
+
+                $returns[] = [
+                    'id' => $return->id,
+                    'invoice_number' => $return->invoice_number,
+                    'date' => $return->return_date,
+                    'net_amount' => $amountSum,
                 ];
-            });
+            }
 
-        $returnsRaw = DB::table('purchase_returns')
-            ->where('party_name', $vendorId)
-            ->whereBetween('return_date', [$startDate, $endDate])
-            ->get();
+            // Vendor builties feature incomplete - table has no amount column
+            // $builties = DB::table('vendor_builties')
+            //     ->where('vendor_id', $vendorId)
+            //     ->whereBetween('date', [$startDate, $endDate])
+            //     ->select('id', 'date', 'amount', 'description')
+            //     ->get();
+            $builties = collect([]);
 
-        $returns = [];
-        $currentReturns = 0;
-        foreach ($returnsRaw as $return) {
-            $amountArray = json_decode($return->return_amount, true);
-            $amountSum = collect($amountArray)->sum();
-            $currentReturns += $amountSum;
+            $local_sales = DB::table('local_sales')
+                ->where('vendor_id', $vendorId)
+                ->whereBetween('created_at', [$startDate, $endDate])
+                ->select('invoice_number', 'created_at as Date', 'net_amount', 'advance_amount', 'item')
+                ->get();
 
-            $returns[] = [
-                'id' => $return->id,
-                'invoice_number' => $return->invoice_number,
-                'date' => $return->return_date,
-                'net_amount' => $amountSum,
-            ];
+            // Job Orders for current period (vendor assigned jobs)
+            $jobOrders = DB::table('job_orders')
+                ->where('vendor_id', $vendorId)
+                ->where('assignee_type', 'vendor')
+                ->whereNotNull('vendor_id')
+                ->whereNull('deleted_at')
+                ->whereBetween('order_date', [$request->input('start_date'), $request->input('end_date')])
+                ->select('id', 'job_order_number', 'order_date', 'total_amount', 'paid_amount', 'remaining_amount', 'description', 'assignment_status')
+                ->get();
+
+            $totalJobOrders = $jobOrders->sum('total_amount');
+            $totalJobPaid   = $jobOrders->sum('paid_amount');
+
+            // ✅ Closing Balance = Opening + Purchases + JobOrders + VendorReceipts + SalesAdvance − (Payments + Returns + Local Sales + JobPaidAmounts)
+            // Note: Builties excluded as table has no amount field
+            $closingBalance = $openingBalance
+                + $purchases->sum('grand_total')
+                + $totalJobOrders
+                + $journalReceipts->sum('amount')
+                + $local_sales->sum('advance_amount')
+                // + $builties->sum('amount')  // Excluded - no amount column
+                - ($recoveries->sum('amount') + $currentReturns + $local_sales->sum('net_amount') + $totalJobPaid);
+
+            return response()->json([
+                'opening_balance' => $openingBalance,
+                'closing_balance' => $closingBalance,
+                'purchases' => $purchases,
+                'recoveries' => $recoveries,
+                'receipts' => $journalReceipts,
+                'returns' => $returns,
+                'builties' => $builties,
+                'local_sales' => $local_sales,
+                'job_orders' => $jobOrders,
+                'startDate' => $startDate,
+                'endDate' => $endDate,
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Vendor Ledger Error: ' . $e->getMessage());
+            \Log::error('Stack Trace: ' . $e->getTraceAsString());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Error: ' . $e->getMessage(),
+                'line' => $e->getLine(),
+                'file' => basename($e->getFile())
+            ], 500);
         }
-
-        $builties = DB::table('vendor_builties')
-            ->where('vendor_id', $vendorId)
-            ->whereBetween('date', [$startDate, $endDate])
-            ->select('id', 'date', 'amount', 'description')
-            ->get();
-
-        // ✅ Closing Balance = Opening + Purchases + Builties − (Payments + Returns)
-        $closingBalance = $openingBalance
-            + $purchases->sum('grand_total')
-            + $builties->sum('amount')
-            - ($recoveries->sum('amount_paid') + $currentReturns);
-
-        return response()->json([
-            'opening_balance' => $openingBalance,
-            'closing_balance' => $closingBalance,
-            'purchases' => $purchases,
-            'recoveries' => $recoveries,
-            'returns' => $returns,
-            'builties' => $builties,
-            'startDate' => $startDate,
-            'endDate' => $endDate,
-        ]);
     }
 
     public function Customer_Ledger_Record()
@@ -254,120 +364,132 @@ class ReportController extends Controller
 
     public function fetchCustomerLedger(Request $request)
     {
-        $CustomerId = $request->input('Customer_id');
-        if (! $CustomerId) {
-            return response()->json(['message' => 'Customer_id is required'], 422);
-        }
+        try {
+            $CustomerId = $request->input('Customer_id');
+            if (! $CustomerId) {
+                return response()->json(['message' => 'Customer_id is required'], 422);
+            }
 
-        $startDate = ($request->input('start_date') ?: date('Y-m-d')).' 00:00:00';
-        $endDate = ($request->input('end_date') ?: now()->format('Y-m-d')).' 23:59:59';
+            $startDate = ($request->input('start_date') ?: date('Y-m-d')).' 00:00:00';
+            $endDate = ($request->input('end_date') ?: now()->format('Y-m-d')).' 23:59:59';
 
-        /* ---- Base opening from ledger (NO carry-forward) ---- */
-        $ledgerRow = DB::table('customer_ledgers')
-            ->where('customer_id', $CustomerId)
-            ->latest('id')
-            ->select('id', 'opening_balance', 'closing_balance', 'created_at')
-            ->first();
+            /* ---- Base opening from ledger (NO carry-forward) ---- */
+            $ledgerRow = DB::table('customer_ledgers')
+                ->where('customer_id', $CustomerId)
+                ->latest('id')
+                ->select('id', 'opening_balance', 'closing_balance', 'created_at')
+                ->first();
 
-        $openingBalance = (float) ($ledgerRow->opening_balance ?? 0); // ← fixed opening
-        $carryFwd = (float) ($ledgerRow->closing_balance ?? 0); // info only
+            $openingBalance = $ledgerRow ? (float) ($ledgerRow->opening_balance ?? 0) : 0;
+            $carryFwd = $ledgerRow ? (float) ($ledgerRow->closing_balance ?? 0) : 0;
 
-        /* ---- Period details (for listing) ---- */
-        $recoveries = DB::table('customer_recoveries as cr')
-            ->join('customer_ledgers as cl', 'cl.id', '=', 'cr.customer_ledger_id')
-            ->where('cl.customer_id', $CustomerId)
-            ->whereBetween('cr.date', [$startDate, $endDate])
-            ->select('cr.id', 'cr.amount_paid', 'cr.salesman', 'cr.date', 'cr.remarks')
-            ->get();
+            // ---- Calculate Opening Balance relative to Start Date ----
+            // 1. Sales before Start Date
+            $previousSales = DB::table('local_sales')
+                ->where('customer_id', $CustomerId)
+                ->where('created_at', '<', $startDate)
+                ->sum('net_amount');
 
-        $localSales = DB::table('local_sales')
-            ->where('customer_id', $CustomerId)
-            ->where(function ($q) use ($startDate, $endDate) {
-                $q->whereBetween('Date', [$startDate, $endDate])
-                    ->orWhere(function ($qq) use ($startDate, $endDate) {
-                        $qq->whereNull('Date')->whereBetween('created_at', [$startDate, $endDate]);
-                    });
-            })
-            ->select('invoice_number', 'Date', 'customer_shopname', 'grand_total',
-                'discount_value', 'scheme_value', 'net_amount', 'created_at')
-            ->get();
+            // 2. Advances before Start Date
+            $previousAdvances = DB::table('local_sales')
+                ->where('customer_id', $CustomerId)
+                ->where('created_at', '<', $startDate)
+                ->sum('advance_amount');
 
-        $saleReturns = DB::table('sale_returns')
-            ->where('sale_type', 'customer')
+            // 3. Recoveries before Start Date
+            $previousRecoveries = DB::table('customer_recoveries as cr')
+                ->join('customer_ledgers as cl', 'cl.id', '=', 'cr.customer_ledger_id')
+                ->where('cl.customer_id', $CustomerId)
+                ->where('cr.date', '<', $startDate)
+                ->sum('cr.amount_paid');
+
+            // 4. Returns before Start Date
+        $previousReturns = DB::table('sale_returns')
+            ->where('party_type', 'customer')
+            ->where('party_id', $CustomerId)
+            ->where('created_at', '<', $startDate)
+            ->sum('return_amount');
+
+        // 5. Journal Receipts before Start Date (Customer pays us)
+        $previousJournalReceipts = DB::table('journal_vouchers')
+            ->where('party_type', 'customer')
+            ->where('party_id', $CustomerId)
+            ->where('voucher_type', 'receipt')
+            ->where('voucher_date', '<', $startDate)
+            ->sum('credit_amount');
+
+        // Correct Opening Balance = Base + Sales - Advances - Recoveries - Returns - Journal Receipts
+        $openingBalance = $openingBalance + $previousSales - ($previousAdvances + $previousRecoveries + $previousReturns + $previousJournalReceipts);
+
+            /* ---- Period details (for listing) ---- */
+            $recoveries = DB::table('customer_recoveries as cr')
+                ->join('customer_ledgers as cl', 'cl.id', '=', 'cr.customer_ledger_id')
+                ->where('cl.customer_id', $CustomerId)
+                ->whereBetween('cr.date', [$startDate, $endDate])
+                ->select('cr.id', 'cr.amount_paid', 'cr.salesman', 'cr.date', 'cr.remarks')
+                ->get();
+
+            $localSales = DB::table('local_sales')
+                ->where('customer_id', $CustomerId)
+                ->whereBetween('created_at', [$startDate, $endDate])
+                ->select('invoice_number', 'sale_date', 'customer_shopname', 'grand_total',
+                    'discount_value', 'net_amount', 'advance_amount', 'created_at')
+                ->get();
+
+            $saleReturns = DB::table('sale_returns')
+            ->where('party_type', 'customer')
             ->where('party_id', $CustomerId)
             ->whereBetween('created_at', [$startDate, $endDate])
-            ->select('invoice_number', 'total_return_amount', 'created_at')
+            ->select('return_amount', 'created_at', 'reason')
             ->get();
 
-        /* ---- Upto endDate aggregates (for closing) ---- */
-        $salesUptoEnd = (float) DB::table('local_sales')
-            ->where('customer_id', $CustomerId)
-            ->where(function ($q) use ($endDate) {
-                $q->where('Date', '<=', $endDate)
-                    ->orWhere(function ($qq) use ($endDate) {
-                        $qq->whereNull('Date')->where('created_at', '<=', $endDate);
-                    });
-            })
-            ->sum('net_amount');
-
-        $cashAtSaleUptoEnd = (float) DB::table('local_sales')
-            ->where('customer_id', $CustomerId)
-            ->where(function ($q) use ($endDate) {
-                $q->where('Date', '<=', $endDate)
-                    ->orWhere(function ($qq) use ($endDate) {
-                        $qq->whereNull('Date')->where('created_at', '<=', $endDate);
-                    });
-            })
-            ->sum('grand_total');
-
-        $recoveriesUptoEnd = (float) DB::table('customer_recoveries as cr')
-            ->join('customer_ledgers as cl', 'cl.id', '=', 'cr.customer_ledger_id')
-            ->where('cl.customer_id', $CustomerId)
-            ->where('cr.date', '<=', $endDate)
-            ->sum('cr.amount_paid');
-
-        $returnsUptoEnd = (float) DB::table('sale_returns')
-            ->where('sale_type', 'customer')
+        $journalReceipts = DB::table('journal_vouchers')
+            ->where('party_type', 'customer')
             ->where('party_id', $CustomerId)
-            ->where('created_at', '<=', $endDate)
-            ->sum('total_return_amount');
+            ->where('voucher_type', 'receipt')
+            ->whereBetween('voucher_date', [$startDate, $endDate])
+            ->select('id', 'credit_amount', 'narration as remarks', 'voucher_date')
+            ->get();
 
-        // Assumption: sale-time cash_received NOT in recoveries table → include both
-        $closingBalance = $openingBalance
-            + $salesUptoEnd
-            - ($recoveriesUptoEnd + $cashAtSaleUptoEnd + $returnsUptoEnd);
+        // ---- Closing Balance Calculation ----
+        $currentSales = $localSales->sum('net_amount');
+        $currentAdvances = $localSales->sum('advance_amount');
+        $currentRecoveries = $recoveries->sum('amount_paid');
+        $currentReturns = $saleReturns->sum('return_amount');
+        $currentJournalReceipts = $journalReceipts->sum('credit_amount');
 
-        return response()->json([
-            // snapshot
-            'opening_balance' => round($openingBalance, 2),
-            'closing_balance' => round($closingBalance, 2),
-
-            // preferred names
-            'opening_as_of_start' => round($openingBalance, 2),
+        $closingBalance = $openingBalance + $currentSales - ($currentAdvances + $currentRecoveries + $currentReturns + $currentJournalReceipts);
+            
+            return response()->json([
+                'opening_balance' => round($openingBalance, 2),
+                'closing_balance' => round($closingBalance, 2),
+                'opening_as_of_start' => round($openingBalance, 2),
             'closing_as_of_end' => round($closingBalance, 2),
-
-            // info
             'ledger_closing_balance' => round($carryFwd, 2),
-
-            // period data (lists)
             'recoveries' => $recoveries,
+            'receipts' => $journalReceipts,
             'local_sales' => $localSales,
             'sale_returns' => $saleReturns,
-
             'startDate' => $startDate,
-            'endDate' => $endDate,
-        ]);
+                'endDate' => $endDate,
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Customer Ledger Error: ' . $e->getMessage());
+            \Log::error('Stack Trace: ' . $e->getTraceAsString());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Error: ' . $e->getMessage(),
+                'line' => $e->getLine(),
+                'file' => basename($e->getFile())
+            ], 500);
+        }
     }
 
     public function stock_Record()
     {
         if (Auth::id()) {
-            $userId = Auth::id();
-            $categories = Category::where('admin_or_user_id', $userId)->get();
-
-            return view('admin_panel.reports.stock_Record', [
-                'categories' => $categories,
-            ]);
+            return view('admin_panel.reports.stock_Record');
         } else {
             return redirect()->back();
         }
@@ -383,332 +505,125 @@ class ReportController extends Controller
 
 
     public function getItemDetails(Request $request)
-{
-    \Log::info('Filter Request:', [
-        'category' => $request->category,
-        'subcategory' => $request->subcategory,
-        'itemCode' => $request->itemCode,
-    ]);
+    {
+        $start_date = $request->start_date;
+        $end_date = $request->end_date;
 
-    $query = Product::query();
+        $query = Product::query();
 
-    if ($request->category !== 'all') {
-        $query->where('category', 'LIKE', '%'.$request->category.'%');
-    }
+        if ($request->search && $request->search !== '') {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('item_name', 'LIKE', "%$search%")
+                  ->orWhere('item_code', 'LIKE', "%$search%");
+            });
+        }
 
-    if ($request->subcategory !== 'all') {
-        $query->where('sub_category', 'LIKE', '%'.$request->subcategory.'%');
-    }
+        $items = $query->get();
 
-    if ($request->itemCode !== 'all') {
-        $query->where('item_code', $request->itemCode);
-    }
+        foreach ($items as $item) {
+            // 1. Purchase Qty (Stock In) - Count total pcs purchased in date range
+            $totalStockIn = 0;
+            $totalPurchaseValue = 0; // Track total value for weighted average
 
-    $items = $query->get();
-
-    if ($items->isEmpty()) {
-        \Log::info('No items found with filters:', [
-            'category' => $request->category,
-            'subcategory' => $request->subcategory,
-            'itemCode' => $request->itemCode,
-        ]);
-    }
-
-    foreach ($items as $item) {
-
-        $pcsInCarton = max((int) $item->pcs_in_carton, 1);
-
-        $openingTotalPCS = (int) ($item->initial_stock ?? 0);
-
-        $item->opening_carton = intdiv($openingTotalPCS, $pcsInCarton);
-        $item->opening_pcs = $openingTotalPCS % $pcsInCarton;
-
-        $purchasePCS = 0;
-
-        foreach (
-            DB::table('purchases')
+            $purchaseQuery = DB::table('purchases')
                 ->whereJsonContains('item', $item->item_name)
-                ->get() as $purchase
-        ) {
-            $names = json_decode($purchase->item, true) ?? [];
-            $cartons = json_decode($purchase->carton_qty, true) ?? [];
-            $pcs = json_decode($purchase->pcs ?? '[]', true);
+                ->whereNull('deleted_at');
 
-            foreach ($names as $i => $n) {
-                if (trim($n) === trim($item->item_name)) {
-                    $purchasePCS +=
-                        ((int) ($cartons[$i] ?? 0) * $pcsInCarton)
-                        + (int) ($pcs[$i] ?? 0);
+            if ($start_date) {
+                $purchaseQuery->where('purchase_date', '>=', $start_date);
+            }
+            if ($end_date) {
+                $purchaseQuery->where('purchase_date', '<=', $end_date);
+            }
+
+            $purchases = $purchaseQuery->get(['item', 'pcs', 'rate']);
+
+            foreach ($purchases as $p) {
+                $names = json_decode($p->item, true) ?? [];
+                $pcs = json_decode($p->pcs, true) ?? [];
+                $rates = json_decode($p->rate, true) ?? [];
+
+                foreach ($names as $idx => $n) {
+                    if (trim($n) === trim($item->item_name)) {
+                        $pQty = (float)($pcs[$idx] ?? 0);
+                        $pRate = (float)($rates[$idx] ?? 0);
+                        $totalStockIn += $pQty;
+                        $totalPurchaseValue += ($pQty * $pRate); // Calculate total purchase value
+                    }
                 }
             }
-        }
 
-        $item->purchase_carton = intdiv($purchasePCS, $pcsInCarton);
-        $item->purchase_pcs = $purchasePCS % $pcsInCarton;
-
-        $purchaseReturnPCS = 0;
-
-        foreach (
-            DB::table('purchase_returns')
+            // Subtract Purchase Returns from Stock In and Purchase Value
+            $returnQuery = DB::table('purchase_returns')
                 ->whereJsonContains('item', $item->item_name)
-                ->get() as $pr
-        ) {
-            $names = json_decode($pr->item, true) ?? [];
-            $cartons = json_decode($pr->carton_qty ?? '[]', true) ?? [];
-            $pcs = json_decode($pr->return_qty ?? '[]', true) ?? [];
+                ->whereNull('deleted_at');
 
-            foreach ($names as $i => $n) {
-                if (trim($n) === trim($item->item_name)) {
-                    $purchaseReturnPCS +=
-                        ((int) ($cartons[$i] ?? 0) * $pcsInCarton)
-                        + (int) ($pcs[$i] ?? 0);
+            if ($start_date) {
+                $returnQuery->where('return_date', '>=', $start_date);
+            }
+            if ($end_date) {
+                $returnQuery->where('return_date', '<=', $end_date);
+            }
+
+            $returns = $returnQuery->get(['item', 'return_qty', 'rate']);
+
+            if ($returns && $returns->count() > 0) {
+                foreach ($returns as $r) {
+                    $names = json_decode($r->item ?? '[]', true) ?? [];
+                    $returnQtys = json_decode($r->return_qty ?? '[]', true) ?? [];
+                    $returnRates = json_decode($r->rate ?? '[]', true) ?? [];
+
+                    if (is_array($names)) {
+                        foreach ($names as $idx => $n) {
+                            if (trim($n) === trim($item->item_name)) {
+                                $rQty = (float)($returnQtys[$idx] ?? 0);
+                                $rRate = (float)($returnRates[$idx] ?? 0);
+                                $totalStockIn -= $rQty; // Subtract returned qty
+                                $totalPurchaseValue -= ($rQty * $rRate); // Subtract return value
+                            }
+                        }
+                    }
                 }
             }
-        }
 
-        $item->purchase_return_carton = intdiv($purchaseReturnPCS, $pcsInCarton);
-        $item->purchase_return_pcs = $purchaseReturnPCS % $pcsInCarton;
+            $item->total_stock_in = abs($totalStockIn);
 
-        /* ================= 🔥 STOCK OUT (JOB ORDERS) ================= */
-        $stockOutPCS = 0;
+            // 2. Sold Qty (Stock Out) - Count from stock_outs table using total_stock field
+            $outQuery = DB::table('stock_outs')
+                ->where('product_id', $item->id)
+                ->whereNull('deleted_at');
 
-// Stock outs table se product_id se match karke total_stock sum karein
-$stockOutRecords = DB::table('stock_outs')
-    ->where('product_id', $item->id)
-    ->get();
-
-foreach ($stockOutRecords as $stockOut) {
-    // total_stock = jo stock use hua hai (current_stock - close_stock)
-    $usedStock = (float)$stockOut->current_stock - (float)$stockOut->close_stock;
-    $stockOutPCS += abs($usedStock); // absolute value lein
-}
-
-$item->stock_out_carton = intdiv($stockOutPCS, $pcsInCarton);
-$item->stock_out_pcs = $stockOutPCS % $pcsInCarton;
-
-        /* ================= LOCAL SOLD (DISPLAY ONLY) ================= */
-        $soldPCS = 0;
-
-        foreach (LocalSale::whereJsonContains('item', $item->item_name)->get() as $sale) {
-            $names = json_decode($sale->item, true) ?? [];
-            $cartons = json_decode($sale->carton_qty, true) ?? [];
-            $pcs = json_decode($sale->pcs, true) ?? [];
-
-            foreach ($names as $i => $n) {
-                if (trim($n) === trim($item->item_name)) {
-                    $soldPCS += (int) ($pcs[$i] ?? 0);
-                }
+            if ($start_date) {
+                $outQuery->where('created_at', '>=', $start_date . ' 00:00:00');
             }
-        }
+            if ($end_date) {
+                $outQuery->where('created_at', '<=', $end_date . ' 23:59:59');
+            }
 
-        /* ================= LOCAL RETURN (DISPLAY ONLY) ================= */
-        $returnPCS = 0;
+            $item->total_stock_out = abs((float)$outQuery->sum('total_stock'));
 
-        foreach (
-            DB::table('sale_returns')
-                ->where('sale_type', 'customer')
-                ->where('item_names', $item->item_name)
-                ->get() as $r
-        ) {
-            $pcsVal = (int) ($r->pcs_qty ?? 0);
-            $cartonVal = (int) ($r->carton_qty ?? 0);
+            // 3. Available Balance = Purchase Qty - Sold Qty
+            $item->balance_stock = $item->total_stock_in - $item->total_stock_out;
 
-            if ($pcsVal > 0) {
-                $returnPCS += $pcsVal;
+            // 4. Calculate Weighted Average Purchase Rate
+            $avgPurchaseRate = 0;
+            if ($totalStockIn > 0) {
+                $avgPurchaseRate = $totalPurchaseValue / $totalStockIn;
             } else {
-                $returnPCS += ($cartonVal * $pcsInCarton);
+                // If no purchases in date range, use wholesale price as fallback
+                $avgPurchaseRate = (float)($item->wholesale_price ?? 0);
             }
+
+            // 5. Stock Value = Available Balance × Average Purchase Rate
+            $item->stock_value = round($item->balance_stock * $avgPurchaseRate, 2);
+            $item->avg_purchase_rate = round($avgPurchaseRate, 2); // For display/debugging
         }
 
-        /* ================= FINAL STOCK ================= */
-        $item->balance_stock = (int) ($item->initial_stock ?? 0);
-        $item->balance_wholesale_price = (float) ($item->wholesale_price ?? 0);
-
-        /* ================= STOCK VALUE (PCS BASED) ================= */
-        $wholesalePrice = (float) ($item->wholesale_price ?? 0);
-        $perPcsPrice = $wholesalePrice * $item->balance_stock;
-        $item->stock_value = round($perPcsPrice);
-
-        /* ================= DISPLAY HELPERS ================= */
-        $item->total_local_sold_carton = intdiv($soldPCS, $pcsInCarton);
-        $item->total_local_sold_pcs = $soldPCS % $pcsInCarton;
-
-        $item->total_local_return_carton = intdiv($returnPCS, $pcsInCarton);
-        $item->total_local_return_pcs = $returnPCS % $pcsInCarton;
+        return response()->json($items);
     }
 
-    return response()->json($items);
-}
-
-    // public function getItemDetails(Request $request)
-    // {
-
-    //     \Log::info('Filter Request:', [
-    //         'category' => $request->category,
-    //         'subcategory' => $request->subcategory,
-    //         'itemCode' => $request->itemCode,
-    //     ]);
-
-    //     $query = Product::query();
-
-    //     if ($request->category !== 'all') {
-    //         $query->where('category', 'LIKE', '%'.$request->category.'%');
-    //     }
-
-    //     // ✅ FIXED: Case-insensitive subcategory filtering
-    //     if ($request->subcategory !== 'all') {
-    //         $query->where('sub_category', 'LIKE', '%'.$request->subcategory.'%');
-    //     }
-
-    //     if ($request->itemCode !== 'all') {
-    //         $query->where('item_code', $request->itemCode);
-    //     }
-
-    //     $items = $query->get();
-
-    //     $items = $query->get();
-
-    //     // ✅ Agar koi item nahi mila toh log mein message show karein
-    //     if ($items->isEmpty()) {
-    //         \Log::info('No items found with filters:', [
-    //             'category' => $request->category,
-    //             'subcategory' => $request->subcategory,
-    //             'itemCode' => $request->itemCode,
-    //         ]);
-    //     }
-
-    //     foreach ($items as $item) {
-
-    //         /* ================= BASE ================= */
-    //         $pcsInCarton = max((int) $item->pcs_in_carton, 1);
-
-    //         /* ================= OPENING (DISPLAY ONLY) ================= */
-    //         $openingTotalPCS = (int) ($item->initial_stock ?? 0);
-
-    //         $item->opening_carton = intdiv($openingTotalPCS, $pcsInCarton);
-    //         $item->opening_pcs = $openingTotalPCS % $pcsInCarton;
-
-    //         /* ================= PURCHASE (DISPLAY ONLY) ================= */
-    //         $purchasePCS = 0;
-
-    //         foreach (
-    //             DB::table('purchases')
-    //                 ->whereJsonContains('item', $item->item_name)
-    //                 ->get() as $purchase
-    //         ) {
-    //             $names = json_decode($purchase->item, true) ?? [];
-    //             $cartons = json_decode($purchase->carton_qty, true) ?? [];
-    //             $pcs = json_decode($purchase->pcs ?? '[]', true);
-
-    //             foreach ($names as $i => $n) {
-    //                 if (trim($n) === trim($item->item_name)) {
-
-    //                     $purchasePCS +=
-    //                         ((int) ($cartons[$i] ?? 0) * $pcsInCarton)
-    //                         + (int) ($pcs[$i] ?? 0);
-    //                 }
-    //             }
-    //         }
-
-    //         $item->purchase_carton = intdiv($purchasePCS, $pcsInCarton);
-    //         $item->purchase_pcs = $purchasePCS % $pcsInCarton;
-
-    //         /* ================= PURCHASE RETURN (DISPLAY ONLY) ================= */
-    //         $purchaseReturnPCS = 0;
-
-    //         foreach (
-    //             DB::table('purchase_returns')
-    //                 ->whereJsonContains('item', $item->item_name)
-    //                 ->get() as $pr
-    //         ) {
-    //             $names = json_decode($pr->item, true) ?? [];
-    //             $cartons = json_decode($pr->carton_qty ?? '[]', true) ?? [];
-    //             $pcs = json_decode($pr->return_qty ?? '[]', true) ?? [];
-
-    //             foreach ($names as $i => $n) {
-    //                 if (trim($n) === trim($item->item_name)) {
-
-    //                     $purchaseReturnPCS +=
-    //                         ((int) ($cartons[$i] ?? 0) * $pcsInCarton)
-    //                         + (int) ($pcs[$i] ?? 0);
-    //                 }
-    //             }
-    //         }
-
-    //         $item->purchase_return_carton = intdiv($purchaseReturnPCS, $pcsInCarton);
-    //         $item->purchase_return_pcs = $purchaseReturnPCS % $pcsInCarton;
-
-    //         /* ================= LOCAL SOLD (DISPLAY ONLY) ================= */
-    //         $soldPCS = 0;
-
-    //         foreach (LocalSale::whereJsonContains('item', $item->item_name)->get() as $sale) {
-    //             $names = json_decode($sale->item, true) ?? [];
-    //             $cartons = json_decode($sale->carton_qty, true) ?? [];
-    //             $pcs = json_decode($sale->pcs, true) ?? [];
-
-    //             foreach ($names as $i => $n) {
-    //                 if (trim($n) === trim($item->item_name)) {
-    //                     $soldPCS += (int) ($pcs[$i] ?? 0);
-    //                 }
-    //             }
-    //         }
-
-    //         /* ================= LOCAL RETURN (DISPLAY ONLY) ================= */
-    //         $returnPCS = 0;
-
-    //         foreach (
-    //             DB::table('sale_returns')
-    //                 ->where('sale_type', 'customer')
-    //                 ->where('item_names', $item->item_name)
-    //                 ->get() as $r
-    //         ) {
-    //             $pcsVal = (int) ($r->pcs_qty ?? 0);
-    //             $cartonVal = (int) ($r->carton_qty ?? 0);
-
-    //             if ($pcsVal > 0) {
-    //                 // PCS based return
-    //                 $returnPCS += $pcsVal;
-    //             } else {
-    //                 // Carton based return → convert using product pcs_in_carton
-    //                 $returnPCS += ($cartonVal * $pcsInCarton);
-    //             }
-    //         }
-
-    //         /* ================= FINAL STOCK ================= */
-    //         /**
-    //          * 🔥 IMPORTANT RULE:
-    //          * product.initial_stock is ALREADY UPDATED
-    //          * on SALE (minus) and RETURN (plus)
-    //          * so report me kuch add / minus nahi karna
-    //          */
-    //         /* ================= STOCK VALUE (PCS BASED) ================= */
-    //         $pcsInCarton = max((int) $item->pcs_in_carton, 1);
-    //         $initialStock = (int) ($item->initial_stock ?? 0);
-    //         $wholesalePrice = (float) ($item->wholesale_price ?? 0);
-
-    //         /* per pcs price */
-    //         // $perPcsPrice = $wholesalePrice / $pcsInCarton;
-    //         $perPcsPrice = $wholesalePrice * $initialStock;
-
-    //         /* total stock value */
-    //         $item->stock_value = round($perPcsPrice);
-
-    //         /* simple balance (as decided) */
-    //         $item->balance_stock = $initialStock;
-    //         $item->balance_wholesale_price = $wholesalePrice;
-
-    //         /* ================= DISPLAY HELPERS ================= */
-    //         $item->total_local_sold_carton = intdiv($soldPCS, $pcsInCarton);
-    //         $item->total_local_sold_pcs = $soldPCS * $pcsInCarton;
-
-    //         $item->total_local_return_carton = intdiv($returnPCS, $pcsInCarton);
-    //         $item->total_local_return_pcs = $returnPCS * $pcsInCarton;
-
-    //     }
-
-    //     return response()->json($items);
-    // }
-
+   
 
     public function date_wise_recovery_report()
     {
@@ -936,85 +851,187 @@ $item->stock_out_pcs = $stockOutPCS % $pcsInCarton;
 
     public function contractor_wise_report()
     {
-
         if (Auth::id()) {
             $userId = Auth::id();
-            // Assuming you have a Contractor model
             $Contractors = Contractor::where('admin_or_user_id', $userId)->get();
+
+            // Get current month dates for default
+            $defaultStartDate = date('Y-m-01');
+            $defaultEndDate = date('Y-m-d');
 
             return view('admin_panel.reports.contractor_wise_report', [
                 'Contractors' => $Contractors,
+                'defaultStartDate' => $defaultStartDate,
+                'defaultEndDate' => $defaultEndDate,
             ]);
         } else {
             return redirect()->back();
         }
     }
 
-  public function fetchContractorReport(Request $request)
-{
-    $userId = Auth::id();
-    $start = $request->start_date;
-    $end = $request->end_date;
-    $contractorId = $request->contractor_id;
 
-    if (!$contractorId) {
-        return response()->json(['error' => 'Contractor is required'], 422);
-    }
-
-    // ✅ Filter by contractor_id
-    $jobs = JobOrder::where('admin_or_user_id', $userId)
-        ->where('staff_type', 'contract')
-        ->where('staff_id', $contractorId)  // ✅ Add this filter
-        ->whereBetween('job_date', [$start, $end])
-        ->orderBy('job_date')
-        ->get();
-
-    $report = [];
-    foreach ($jobs as $job) {
-        // ✅ Parse work_type JSON and extract names
-        $workTypes = [];
-        if ($job->work_type) {
-            $decoded = json_decode($job->work_type, true);
-            if (is_array($decoded)) {
-                foreach ($decoded as $work) {
-                    if (isset($work['name'])) {
-                        $workTypes[] = $work['name'];
-                    }
-                }
+    public function fetchContractorReport(Request $request)
+    {
+        try {
+            $contractorId = $request->input('contractor_id');
+            if (!$contractorId) {
+                return response()->json(['message' => 'Contractor ID is required'], 422);
             }
-        }
-        
-        // ✅ Join work types with comma
-        $workTypeString = !empty($workTypes) ? implode(', ', $workTypes) : 'N/A';
 
-        $report[] = [
-            'job_no' => $job->job_order_no,
-            'date' => \Carbon\Carbon::parse($job->job_date)->format('d-M-Y'),
-            'work_type' => $workTypeString,  // ✅ Now it's comma separated
-            'total_amount' => $job->total_amount,
-            'paid_amount' => $job->paid_amount,
-            'remaining_amount' => $job->remaining_amount,
-            'status' => ucfirst($job->status),
-        ];
+            $startDate = ($request->input('start_date') ?: date('Y-m-01')).' 00:00:00';
+            $endDate = ($request->input('end_date') ?: date('Y-m-d')).' 23:59:59';
+
+            /* ---- Base opening from ledger ---- */
+            $ledgerRow = DB::table('contractor_ledgers')
+                ->where('contractor_id', $contractorId)
+                ->latest('id')
+                ->select('id', 'opening_balance', 'previous_balance', 'closing_balance', 'created_at')
+                ->first();
+
+            $openingBalance = $ledgerRow ? (float) ($ledgerRow->opening_balance ?? 0) : 0;
+            $previousBalance = $ledgerRow ? (float) ($ledgerRow->previous_balance ?? 0) : 0;
+            $carryFwd = $ledgerRow ? (float) ($ledgerRow->closing_balance ?? 0) : 0;
+            $ledgerId = $ledgerRow ? $ledgerRow->id : null;
+
+
+            // ---- Calculate Opening Balance relative to Start Date ----
+            // 1. Job Orders (Work Done) before Start Date
+            $previousJobs = DB::table('job_orders')
+                ->where('staff_type', 'contract')
+                ->where('staff_id', $contractorId)
+                ->whereNull('deleted_at')
+                ->where('order_date', '<', $startDate)
+                ->sum('total_amount');
+
+            // 2. Paid amounts from jobs before Start Date
+            $previousJobPaid = DB::table('job_orders')
+                ->where('staff_type', 'contract')
+                ->where('staff_id', $contractorId)
+                ->whereNull('deleted_at')
+                ->where('order_date', '<', $startDate)
+                ->sum('paid_amount');
+
+            // 3. Recoveries (Payments to Contractor) before Start Date
+            $previousRecoveries = 0;
+            if ($ledgerId) {
+                $previousRecoveries = DB::table('contractor_recoveries')
+                    ->where('contractor_ledger_id', $ledgerId)
+                    ->whereNull('deleted_at')
+                    ->where('recovery_date', '<', $startDate)
+                    ->sum('amount');
+            }
+
+            // Opening Balance = Base Opening + Previous Work - Previous Payments
+            $openingBalance = $openingBalance + $previousJobs - ($previousJobPaid + $previousRecoveries);
+
+            /* ---- Period details (for listing) ---- */
+            // Job Orders in Period
+            $jobOrders = DB::table('job_orders')
+                ->where('staff_type', 'contract')
+                ->where('staff_id', $contractorId)
+                ->whereNull('deleted_at')
+                ->whereBetween('order_date', [$startDate, $endDate])
+                ->select('id', 'job_order_number', 'order_date', 'description', 'total_amount', 'paid_amount', 'remaining_amount', 'status')
+                ->orderBy('order_date')
+                ->get();
+
+            // Payments Given (from Journal Vouchers) in Period
+            $payments = DB::table('journal_vouchers')
+                ->where('party_type', 'contractor')
+                ->where('party_id', $contractorId)
+                ->where('voucher_type', 'payment')
+                ->whereNull('deleted_at')
+                ->whereBetween('voucher_date', [$startDate, $endDate])
+                ->select('id', 'voucher_no', 'debit_amount as amount', 'voucher_date', 'narration', 'payment_method')
+                ->orderBy('voucher_date')
+                ->get();
+
+
+            // Also check contractor_recoveries table for legacy payments
+            $legacyPayments = collect([]);
+            if ($ledgerId) {
+                $legacyPayments = DB::table('contractor_recoveries')
+                    ->where('contractor_ledger_id', $ledgerId)
+                    ->whereNull('deleted_at')
+                    ->whereBetween('recovery_date', [$startDate, $endDate])
+                    ->select('id', 'amount', 'recovery_date as voucher_date', 'remarks as narration')
+                    ->orderBy('recovery_date')
+                    ->get();
+            }
+
+            // Merge both payment sources
+            $allPayments = $payments->merge($legacyPayments);
+
+
+            // ---- Closing Balance Calculation ----
+            $currentJobsTotal = $jobOrders->sum('total_amount');
+            $currentJobsPaid = $jobOrders->sum('paid_amount');
+            $currentPaymentsGiven = $allPayments->sum('amount');
+
+            $closingBalance = $openingBalance + $currentJobsTotal - ($currentJobsPaid + $currentPaymentsGiven);
+
+            return response()->json([
+                'opening_balance' => round($openingBalance, 2),
+                'closing_balance' => round($closingBalance, 2),
+                'ledger_closing_balance' => round($carryFwd, 2),
+                'job_orders' => $jobOrders,
+                'payments' => $allPayments,  // Changed from 'recoveries' to 'payments'
+                'totals' => [
+                    'total_work' => round($currentJobsTotal, 2),
+                    'total_paid' => round($currentJobsPaid + $currentPaymentsGiven, 2),
+                    'balance' => round($closingBalance, 2),
+                ],
+                'startDate' => $startDate,
+                'endDate' => $endDate,
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Contractor Ledger Error: ' . $e->getMessage());
+            \Log::error('Stack Trace: ' . $e->getTraceAsString());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error: ' . $e->getMessage(),
+                'line' => $e->getLine(),
+                'file' => basename($e->getFile())
+            ], 500);
+        }
     }
 
-    return response()->json([
-        'report' => $report,
-        'totals' => [
-            'total_amount' => $jobs->sum('total_amount'),
-            'paid_amount' => $jobs->sum('paid_amount'),
-            'remaining_amount' => $jobs->sum('remaining_amount'),
-        ],
-    ]);
-}
 
     public function staff_wise_report()
 {
-    $staffs = Salesman::where('admin_or_user_id', Auth::id())
+    if (!Auth::check()) {
+        return redirect()->route('login');
+    }
+
+    $userId = Auth::id();
+
+    // Get all active staff with their names
+    $staffs = Salesman::where('admin_or_user_id', $userId)
         ->where('status', 1)
+        ->whereNotNull('name')
+        ->select('id', 'name', 'designation', 'salary', 'phone', 'created_at')
+        ->orderBy('name')
         ->get();
 
-    return view('admin_panel.reports.staff_wise_report', compact('staffs'));
+    // Get overall summary
+    $summary = DB::table('staff_ledgers as sl')
+        ->join('sales_mens as sm', 'sl.staff_id', '=', 'sm.id')
+        ->where('sl.admin_or_user_id', $userId)
+        ->whereNotNull('sl.week_start')
+        ->whereNotNull('sm.name')
+        ->select(
+            DB::raw('COUNT(DISTINCT sl.staff_id) as total_staff'),
+            DB::raw('COUNT(sl.id) as total_weeks'),
+            DB::raw('COALESCE(SUM(sl.weekly_amount), 0) as total_weekly_amount'),
+            DB::raw('COALESCE(SUM(sl.advance), 0) as total_advances'),
+            DB::raw('COALESCE(SUM(sl.paid), 0) as total_paid'),
+            DB::raw('COALESCE(SUM(sl.balance), 0) as total_balance')
+        )
+        ->first();
+
+    return view('admin_panel.reports.staff_wise_report', compact('staffs', 'summary'));
 }
 
 public function fetchStaffReport(Request $request)
@@ -1071,24 +1088,63 @@ public function fetchStaffReport(Request $request)
 
 public function staffWeeklyHistory(Request $request)
 {
-    return DB::table('staff_ledgers')
-        ->where('saleman_id', $request->staff_id)
-        ->where('admin_or_user_id', Auth::id())
-        ->whereNotNull('week_start')  // ✅ null entries filter
-        ->whereNotNull('week_end')
-        ->orderBy('week_start', 'desc')
+    $history = DB::table('staff_ledgers as sl')
+        ->join('sales_mens as sm', 'sl.staff_id', '=', 'sm.id')
+        ->where('sl.staff_id', $request->staff_id)
+        ->where('sl.admin_or_user_id', Auth::id())
+        ->whereNotNull('sl.week_start')
+        ->whereNotNull('sl.week_end')
+        ->whereNotNull('sm.name')
+        ->select(
+            'sl.*',
+            'sm.name as staff_name',
+            'sm.designation'
+        )
+        ->orderBy('sl.week_start', 'desc')
         ->get();
+
+    return response()->json($history);
 }
 
-// ✅ New function
+// Save weekly payment entry
 public function saveStaffWeekly(Request $request)
 {
     $userId = Auth::id();
     $staffId = $request->staff_id;
+    $weekStart = $request->week_start;
+    $weekEnd = $request->week_end;
+
+    // ✅ Check for duplicate week entry
+    $existingEntry = DB::table('staff_ledgers')
+        ->where('staff_id', $staffId)
+        ->where('admin_or_user_id', $userId)
+        ->where('week_start', $weekStart)
+        ->where('week_end', $weekEnd)
+        ->first();
+
+    if ($existingEntry) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Payment already exists for this week! You cannot add payment twice for the same week.'
+        ], 422);
+    }
+
+    // Get staff name for validation
+    $staff = DB::table('sales_mens')
+        ->where('id', $staffId)
+        ->where('admin_or_user_id', $userId)
+        ->first();
+
+    if (!$staff || !$staff->name) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Staff not found or invalid data!'
+        ], 404);
+    }
 
     // Get previous balance
     $previousEntry = DB::table('staff_ledgers')
-        ->where('saleman_id', $staffId)
+        ->where('staff_id', $staffId)
         ->where('admin_or_user_id', $userId)
         ->whereNotNull('week_start')
         ->orderBy('week_end', 'desc')
@@ -1101,24 +1157,158 @@ public function saveStaffWeekly(Request $request)
     $paid = (float)($request->paid ?? 0);
     $advance = (float)($request->advance ?? 0);
 
-    // Previous Balance + Weekly - Paid - Advance
-    $newBalance = $previousBalance + $weeklyAmount - $paid - $advance;
+    // Previous Balance + Weekly - Advance - Paid
+    $newBalance = $previousBalance + $weeklyAmount - $advance - $paid;
 
     // Save
     DB::table('staff_ledgers')->insert([
         'admin_or_user_id' => $userId,
-        'saleman_id' => $staffId,
-        'week_start' => $request->week_start,
-        'week_end' => $request->week_end,
+        'staff_id' => $staffId,
+        'week_start' => $weekStart,
+        'week_end' => $weekEnd,
         'weekly_amount' => $weeklyAmount,
-        'paid' => $paid,
+        'days_present' => $request->days_present ?? 0,
+        'days_absent' => $request->days_absent ?? 0,
         'advance' => $advance,
+        'paid' => $paid,
         'balance' => $newBalance,
+        'note' => $request->note,
         'created_at' => now(),
         'updated_at' => now(),
     ]);
 
-    return response()->json(['success' => true]);
+    return response()->json([
+        'success' => true,
+        'message' => 'Weekly payment saved successfully!'
+    ]);
+}
+
+// Get comprehensive staff payment summary
+public function getStaffPaymentSummary(Request $request)
+{
+    $userId = Auth::id();
+    $staffId = $request->staff_id;
+
+    // Get staff details
+    $staff = DB::table('sales_mens')
+        ->where('id', $staffId)
+        ->where('admin_or_user_id', $userId)
+        ->first();
+
+    if (!$staff) {
+        return response()->json(['error' => 'Staff not found'], 404);
+    }
+
+    // Get all payment records
+    $payments = DB::table('staff_ledgers')
+        ->where('staff_id', $staffId)
+        ->where('admin_or_user_id', $userId)
+        ->whereNotNull('week_start')
+        ->orderBy('week_start', 'desc')
+        ->get();
+
+    // Calculate summary
+    $totalWeeks = $payments->count();
+    $totalWeeklyAmount = $payments->sum('weekly_amount');
+    $totalAdvances = $payments->sum('advance');
+    $totalPaid = $payments->sum('paid');
+    $currentBalance = $payments->first()->balance ?? 0;
+
+    // Get staff with outstanding balances
+    $staffWithBalance = DB::table('staff_ledgers as sl')
+        ->join('sales_mens as sm', 'sl.staff_id', '=', 'sm.id')
+        ->where('sl.admin_or_user_id', $userId)
+        ->whereNotNull('sl.week_start')
+        ->select(
+            'sm.id',
+            'sm.name',
+            'sm.designation',
+            DB::raw('MAX(sl.week_end) as last_payment_date'),
+            DB::raw('(SELECT balance FROM staff_ledgers WHERE staff_id = sm.id AND admin_or_user_id = '.$userId.' AND week_start IS NOT NULL ORDER BY week_end DESC LIMIT 1) as current_balance')
+        )
+        ->groupBy('sm.id', 'sm.name', 'sm.designation')
+        ->having('current_balance', '>', 0)
+        ->get();
+
+    return response()->json([
+        'staff' => [
+            'name' => $staff->name,
+            'designation' => $staff->designation,
+            'phone' => $staff->phone,
+            'salary' => $staff->salary,
+        ],
+        'summary' => [
+            'total_weeks' => $totalWeeks,
+            'total_weekly_amount' => $totalWeeklyAmount,
+            'total_advances' => $totalAdvances,
+            'total_paid' => $totalPaid,
+            'current_balance' => $currentBalance,
+        ],
+        'payments' => $payments,
+        'staff_with_balance' => $staffWithBalance
+    ]);
+}
+
+// Get all staff summary for modal view
+public function getAllStaffSummary()
+{
+    $userId = Auth::id();
+
+    $summary = DB::table('sales_mens as sm')
+        ->leftJoin('staff_ledgers as sl', function($join) use ($userId) {
+            $join->on('sm.id', '=', 'sl.staff_id')
+                ->where('sl.admin_or_user_id', '=', $userId)
+                ->whereNotNull('sl.week_start');
+        })
+        ->where('sm.admin_or_user_id', $userId)
+        ->where('sm.status', 1)
+        ->whereNotNull('sm.name')
+        ->select(
+            'sm.id',
+            'sm.name as staff_name',
+            'sm.designation',
+            'sm.salary',
+            DB::raw('COUNT(DISTINCT sl.id) as total_weeks'),
+            DB::raw('COALESCE(SUM(sl.weekly_amount), 0) as total_weekly'),
+            DB::raw('COALESCE(SUM(sl.advance), 0) as total_advance'),
+            DB::raw('COALESCE(SUM(sl.paid), 0) as total_paid'),
+            DB::raw('(SELECT balance FROM staff_ledgers WHERE staff_id = sm.id AND admin_or_user_id = '.$userId.' AND week_start IS NOT NULL ORDER BY week_end DESC LIMIT 1) as current_balance')
+        )
+        ->groupBy('sm.id', 'sm.name', 'sm.designation', 'sm.salary')
+        ->orderBy('sm.name')
+        ->get();
+
+    return response()->json($summary);
+}
+
+// Get attendance data for selected week
+public function getStaffWeeklyAttendance(Request $request)
+{
+    $staffId = $request->staff_id;
+    $weekStart = $request->week_start;
+    $weekEnd = $request->week_end;
+
+    // Count attendance for the week
+    $attendance = DB::table('staff_attendences')
+        ->where('staff_id', $staffId)
+        ->whereBetween('attendence_date', [$weekStart, $weekEnd])
+        ->get();
+
+    $present = $attendance->where('status', 'present')->count();
+    $absent = $attendance->where('status', 'absent')->count();
+
+    // Get advances for this week
+    $advances = DB::table('staff_recoveries')
+        ->where('saleman_id', $staffId)
+        ->whereBetween('date', [$weekStart, $weekEnd])
+        ->where('adjust_type', 'plus')
+        ->sum('adjust_amount');
+
+    return response()->json([
+        'present' => $present,
+        'absent' => $absent,
+        'advance' => $advances ?? 0
+    ]);
 }
 
     public function Area_wise_Customer_payments()

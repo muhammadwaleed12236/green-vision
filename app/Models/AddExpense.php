@@ -13,4 +13,15 @@ class AddExpense extends Model
     use SoftDeletes;
 
     protected $guarded = [];
+
+    // Relationship to Expense category
+    public function expense()
+    {
+        return $this->belongsTo(Expense::class, 'expense_id');
+    }
+
+    public function expenseCategory()
+    {
+        return $this->belongsTo(Expense::class, 'expense_id');
+    }
 }

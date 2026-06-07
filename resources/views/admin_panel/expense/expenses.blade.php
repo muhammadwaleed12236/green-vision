@@ -37,10 +37,10 @@
                                 @foreach($expenses as $key => $expense)
                                     <tr>
                                         <td>{{ $key + 1 }}</td>
-                                        <td>{{ $expense->expense_category }}</td>
+                                        <td>{{ $expense->expense_name }}</td>
                                         <td>
                                             <button class="btn btn-sm btn-primary editExpenseBtn"
-                                                data-id="{{ $expense->id }}" data-name="{{ $expense->expense_category }}"
+                                                data-id="{{ $expense->id }}" data-name="{{ $expense->expense_name }}"
                                                 data-bs-toggle="modal" data-bs-target="#editExpenseModal">Edit</button>
 
                                             <button class="btn btn-sm btn-danger deleteAddExpenseBtn"

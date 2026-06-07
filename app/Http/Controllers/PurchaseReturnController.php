@@ -15,18 +15,15 @@ class PurchaseReturnController extends Controller
     public function showReturnForm($id)
     {
         $purchase = Purchase::with('vendor')->findOrFail($id);
-        $purchase->category = json_decode($purchase->category, true);
-        $purchase->subcategory = json_decode($purchase->subcategory, true);
+
+        // Decode JSON fields
         $purchase->item = json_decode($purchase->item, true);
-        $purchase->size = json_decode($purchase->size, true);
         $purchase->rate = json_decode($purchase->rate, true);
-        $purchase->carton_qty = json_decode($purchase->carton_qty, true);
+        $purchase->product_mode = json_decode($purchase->product_mode, true);
         $purchase->pcs = json_decode($purchase->pcs, true);
-        $purchase->pcs_carton = json_decode($purchase->pcs_carton, true);
-        $purchase->measurement_size = json_decode($purchase->measurement_size, true); // <-- ADD THIS
-        $purchase->gross_total = json_decode($purchase->gross_total, true);
         $purchase->discount = json_decode($purchase->discount, true);
         $purchase->amount = json_decode($purchase->amount, true);
+        $purchase->pcs_carton = json_decode($purchase->pcs_carton, true);
 
         return view('admin_panel.purchase_return.purcahse_return', compact('purchase'));
     }
@@ -34,61 +31,64 @@ class PurchaseReturnController extends Controller
     public function store(Request $request)
     {
         $purchaseId = $request->purchase_id;
-        $invoicenumber = $request->invoice_number;
         $userId = Auth::id();
+
+        // ================= FILTER & VALIDATE ITEMS (LIKE PURCHASE) =================
+        $items = $request->item ?? [];
+        $rates = $request->rate ?? [];
+        $returnQtys = $request->return_qty ?? [];
+        $discounts = $request->discount ?? [];
+        $returnAmounts = $request->return_amount ?? [];
+
+        $rows = [];
+        $totalReturnAmount = 0;
+
+        // Filter valid rows with data
+        foreach ($items as $i => $itemName) {
+            $qty = (float)($returnQtys[$i] ?? 0);
+            $amount = (float)($returnAmounts[$i] ?? 0);
+
+            // Only process rows with valid data
+            if (trim($itemName) !== '' && $qty > 0 && $amount > 0) {
+                $rows[] = [
+                    'item' => $itemName,
+                    'rate' => $rates[$i] ?? 0,
+                    'return_qty' => $qty,
+                    'discount' => $discounts[$i] ?? 0,
+                    'return_amount' => $amount,
+                ];
+                $totalReturnAmount += $amount;
+            }
+        }
+
+        // Validate: At least one item must be returned
+        if (count($rows) === 0) {
+            return redirect()->back()->with('error', 'At least one item with return quantity is required.');
+        }
+
         // Step 1: Save the return record
         PurchaseReturn::create([
             'admin_or_user_id' => $userId,
-            'invoice_number' => $invoicenumber,
             'purchase_id' => $purchaseId,
             'party_name' => $request->party_name,
             'return_date' => $request->return_date,
-            'category' => json_encode($request->category),
-            'subcategory' => json_encode($request->subcategory),
-            'item' => json_encode($request->item),
-            'rate' => json_encode($request->rate),
-            'carton_qty' => json_encode($request->carton_qty),
-            'return_qty' => json_encode($request->return_qty),
-            'pcs_carton' => json_encode($request->pcs_carton),
-            'measurement' => json_encode($request->size),
-            'return_amount' => json_encode($request->return_amount),
-            'return_liters' => json_encode($request->return_liters),
+            'item' => json_encode(array_column($rows, 'item')),
+            'rate' => json_encode(array_column($rows, 'rate')),
+            'return_qty' => json_encode(array_column($rows, 'return_qty')),
+            'discount' => json_encode(array_column($rows, 'discount')),
+            'return_amount' => json_encode(array_column($rows, 'return_amount')),
+            'total_return_amount' => $totalReturnAmount,
+            'return_items' => implode(', ', array_column($rows, 'item')),
         ]);
 
         // Step 2: Update return status in purchase
         Purchase::where('id', $purchaseId)->update(['return_status' => 1]);
 
-        // Step 3: Adjust stock in products table
-        for ($i = 0; $i < count($request->item); $i++) {
-            $category = $request->category[$i];
-            $subcategory = $request->subcategory[$i];
-            $item_name = $request->item[$i];
+        // Step 3: No stock tracking for simplified products
+        // Stock management removed as per simplified product structure
 
-            $returnQty = (int)$request->return_qty[$i];
-            $pcsPerCarton = (int)$request->pcs_carton[$i];
-            $totalReturnedPcs = $returnQty * $pcsPerCarton;
-
-            $product = Product::where('category', $category)
-                ->where('sub_category', $subcategory)
-                ->where('item_name', $item_name)
-                ->first();
-
-            if ($product) {
-                $product->carton_quantity = max(0, $product->carton_quantity - $returnQty);
-                $product->initial_stock = max(0, $product->initial_stock - $totalReturnedPcs);
-                $product->save();
-            }
-        }
-
-        // Step 4: Calculate return amount total
-        $returnAmounts = $request->return_amount;
-        $totalReturnAmount = 0;
-
-        foreach ($returnAmounts as $amount) {
-            $totalReturnAmount += floatval($amount);
-        }
-        // Step 5: Update closing_balance of vendor
-        $vendorId = $request->party_name; // assuming this is vendor_id
+        // Step 4: Update closing_balance of vendor
+        $vendorId = $request->party_name; // vendor_id
         $vendorLedger = VendorLedger::where('vendor_id', $vendorId)->first();
 
         if ($vendorLedger) {
@@ -96,7 +96,8 @@ class PurchaseReturnController extends Controller
             $vendorLedger->save();
         }
 
-        return redirect()->back()->with('success', 'Purchase return saved, stock updated, and vendor ledger adjusted successfully.');
+        return redirect()->route('all-Purchases')->with('success', 'Purchase return processed successfully.');
+        // return redirect()->back()->with('success', 'Purchase return saved, stock updated, and vendor ledger adjusted successfully.');
     }
 
 

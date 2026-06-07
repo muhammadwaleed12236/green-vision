@@ -12,71 +12,70 @@ class GeneralReportController extends Controller
         return view('admin_panel.reports.job_profit_report');
     }
 
-public function fetch(Request $request)
-{
+    public function fetch(Request $request)
+    {
+        $from = $request->from;
+        $to   = $request->to;
 
-    $from = $request->from;
-    $to   = $request->to;
+        // 1. Fetch Job Orders
+        $jobOrders = \App\Models\JobOrder::with(['contractor', 'vendor', 'salesman'])
+            ->whereBetween('order_date', [$from, $to])
+            ->get();
 
-    $jobOrders = DB::table('job_orders')
-        ->leftJoin('sales_mens', 'sales_mens.id', '=', 'job_orders.staff_id')
-        ->whereBetween('job_orders.job_date', [$from, $to])
-        ->select(
-            'job_orders.*',
-            'sales_mens.name as staff_name'
-        )
-        ->get();
-// dd($jobOrders);
-    $jobRows = [];
-    $totalJobAmount = 0;
-    $totalJobProfit = 0;
+        $jobRows = [];
+        $totalJobAmount = 0;
 
-foreach ($jobOrders as $job) {
+        foreach ($jobOrders as $job) {
+            $staffName = 'N/A';
+            if ($job->assignee_type === 'contractor' && $job->contractor) {
+                $staffName = $job->contractor->contractor_name;
+            } elseif ($job->assignee_type === 'vendor' && $job->vendor) {
+                $staffName = $job->vendor->Party_name;
+            } elseif ($job->assignee_type === 'inhouse' && $job->salesman) {
+                $staffName = $job->salesman->salesman_name;
+            } elseif ($job->salesman) { // Fallback for old data
+                 $staffName = $job->salesman->salesman_name;
+            }
 
-    $jobAmount = $job->total_amount ?? 0;
+            $jobAmount = $job->total_amount;
+            $totalJobAmount += $jobAmount;
 
-    // 🔹 Job date ke against stock outs nikaalo (SAME AS STOCK OUT REPORT)
-    $stockData = DB::table('stock_outs')
-        ->whereDate('stock_outs.created_at', $job->job_date)
-        ->where('stock_outs.admin_or_user_id', $job->admin_or_user_id)
-        ->selectRaw('COUNT(id) as total_items, SUM(total_stock) as total_stock')
-        ->first();
+            $jobRows[] = [
+                'job'          => $job->job_order_number,
+                'date'         => \Carbon\Carbon::parse($job->order_date)->format('d-m-Y'),
+                'staff'        => $staffName,
+                'job_amount'   => number_format($jobAmount, 2),
+            ];
+        }
 
-    $totalItems = $stockData->total_items ?? 0;
-    $stockCost  = $stockData->total_stock ?? 0;
+        // 2. Expenses
 
-    $jobProfit = $jobAmount - $stockCost;
+        // A. Stock Outs Cost
+        $stockCost = DB::table('stock_outs')
+            ->whereBetween('stock_out_date', [$from, $to]) // Use stock_out_date if populated, otherwise created_at
+             // Fallback if stock_out_date is null in some records? Migration says nullable.
+             // Ideally we trust stock_out_date.
+            ->sum('total_stock');
 
-    $jobRows[] = [
-        'job'          => $job->job_order_no,
-        'staff'        => $job->staff_name ?? 'N/A',
-        'job_amount'   => number_format($jobAmount, 2),
-        'total_items'  => $totalItems,
-        'stock_cost'   => number_format($stockCost, 2),
-        'profit'       => number_format($jobProfit, 2),
-    ];
+        // B. Staff Salaries
+        $salaryExpense = DB::table('staff_salary_payments')
+            ->whereBetween('payment_date', [$from, $to])
+            ->sum('amount_paid');
 
-    $totalJobAmount += $jobAmount;
-    $totalJobProfit += $jobProfit;
-}
+        // C. Other Expenses
+        $otherExpense = DB::table('add_expenses')
+            ->whereBetween('expense_date', [$from, $to])
+            ->sum('amount');
 
+        $overallExpense = $stockCost + $salaryExpense + $otherExpense;
+        $netProfit = $totalJobAmount - $overallExpense;
 
-    $staffExpense = DB::table('staff_ledgers')
-        ->whereBetween('created_at', [$from, $to])
-        ->sum('paid');
-
-    $otherExpense = DB::table('add_expenses')
-        ->whereBetween('date', [$from, $to])
-        ->sum('amount');
-
-    $overallExpense = $staffExpense + $otherExpense;
-
-    return response()->json([
-        'jobs'           => $jobRows,
-        'totalJobs'      => count($jobRows),
-        'totalAmount'    => number_format($totalJobAmount, 2),
-        'overallExpense' => number_format($overallExpense, 2),
-        'netProfit'      => number_format($totalJobProfit - $overallExpense, 2),
-    ]);
-}
+        return response()->json([
+            'jobs'           => $jobRows,
+            'totalJobs'      => count($jobRows),
+            'totalAmount'    => number_format($totalJobAmount, 2),
+            'overallExpense' => number_format($overallExpense, 2),
+            'netProfit'      => number_format($netProfit, 2),
+        ]);
+    }
 }

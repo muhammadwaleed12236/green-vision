@@ -35,8 +35,7 @@
                                     <th>#</th>
                                     <th>Code</th>
                                     <th>Name</th>
-                                    <th>City</th>
-                                    <th>Area</th>
+
                                     @if(Auth::user()->usertype === 'admin')
                                         <th>Address</th>
                                         <th>Phone</th>
@@ -50,8 +49,7 @@
                                         <td>{{ $key + 1 }}</td>
                                         <td>{{ $Vendor->Party_code }}</td>
                                         <td>{{ $Vendor->Party_name }}</td>
-                                        <td>{{ $Vendor->City }}</td>
-                                        <td>{{ $Vendor->Area }}</td>
+
                                         @if(Auth::user()->usertype === 'admin')
                                             <td>{{ $Vendor->Party_address }}</td>
                                             <td>{{ $Vendor->Party_phone }}</td>
@@ -95,42 +93,27 @@
                 @csrf
                 <div class="modal-body">
                     <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Party Code</label>
-                            <input type="text" class="form-control" name="Party_code" required>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Party Name</label>
+                         <div class="col-md-6 mb-3">
+                            <label class="form-label">Vendor Name</label>
                             <input type="text" class="form-control" name="Party_name" required>
                         </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Vendor Code</label>
+                            <input type="text" class="form-control" name="Party_code" required>
+                        </div>
+
                     </div>
+
                     <div class="row">
-                        <div class="col-md-4 mb-3">
-                            <label class="form-label">City</label>
-                            <select class="form-control" name="city" id="citySelect" required>
-                                <option value="" disabled selected>Select City</option>
-                                @foreach($cities as $city)
-                                    <option value="{{ $city->city_name }}">{{ $city->city_name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label class="form-label">Area</label>
-                            <select class="form-control" name="area" id="areaSelect" required>
-                                <option value="">Select Area</option>
-                            </select>
-                        </div>
-                        <div class="col-md-4 mb-3">
+                         <div class="col-md-4 mb-3">
                             <label class="form-label">Opening Balance</label>
                             <input type="number" class="form-control" name="opening_balance" required>
                         </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
+                        <div class="col-md-4 mb-3">
                             <label class="form-label">Address</label>
                             <input type="text" name="Party_address" class="form-control">
                         </div>
-                        <div class="col-md-6 mb-3">
+                        <div class="col-md-4 mb-3">
                             <label class="form-label">Phone</label>
                             <input type="text" class="form-control" name="Party_phone" required>
                         </div>
@@ -167,23 +150,7 @@
                             <input type="text" class="form-control" name="Party_name" id="edit_Party_name" required>
                         </div>
                     </div>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">City</label>
-                            <select class="form-control" name="city" id="edit_city" required>
-                                <option value="" disabled selected>Select City</option>
-                                @foreach($cities as $city)
-                                    <option value="{{ $city->city_name }}">{{ $city->city_name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Area</label>
-                            <select class="form-control" name="area" id="edit_area" required>
-                                <option value="">Select Area</option>
-                            </select>
-                        </div>
-                    </div>
+
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Address</label>

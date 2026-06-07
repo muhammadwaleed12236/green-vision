@@ -13,9 +13,14 @@ return new class extends Migration
     {
         Schema::create('expenses', function (Blueprint $table) {
             $table->id();
+            $table->string('expense_name');
+            $table->text('description')->nullable();
+            $table->decimal('amount', 15, 2)->default(0);
+            $table->date('expense_date')->nullable();
+            $table->string('category')->nullable();
+            $table->foreignId('admin_or_user_id')->constrained('users')->onDelete('cascade');
             $table->timestamps();
             $table->softDeletes();
-
         });
     }
 
