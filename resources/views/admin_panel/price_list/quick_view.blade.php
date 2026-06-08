@@ -158,8 +158,7 @@
 <div class="rate-container">
     {{-- Company Header --}}
     <div class="company-header">
-        <h1><i class="fa fa-gem me-2"></i>Green Vision</h1>
-        <p>Glass & Aluminum Works</p>
+        <img src="{{ asset('assets/img/logo.png') }}" alt="Green Vision Logo" style="height: 60px; margin-bottom: 10px;">
         <p><i class="fa fa-map-marker-alt me-1"></i> Shop # 37/8 saddar cant, Hyderabad</p>
         <p><i class="fa fa-phone me-1"></i> 0300-2529972 | 0334-2611233</p>
     </div>

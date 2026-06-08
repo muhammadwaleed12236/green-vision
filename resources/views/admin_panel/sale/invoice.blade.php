@@ -14,7 +14,6 @@
                             <img src="{{ asset('assets/img/logo.png') }}" alt="Green Vision Logo" style="max-width: 180px;">
                         </div>
                         <div class="col-md-4 text-center">
-                            <h5 class="font-weight-bold">Green Vision</h5>
                             <p class="mb-1" style="line-height: 1;">6-B Block-E, Latifabad No. 08, Hyderabad</p>
                             <p class="mb-0" style="line-height: 1;">Phone: 0300 2529972 / 0334-2611233</p>
                         </div>

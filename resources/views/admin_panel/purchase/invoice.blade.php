@@ -16,7 +16,6 @@
         <img src="{{ asset('assets/img/logo.png') }}" alt="Green Vision Logo" style="max-width: 180px;">
     </div>
     <div class="col-md-4 text-center">
-        <h6 class="fw-bold mb-0">Green Vision</h6>
         <small>New Faran Hotel،, Sydena Tahir Saifuddin Road, Saddar, Hyderabad, 71110</small><br>
         <small>0300 2529972</small>
     </div>

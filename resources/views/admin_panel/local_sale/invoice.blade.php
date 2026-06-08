@@ -266,8 +266,7 @@
 <div class="invoice-container">
     <div class="invoice-header">
         <div class="company-logo">
-            <h1>Green Vision</h1>
-            <p>Glass & Building Materials</p>
+            <img src="{{ asset('assets/img/logo.png') }}" alt="Green Vision Logo" style="max-width: 180px; margin-bottom: 5px;">
             <p>+92 311 7223 451 | +92 311 7223 442</p>
         </div>
         <div class="invoice-title">
