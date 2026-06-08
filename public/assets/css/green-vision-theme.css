@@ -4,6 +4,12 @@
    ============================================ */
 
 /* ========== CORE COLOR VARIABLES ========== */
+@import url('https://fonts.googleapis.com/css2?family=Fira+Sans:wght@300;400;500;600;700&display=swap');
+
+#invoice, #receiptSection, #receiptCard, .invoice-container, .voucher-container, .rate-container {
+    font-family: 'Fira Sans', sans-serif !important;
+}
+
 :root {
     --gv-green: #1c9262;
     --gv-green-hover: #157a52;

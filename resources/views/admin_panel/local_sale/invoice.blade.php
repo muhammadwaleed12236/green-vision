@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Invoice #{{ $sale->invoice_number }}</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fira+Sans:wght@300;400;500;600;700&display=swap');
         * {
             margin: 0;
             padding: 0;
@@ -12,7 +13,7 @@
         }
 
         body {
-            font-family: Arial, Helvetica, sans-serif;
+            font-family: 'Fira Sans', sans-serif;
             background-color: #fff;
             padding: 20px;
         }

@@ -1,6 +1,8 @@
 @include('admin_panel.include.header_include')
 
 <style>
+    @import url('https://fonts.googleapis.com/css2?family=Fira+Sans:wght@300;400;500;600;700&display=swap');
+
     * {
         margin: 0;
         padding: 0;
@@ -8,7 +10,7 @@
     }
 
     body {
-        font-family: Arial, Helvetica, sans-serif;
+        font-family: 'Fira Sans', sans-serif;
         background-color: #f5f5f5;
     }
 

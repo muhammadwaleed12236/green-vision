@@ -15,19 +15,41 @@ class CashBookController extends Controller
         }
 
         $user = Auth::user();
+        $filter = $request->filter ?? 'daily';
         $selectedDate = $request->date ?? date('Y-m-d');
         
-        // Get entries for selected date
-        $entries = CashBook::where('admin_or_user_id', $user->id)
-                          ->whereNull('deleted_at')
-                          ->whereDate('date', $selectedDate)
-                          ->orderBy('id', 'asc')
-                          ->get();
+        $query = CashBook::where('admin_or_user_id', $user->id)
+                          ->whereNull('deleted_at');
 
-        // Opening balance is always 0 for each new day
+        $titleDate = '';
+
+        if ($filter == 'weekly') {
+            $startOfWeek = \Carbon\Carbon::now()->startOfWeek()->format('Y-m-d');
+            $endOfWeek = \Carbon\Carbon::now()->endOfWeek()->format('Y-m-d');
+            $query->whereBetween('date', [$startOfWeek, $endOfWeek]);
+            $titleDate = "This Week (" . \Carbon\Carbon::parse($startOfWeek)->format('d M') . " - " . \Carbon\Carbon::parse($endOfWeek)->format('d M Y') . ")";
+        } elseif ($filter == 'monthly') {
+            $startOfMonth = \Carbon\Carbon::now()->startOfMonth()->format('Y-m-d');
+            $endOfMonth = \Carbon\Carbon::now()->endOfMonth()->format('Y-m-d');
+            $query->whereBetween('date', [$startOfMonth, $endOfMonth]);
+            $titleDate = "This Month (" . \Carbon\Carbon::now()->format('F Y') . ")";
+        } elseif ($filter == 'yearly') {
+            $startOfYear = \Carbon\Carbon::now()->startOfYear()->format('Y-m-d');
+            $endOfYear = \Carbon\Carbon::now()->endOfYear()->format('Y-m-d');
+            $query->whereBetween('date', [$startOfYear, $endOfYear]);
+            $titleDate = "This Year (" . \Carbon\Carbon::now()->format('Y') . ")";
+        } else {
+            // daily
+            $query->whereDate('date', $selectedDate);
+            $titleDate = \Carbon\Carbon::parse($selectedDate)->format('d M Y, l');
+        }
+
+        $entries = $query->orderBy('date', 'asc')->orderBy('id', 'asc')->get();
+
+        // Opening balance is always 0 for each new day/period
         $openingBalance = 0;
         
-        // Calculate running balance for the day starting from 0
+        // Calculate running balance for the period starting from 0
         $runningBalance = 0;
         foreach ($entries as $entry) {
             $runningBalance += ($entry->debit - $entry->credit);
@@ -36,7 +58,7 @@ class CashBookController extends Controller
         
         $closingBalance = $runningBalance;
 
-        return view('admin_panel.cashbook.index', compact('entries', 'selectedDate', 'openingBalance', 'closingBalance'));
+        return view('admin_panel.cashbook.index', compact('entries', 'selectedDate', 'openingBalance', 'closingBalance', 'filter', 'titleDate'));
     }
 
     public function history()

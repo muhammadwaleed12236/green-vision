@@ -10,15 +10,23 @@
             {{-- PAGE HEADER --}}
             <div class="page-header">
                 <div class="page-title">
-                    <h4>Cash Book / Ledger - Daily</h4>
-                    <h6>Each day starts from 0 balance</h6>
+                    <h4>Cash Book / Ledger</h4>
+                    <h6>Starts from 0 balance for the selected period</h6>
                 </div>
                 <div class="page-btn d-flex gap-2 align-items-center">
                     <a href="{{ route('cash-book.history') }}" class="btn btn-info">
                         <i class="fa fa-history"></i> View History
                     </a>
-                    <form method="GET" action="{{ route('cash-book') }}" class="d-flex gap-2">
+                    <form method="GET" action="{{ route('cash-book') }}" class="d-flex gap-2" id="filterForm">
+                        <select name="filter" class="form-select" onchange="document.getElementById('filterForm').submit()">
+                            <option value="daily" {{ (isset($filter) && $filter == 'daily') ? 'selected' : '' }}>Daily</option>
+                            <option value="weekly" {{ (isset($filter) && $filter == 'weekly') ? 'selected' : '' }}>This Week</option>
+                            <option value="monthly" {{ (isset($filter) && $filter == 'monthly') ? 'selected' : '' }}>This Month</option>
+                            <option value="yearly" {{ (isset($filter) && $filter == 'yearly') ? 'selected' : '' }}>This Year</option>
+                        </select>
+                        @if(!isset($filter) || $filter == 'daily')
                         <input type="date" name="date" class="form-control" value="{{ $selectedDate }}" onchange="this.form.submit()">
+                        @endif
                     </form>
                     <button class="btn btn-added" data-bs-toggle="modal" data-bs-target="#addEntryModal">
                         + Add Entry
@@ -36,7 +44,7 @@
                     @endif
 
                     <div class="mb-3 d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">Date: {{ \Carbon\Carbon::parse($selectedDate)->format('d M Y, l') }}</h5>
+                        <h5 class="mb-0">Period: {{ $titleDate ?? \Carbon\Carbon::parse($selectedDate)->format('d M Y, l') }}</h5>
                         <div class="badge bg-success fs-6">Opening Balance: 0.00</div>
                     </div>
 
@@ -45,17 +53,19 @@
                             <thead class="table-light">
                                 <tr>
                                     <th width="5%">#</th>
+                                    <th width="12%">Date</th>
                                     <th width="20%">Description</th>
                                     <th width="15%">Debit (IN)</th>
                                     <th width="15%">Credit (OUT)</th>
                                     <th width="15%">Balance</th>
-                                    <th width="10%">Action</th>
+                                    <th width="8%">Action</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @forelse($entries as $k => $entry)
                                     <tr>
                                         <td>{{ $k + 1 }}</td>
+                                        <td>{{ \Carbon\Carbon::parse($entry->date)->format('d M Y') }}</td>
                                         <td>{{ $entry->description }}</td>
                                         <td class="text-success fw-bold">
                                             {{ $entry->debit > 0 ? number_format($entry->debit, 2) : '—' }}
@@ -85,19 +95,19 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="6" class="text-center text-muted">No entries for this date</td>
+                                        <td colspan="7" class="text-center text-muted">No entries for this period</td>
                                     </tr>
                                 @endforelse
                             </tbody>
                             <tfoot>
                                 <tr class="table-secondary fw-bold">
-                                    <th colspan="2" class="text-end">Total for Day:</th>
+                                    <th colspan="3" class="text-end">Total for Period:</th>
                                     <th class="text-success">{{ number_format($entries->sum('debit'), 2) }}</th>
                                     <th class="text-danger">{{ number_format($entries->sum('credit'), 2) }}</th>
                                     <th colspan="2"></th>
                                 </tr>
                                 <tr class="table-success fw-bold fs-5">
-                                    <th colspan="4" class="text-end">Closing Balance:</th>
+                                    <th colspan="5" class="text-end">Closing Balance:</th>
                                     <th class="{{ $closingBalance >= 0 ? 'text-success' : 'text-danger' }}">
                                         {{ number_format($closingBalance, 2) }}
                                     </th>

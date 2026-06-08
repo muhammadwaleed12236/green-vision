@@ -5,8 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ $voucher->voucher_no }} - {{ ucfirst($voucher->voucher_type) }} Voucher</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fira+Sans:wght@300;400;500;600;700&display=swap');
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f5f5; padding: 20px; }
+        body { font-family: 'Fira Sans', sans-serif; background: #f5f5f5; padding: 20px; }
         .voucher-container {
             max-width: 800px;
             margin: 0 auto;
@@ -210,11 +211,11 @@
                 <div class="signature-box">
                     <div class="signature-line">Prepared By</div>
                 </div>
-                <div class="signature-box">
+                <!-- <div class="signature-box">
                     <div class="signature-line">Checked By</div>
-                </div>
+                </div> -->
                 <div class="signature-box">
-                    <div class="signature-line">Approved By</div>
+                    <div class="signature-line">Recieved By</div>
                 </div>
             </div>
         </div>
