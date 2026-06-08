@@ -153,8 +153,7 @@
 
         <div class="company-info">
             <div>
-                <div class="company-name">Green Vision</div>
-                <small>Glass & Aluminum Works</small>
+                <img src="{{ asset('assets/img/logo.png') }}" alt="Green Vision Logo" style="height: 50px; max-width: 250px; object-fit: contain;">
             </div>
             <div class="voucher-date">
                 <label>Date</label>

@@ -21,7 +21,7 @@
 		<!-- Delivery Notifications -->
 		<li class="nav-item dropdown">
 			<a href="javascript:void(0);" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">
-				<i class="fa fa-bell" style="font-size: 24px; color: #ff9f43;"></i>
+				<i class="fa fa-bell" style="font-size: 24px; color: #1c9262;"></i>
 				@php
 					$upcomingDeliveries = \App\Models\LocalSale::whereNotNull('delivery_date')
 						->whereNotIn('job_status', ['completed', 'ready'])

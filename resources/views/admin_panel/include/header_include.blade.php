@@ -26,6 +26,9 @@
     <!-- Custom Style -->
     <link rel="stylesheet" href="{{ url('assets/css/style.css') }}">
 
+    <!-- Green Vision Theme Override (60/30/10) -->
+    <link rel="stylesheet" href="{{ url('assets/css/green-vision-theme.css') }}">
+
 
 </head>
 

@@ -35,7 +35,8 @@
             position: relative;
             max-width: 430px;
             width: 100%;
-            background: #ffffff47;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
             padding: 60px 34px;
             border-radius: 6px;
             box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
@@ -45,7 +46,7 @@
             position: relative;
             font-size: 22px;
             font-weight: 600;
-            color: #f1f6f8;
+            color: #1a1a2e;
         }
 
         .wrapper h2::before {
@@ -56,7 +57,7 @@
             height: 3px;
             width: 48px;
             border-radius: 12px;
-            background: #0089fd;
+            background: #1c9262;
         }
 
         .wrapper form {
@@ -99,7 +100,7 @@
 
         .input-box input:focus,
         .input-box input:valid {
-            border-color: #0089fd;
+            border-color: #1c9262;
         }
 
         form .policy {
@@ -118,12 +119,12 @@
             color: #fff;
             letter-spacing: 1px;
             border: none;
-            background: #0089fd;
+            background: #1c9262;
             cursor: pointer;
         }
 
         .input-box.button input:hover {
-            background: #0089fd;
+            background: #157a52;
         }
 
         form .text h3 {
@@ -133,7 +134,7 @@
         }
 
         form .text h3 a {
-            color: #4070f4;
+            color: #1c9262;
             text-decoration: none;
         }
 

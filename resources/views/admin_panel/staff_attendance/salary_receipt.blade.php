@@ -29,7 +29,7 @@
             {{-- Receipt Card --}}
             <div class="card p-4" id="receiptCard" style="max-width: 600px; margin: auto;">
                 <div class="text-center mb-4" style="border-bottom: 2px solid #000; padding-bottom: 15px;">
-                    <h4 class="mb-1">Green Vision</h4>
+                    <img src="{{ asset('assets/img/logo.png') }}" alt="Green Vision Logo" style="max-width: 200px; margin-bottom: 10px;">
                     <p class="mb-1">Glass & Aluminum Works</p>
                     <small>Shop # 37/8 saddar cant, Hyderabad</small><br>
                     <small>0300 2529972 | 0334-2611233</small>

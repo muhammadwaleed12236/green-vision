@@ -2,18 +2,18 @@
 
 <style>
     :root {
-        --primary-gradient: linear-gradient(135deg, #6366f1 0%, #4338ca 100%);
-        --secondary-gradient: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        --primary-gradient: linear-gradient(135deg, #1c9262 0%, #157a52 100%);
+        --secondary-gradient: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
         --warning-gradient: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
         --danger-gradient: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-        --info-gradient: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
-        --purple-gradient: linear-gradient(135deg, #a855f7 0%, #9333ea 100%);
+        --info-gradient: linear-gradient(135deg, #22a06b 0%, #1c9262 100%);
+        --purple-gradient: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
         --glass-bg: rgba(255, 255, 255, 0.95);
         --glass-border: rgba(255, 255, 255, 0.2);
     }
 
     .page-wrapper {
-        background-color: #f8fafc;
+        background-color: #ffffff;
     }
 
     .dash-widget {
@@ -88,7 +88,7 @@
 
     .card-title {
         font-weight: 700;
-        color: #1e293b;
+        color: #1a1a2e;
         font-size: 1.125rem !important;
     }
 
@@ -122,7 +122,7 @@
 
     .welcome-header h3 {
         font-weight: 800;
-        color: #0f172a;
+        color: #1a1a2e;
         margin-bottom: 8px;
     }
 
@@ -490,11 +490,11 @@ new Chart(salesPurchaseCtx, {
         datasets: [{
             label: 'Sales',
             data: salesData,
-            borderColor: '#6366f1',
-            backgroundColor: 'rgba(99, 102, 241, 0.1)',
+            borderColor: '#1c9262',
+            backgroundColor: 'rgba(28, 146, 98, 0.1)',
             tension: 0.4,
             fill: true,
-            pointBackgroundColor: '#6366f1',
+            pointBackgroundColor: '#1c9262',
             pointBorderColor: '#fff',
             pointHoverRadius: 6
         }, {
@@ -641,8 +641,8 @@ new Chart(topProductsCtx, {
         datasets: [{
             label: 'Revenue',
             data: topProducts.map(item => item.total_revenue),
-            backgroundColor: 'rgba(99, 102, 241, 0.8)',
-            borderColor: '#6366f1',
+            backgroundColor: 'rgba(28, 146, 98, 0.8)',
+            borderColor: '#1c9262',
             borderRadius: 8,
             borderWidth: 0
         }]
