@@ -9,11 +9,9 @@
             {{-- Top Receipt Header with Logo and Company Info --}}
             <div class="row mb-4 align-items-center pt-2 pb-2 border-bottom border-3 border-dark">
                 <div class="col-md-4 d-flex align-items-center">
-                    <img src="{{ url('small-logo.png') }}" alt="Logo" style="max-width: 120px;">
-                    <h4 class="fw-bold ms-3" style="font-size: 16px;">Green Vision</h4>
+                    <img src="{{ asset('assets/img/logo.png') }}" alt="Green Vision Logo" style="max-width: 180px;">
                 </div>
                 <div class="col-md-4 text-center">
-                    <h5 class="fw-bold mb-1">Green Vision</h5>
                     <p class="mb-0">6-B Block-E, Latifabad No. 08, Hyderabad</p>
                     <p class="mb-0">Phone: 0300 2529972 / 0334-2611233</p>
                 </div>

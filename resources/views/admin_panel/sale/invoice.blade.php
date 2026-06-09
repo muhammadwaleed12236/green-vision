@@ -11,11 +11,9 @@ i@include('admin_panel.include.header_include')
                     <!-- Header Section -->
                     <div class="row mb-2 align-items-center pt-2 pb-2" style="border-bottom: 3px solid #000;">
                         <div class="col-md-4 d-flex align-items-center">
-                            <img src="{{ url('small-logo.png') }}" alt="Logo" style="max-width: 120px;">
-                            <h4 class="fw-bold ms-3" style="font-size: 16px;">Green Vision</h4>
+                            <img src="{{ asset('assets/img/logo.png') }}" alt="Green Vision Logo" style="max-width: 180px;">
                         </div>
                         <div class="col-md-4 text-center">
-                            <h5 class="font-weight-bold">Green Vision</h5>
                             <p class="mb-1" style="line-height: 1;">6-B Block-E, Latifabad No. 08, Hyderabad</p>
                             <p class="mb-0" style="line-height: 1;">Phone: 0300 2529972 / 0334-2611233</p>
                         </div>

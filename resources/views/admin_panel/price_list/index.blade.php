@@ -152,8 +152,9 @@
                     <thead>
                         <tr>
                             <th width="5%">#</th>
-                            <th width="50%">Product Name</th>
-                            <th width="25%">Price</th>
+                            <th width="40%">Item Name</th>
+                            <th width="15%">Unit</th>
+                            <th width="20%">Price/ Unit</th>
                             <th width="20%" class="text-center">Action</th>
                         </tr>
                     </thead>
@@ -168,11 +169,9 @@
                                     <br><small class="text-muted">{{ $item->description }}</small>
                                 @endif
                             </td>
+                            <td>{{ $item->unit ? ucfirst($item->unit) : '-' }}</td>
                             <td>
-                                <span class="price-tag">Rs. {{ number_format($item->rate, 0) }}</span>
-                                @if($item->unit)
-                                    <small class="text-muted ms-2">/ {{ $item->unit }}</small>
-                                @endif
+                                <span class="price-tag">Rs {{ number_format($item->rate, 0) }}</span>
                             </td>
                             <td class="text-center">
                                 <button class="action-btn edit" onclick="editItem({{ $item->id }})" title="Edit">

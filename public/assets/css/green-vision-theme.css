@@ -1,0 +1,581 @@
+/* ============================================
+   Green Vision – 60/30/10 Theme Override
+   60% White (#fff) · 30% Dark (#1a1a2e) · 10% Green (#1c9262)
+   ============================================ */
+
+/* ========== CORE COLOR VARIABLES ========== */
+@import url('https://fonts.googleapis.com/css2?family=Fira+Sans:wght@300;400;500;600;700&display=swap');
+
+#invoice, #receiptSection, #receiptCard, .invoice-container, .voucher-container, .rate-container {
+    font-family: 'Fira Sans', sans-serif !important;
+}
+
+:root {
+    --gv-green: #1c9262;
+    --gv-green-hover: #157a52;
+    --gv-green-active: #0f5e3e;
+    --gv-green-light: #e8f5ef;
+    --gv-green-rgb: 28, 146, 98;
+    --gv-dark: #1a1a2e;
+    --gv-dark-light: #16213e;
+    --gv-dark-lighter: #2a2a4e;
+    --gv-white: #ffffff;
+    --gv-off-white: #f8faf9;
+}
+
+/* ========== SIDEBAR ========== */
+.sidebar {
+    background: var(--gv-dark) !important;
+}
+
+.sidebar-inner {
+    background: var(--gv-dark) !important;
+}
+
+.sidebar .sidebar-inner .slimScrollDiv {
+    background: var(--gv-dark) !important;
+}
+
+.sidebar-menu ul li a {
+    color: #c8d0da !important;
+    transition: all 0.25s ease;
+}
+
+.sidebar-menu ul li a:hover {
+    color: #ffffff !important;
+    background: rgba(var(--gv-green-rgb), 0.15) !important;
+}
+
+.sidebar-menu ul li.active > a,
+.sidebar-menu ul li a.active {
+    color: #ffffff !important;
+    background: rgba(var(--gv-green-rgb), 0.2) !important;
+    border-left: 3px solid var(--gv-green);
+}
+
+.sidebar-menu ul li.active > a i,
+.sidebar-menu ul li a.active i {
+    color: var(--gv-green) !important;
+}
+
+.sidebar-menu ul li a i {
+    color: #8a95a5 !important;
+    transition: color 0.25s ease;
+}
+
+.sidebar-menu ul li a:hover i {
+    color: var(--gv-green) !important;
+}
+
+/* Submenu */
+.sidebar-menu ul li.submenu ul {
+    background: var(--gv-dark-light) !important;
+}
+
+.sidebar-menu ul li.submenu ul li a {
+    color: #a0aab5 !important;
+}
+
+.sidebar-menu ul li.submenu ul li a:hover {
+    color: var(--gv-green) !important;
+    background: rgba(var(--gv-green-rgb), 0.08) !important;
+}
+
+.sidebar-menu ul li.submenu ul li a.active {
+    color: var(--gv-green) !important;
+}
+
+.sidebar-menu .menu-arrow::before {
+    border-color: #8a95a5 !important;
+}
+
+/* ========== HEADER / NAVBAR ========== */
+.header {
+    background: var(--gv-white) !important;
+    border-bottom: 1px solid #e8ecf0 !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+}
+
+.header-left {
+    background: var(--gv-dark) !important;
+    border-bottom: 1px solid var(--gv-dark-lighter) !important;
+}
+
+.header-left a,
+.header-left h6 {
+    color: #ffffff !important;
+}
+
+.header-left .logo-small img {
+    filter: brightness(1.1);
+}
+
+/* ========== PAGE BACKGROUND ========== */
+.page-wrapper {
+    background-color: var(--gv-white) !important;
+}
+
+.content {
+    background-color: var(--gv-off-white);
+}
+
+/* ========== BOOTSTRAP btn-primary OVERRIDE ========== */
+.btn-primary,
+.btn-primary:visited {
+    background-color: var(--gv-green) !important;
+    border-color: var(--gv-green) !important;
+    color: #fff !important;
+}
+
+.btn-primary:hover,
+.btn-primary:focus {
+    background-color: var(--gv-green-hover) !important;
+    border-color: var(--gv-green-hover) !important;
+    box-shadow: 0 4px 12px rgba(var(--gv-green-rgb), 0.35) !important;
+    color: #fff !important;
+}
+
+.btn-primary:active,
+.btn-primary.active,
+.show > .btn-primary.dropdown-toggle {
+    background-color: var(--gv-green-active) !important;
+    border-color: var(--gv-green-active) !important;
+    color: #fff !important;
+}
+
+.btn-primary:disabled,
+.btn-primary.disabled {
+    background-color: var(--gv-green) !important;
+    border-color: var(--gv-green) !important;
+    opacity: 0.65;
+}
+
+/* ========== BOOTSTRAP btn-info OVERRIDE ========== */
+.btn-info,
+.btn-info:visited {
+    background-color: var(--gv-dark) !important;
+    border-color: var(--gv-dark) !important;
+    color: #fff !important;
+}
+
+.btn-info:hover,
+.btn-info:focus {
+    background-color: var(--gv-dark-light) !important;
+    border-color: var(--gv-dark-light) !important;
+    box-shadow: 0 4px 12px rgba(26, 26, 46, 0.3) !important;
+    color: #fff !important;
+}
+
+.btn-info:active,
+.btn-info.active {
+    background-color: #0f0f23 !important;
+    border-color: #0f0f23 !important;
+    color: #fff !important;
+}
+
+/* ========== BOOTSTRAP btn-success OVERRIDE ========== */
+.btn-success,
+.btn-success:visited {
+    background-color: var(--gv-green) !important;
+    border-color: var(--gv-green) !important;
+    color: #fff !important;
+}
+
+.btn-success:hover,
+.btn-success:focus {
+    background-color: var(--gv-green-hover) !important;
+    border-color: var(--gv-green-hover) !important;
+}
+
+/* ========== OUTLINE VARIANTS ========== */
+.btn-outline-primary {
+    color: var(--gv-green) !important;
+    border-color: var(--gv-green) !important;
+}
+
+.btn-outline-primary:hover,
+.btn-outline-primary:focus {
+    background-color: var(--gv-green) !important;
+    border-color: var(--gv-green) !important;
+    color: #ffffff !important;
+}
+
+.btn-outline-info {
+    color: var(--gv-dark) !important;
+    border-color: var(--gv-dark) !important;
+}
+
+.btn-outline-info:hover {
+    background-color: var(--gv-dark) !important;
+    color: #ffffff !important;
+}
+
+.btn-outline-success {
+    color: var(--gv-green) !important;
+    border-color: var(--gv-green) !important;
+}
+
+.btn-outline-success:hover {
+    background-color: var(--gv-green) !important;
+    color: #ffffff !important;
+}
+
+/* ========== BOOTSTRAP bg-* BACKGROUND OVERRIDES ========== */
+.bg-primary {
+    background-color: var(--gv-green) !important;
+}
+
+.bg-info {
+    background-color: var(--gv-dark) !important;
+}
+
+.bg-success {
+    background-color: var(--gv-green) !important;
+}
+
+/* Gradient variants */
+.bg-primary.bg-gradient {
+    background: linear-gradient(135deg, var(--gv-green) 0%, var(--gv-green-hover) 100%) !important;
+}
+
+.bg-info.bg-gradient {
+    background: linear-gradient(135deg, var(--gv-dark) 0%, var(--gv-dark-light) 100%) !important;
+}
+
+/* ========== BOOTSTRAP TEXT COLOR OVERRIDES ========== */
+.text-primary {
+    color: var(--gv-green) !important;
+}
+
+.text-info {
+    color: var(--gv-dark) !important;
+}
+
+.text-success {
+    color: var(--gv-green) !important;
+}
+
+/* ========== BOOTSTRAP BORDER OVERRIDES ========== */
+.border-primary {
+    border-color: var(--gv-green) !important;
+}
+
+.border-info {
+    border-color: var(--gv-dark) !important;
+}
+
+.border-success {
+    border-color: var(--gv-green) !important;
+}
+
+/* ========== BADGES ========== */
+.badge.bg-primary {
+    background-color: var(--gv-green) !important;
+    color: #fff !important;
+}
+
+.badge.bg-info {
+    background-color: var(--gv-dark) !important;
+    color: #fff !important;
+}
+
+.badge.bg-success {
+    background-color: var(--gv-green) !important;
+    color: #fff !important;
+}
+
+.bg-lightgreen,
+.badge-success {
+    background: rgba(var(--gv-green-rgb), 0.15) !important;
+    color: var(--gv-green) !important;
+}
+
+/* ========== MODAL HEADERS ========== */
+.modal-header.bg-primary {
+    background-color: var(--gv-green) !important;
+    border-bottom-color: var(--gv-green-hover) !important;
+}
+
+.modal-header.bg-info {
+    background-color: var(--gv-dark) !important;
+    border-bottom-color: var(--gv-dark-light) !important;
+}
+
+/* ========== LINKS ========== */
+a {
+    color: var(--gv-green);
+}
+
+a:hover {
+    color: var(--gv-green-hover);
+}
+
+.text-primary a,
+a.text-primary {
+    color: var(--gv-green) !important;
+}
+
+a.text-primary:hover {
+    color: var(--gv-green-hover) !important;
+}
+
+/* ========== CARDS ========== */
+.card {
+    border: none !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05) !important;
+    border-radius: 12px !important;
+}
+
+.card-header {
+    background: #ffffff !important;
+    border-bottom: 1px solid #f0f2f5 !important;
+}
+
+.card-header.bg-primary {
+    background: var(--gv-green) !important;
+    border-bottom: 1px solid var(--gv-green-hover) !important;
+    color: #fff !important;
+}
+
+.card-header.bg-info {
+    background: var(--gv-dark) !important;
+    border-bottom: 1px solid var(--gv-dark-light) !important;
+    color: #fff !important;
+}
+
+.card.bg-primary,
+.card.bg-info {
+    border-radius: 12px !important;
+}
+
+.card.bg-primary .card-body,
+.card.bg-info .card-body {
+    color: #fff;
+}
+
+/* ========== TABLES ========== */
+.table thead th {
+    background-color: var(--gv-off-white) !important;
+    color: #3d4f5f !important;
+    border-bottom-color: #e2e8f0 !important;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    letter-spacing: 0.03em;
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(var(--gv-green-rgb), 0.04) !important;
+}
+
+.table tbody td {
+    vertical-align: middle;
+}
+
+/* ========== FORM CONTROLS ========== */
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--gv-green) !important;
+    box-shadow: 0 0 0 0.2rem rgba(var(--gv-green-rgb), 0.2) !important;
+}
+
+input[type="checkbox"]:checked,
+input[type="radio"]:checked {
+    background-color: var(--gv-green);
+    border-color: var(--gv-green);
+}
+
+/* ========== PAGINATION ========== */
+.page-item.active .page-link {
+    background-color: var(--gv-green) !important;
+    border-color: var(--gv-green) !important;
+    color: #fff !important;
+}
+
+.page-link {
+    color: var(--gv-green) !important;
+}
+
+.page-link:hover {
+    color: var(--gv-green-hover) !important;
+    background-color: var(--gv-green-light) !important;
+}
+
+/* ========== SELECT2 ========== */
+.select2-container--default .select2-results__option--highlighted[aria-selected] {
+    background-color: var(--gv-green) !important;
+}
+
+.select2-container--default .select2-selection--single:focus,
+.select2-container--default.select2-container--focus .select2-selection--single,
+.select2-container--default .select2-selection--single:active {
+    border-color: var(--gv-green) !important;
+}
+
+/* ========== DATATABLES ========== */
+.dataTables_wrapper .dataTables_paginate .paginate_button.current,
+.dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
+    background: var(--gv-green) !important;
+    border-color: var(--gv-green) !important;
+    color: #fff !important;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+    background: var(--gv-green-hover) !important;
+    border-color: var(--gv-green-hover) !important;
+    color: #fff !important;
+}
+
+/* ========== DROPDOWNS ========== */
+.dropdown-item:hover,
+.dropdown-item:focus {
+    background-color: rgba(var(--gv-green-rgb), 0.08) !important;
+    color: var(--gv-green) !important;
+}
+
+.dropdown-item.active,
+.dropdown-item:active {
+    background-color: var(--gv-green) !important;
+    color: #fff !important;
+}
+
+.dropdown-header.bg-primary {
+    background-color: var(--gv-green) !important;
+}
+
+/* ========== NAV PILLS / TABS ========== */
+.nav-pills .nav-link.active,
+.nav-pills .show > .nav-link {
+    background-color: var(--gv-green) !important;
+    color: #fff !important;
+}
+
+.nav-pills .nav-link {
+    color: var(--gv-dark) !important;
+}
+
+.nav-pills .nav-link:hover {
+    color: var(--gv-green) !important;
+}
+
+.nav-tabs .nav-link.active {
+    color: var(--gv-green) !important;
+    border-bottom-color: var(--gv-green) !important;
+}
+
+/* ========== ALERTS ========== */
+.alert-primary {
+    background-color: var(--gv-green-light) !important;
+    border-color: rgba(var(--gv-green-rgb), 0.3) !important;
+    color: var(--gv-green-active) !important;
+}
+
+.alert-info {
+    background-color: rgba(26, 26, 46, 0.08) !important;
+    border-color: rgba(26, 26, 46, 0.2) !important;
+    color: var(--gv-dark) !important;
+}
+
+/* ========== PROGRESS BARS ========== */
+.progress-bar {
+    background-color: var(--gv-green) !important;
+}
+
+.progress-bar.bg-primary {
+    background-color: var(--gv-green) !important;
+}
+
+.progress-bar.bg-info {
+    background-color: var(--gv-dark) !important;
+}
+
+/* ========== SWEETALERT2 ========== */
+.swal2-confirm.swal2-styled {
+    background-color: var(--gv-green) !important;
+    border-color: var(--gv-green) !important;
+}
+
+.swal2-confirm.swal2-styled:hover {
+    background-color: var(--gv-green-hover) !important;
+}
+
+/* ========== STATUS INDICATORS ========== */
+.status.online {
+    background-color: var(--gv-green) !important;
+}
+
+/* ========== LOADER ========== */
+.whirly-loader {
+    border-top-color: var(--gv-green) !important;
+}
+
+/* ========== SCROLLBAR (Webkit) ========== */
+.sidebar .slimScrollDiv .slimScrollBar {
+    background: var(--gv-green) !important;
+}
+
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--gv-green);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--gv-green-hover);
+}
+
+/* ========== LIST GROUP ========== */
+.list-group-item.active {
+    background-color: var(--gv-green) !important;
+    border-color: var(--gv-green) !important;
+}
+
+/* ========== ACCORDION ========== */
+.accordion-button:not(.collapsed) {
+    background-color: var(--gv-green-light) !important;
+    color: var(--gv-green) !important;
+}
+
+.accordion-button:focus {
+    border-color: var(--gv-green) !important;
+    box-shadow: 0 0 0 0.2rem rgba(var(--gv-green-rgb), 0.15) !important;
+}
+
+/* ========== TOAST ========== */
+.toast .bg-primary {
+    background-color: var(--gv-green) !important;
+}
+
+/* ========== SECTION HEADER ========== */
+.section-header .line {
+    color: var(--gv-green) !important;
+}
+
+/* ========== PRINT STYLES ========== */
+@media print {
+    .btn-primary {
+        background-color: var(--gv-green) !important;
+        border-color: var(--gv-green) !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    .bg-primary {
+        background-color: var(--gv-green) !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    .bg-info {
+        background-color: var(--gv-dark) !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+}
