@@ -610,7 +610,13 @@
                     <div class="table-responsive">
                         <table class="table datanew">
                             <thead>
-                                <tr>\n                                    <th>#</th>\n                                    <th>Job No</th>\n                                    <th>Invoice No</th>\n                                    <th>Party</th>\n                                    <th>Assigned To</th>\n                                    <th>Date</th>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Job No</th>
+                                    <th>Invoice No</th>
+                                    <th>Party</th>
+                                    <th>Assigned To</th>
+                                    <th>Date</th>
                                     <th>Total Amount</th>
                                     <th>Paid Amount</th>
                                     <th>Remaining</th>

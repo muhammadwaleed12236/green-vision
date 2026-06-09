@@ -103,6 +103,26 @@
         font-weight: 500;
         color: #212529;
     }
+
+    /* Autocomplete */
+    .autocomplete-list {
+        position: absolute;
+        z-index: 9999;
+        background: #fff;
+        border: 1px solid #ddd;
+        max-height: 220px;
+        overflow-y: auto;
+        width: 100%;
+        border-radius: 4px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+    .autocomplete-item {
+        padding: 8px 12px;
+        cursor: pointer;
+        border-bottom: 1px solid #eee;
+    }
+    .autocomplete-item:last-child { border-bottom: none; }
+    .autocomplete-item:hover { background: #e9ecef; }
 </style>
 
 <div class="main-wrapper">
@@ -211,7 +231,11 @@
                                 @for($i=0; $i<5; $i++)
                                     <tr class="sale-row">
                                         <td class="text-center"><span class="row-index">{{ $i + 1 }}</span></td>
-                                        <td><input name="item_name[]" class="form-control" placeholder="Product Name"></td>
+                                        <td style="position:relative;">
+                                            <input type="hidden" name="item_id[]" class="item-id">
+                                            <input type="text" name="item_name[]" class="form-control item-input" autocomplete="off" placeholder="Product Name">
+                                            <div class="autocomplete-list d-none"></div>
+                                        </td>
                                         <td>
                                             <div class="qty-box">
                                                 <button type="button" class="btn qty-minus">−</button>
@@ -415,6 +439,7 @@
         r.find('.rate').val('');
         r.find('.item-total').val('0.00');
         r.find('.unit').val('pcs');
+        r.find('.autocomplete-list').addClass('d-none').empty();
         
         $('#saleTableBody').append(r);
         updateRowNumbers();
@@ -473,5 +498,61 @@
 
     $(document).ready(function() {
         updateRowNumbers();
+
+        // Autocomplete Logic
+        $(document).on('input', '.item-input', function () {
+            let input = $(this);
+            let row = input.closest('tr');
+            let list = row.find('.autocomplete-list');
+            let q = input.val().trim();
+
+            if (!q) {
+                list.addClass('d-none');
+                return;
+            }
+
+            $.ajax({
+                url: "{{ route('get.items') }}",
+                type: "GET",
+                data: { q: q },
+                success: function (res) {
+                    if (!Array.isArray(res) || res.length === 0) {
+                        list.addClass('d-none');
+                        return;
+                    }
+
+                    list.empty().removeClass('d-none');
+                    res.forEach(it => {
+                        let el = $(`<div class="autocomplete-item">${it.item_name}</div>`);
+                        el.data('item', it);
+                        list.append(el);
+                    });
+                }
+            });
+        });
+
+        // Hide autocomplete when clicking outside
+        $(document).on('click', function (e) {
+            if (!$(e.target).closest('.item-input, .autocomplete-list').length) {
+                $('.autocomplete-list').addClass('d-none');
+            }
+        });
+
+        // Select item from autocomplete
+        $(document).on('click', '.autocomplete-item', function () {
+            let it = $(this).data('item');
+            let row = $(this).closest('tr');
+
+            row.find('.item-input').val(it.item_name);
+            row.find('.item-id').val(it.id);
+
+            // Rate logic
+            let price = parseFloat(it.retail_price) || parseFloat(it.wholesale_price) || 0;
+            row.find('.rate').val(price);
+
+            row.find('.autocomplete-list').addClass('d-none');
+
+            calcRow(row);
+        });
     });
 </script>
