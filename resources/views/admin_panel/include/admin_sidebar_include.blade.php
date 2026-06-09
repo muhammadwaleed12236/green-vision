@@ -1,3 +1,22 @@
+<style>
+    /* Active Link Styles */
+    #sidebar-menu ul li.active > a {
+        background-color: rgba(40, 167, 69, 0.15) !important; /* Transparent dark green background */
+        color: #ffffff !important; /* White text */
+        font-weight: 600;
+        border-radius: 6px;
+    }
+    #sidebar-menu ul li.active > a i {
+        color: #28a745 !important; /* Green icon */
+    }
+    
+    /* Submenu Active Styles */
+    #sidebar-menu ul li.submenu ul li.active > a {
+        background-color: transparent !important;
+        color: #28a745 !important;
+    }
+</style>
+
 <div class="sidebar" id="sidebar">
     <div class="sidebar-inner slimscroll">
         <div id="sidebar-menu" class="sidebar-menu">
@@ -406,3 +425,55 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    var currentUrl = window.location.href.split('#')[0].split('?')[0];
+
+    // Remove static active classes
+    var staticActives = document.querySelectorAll('#sidebar-menu li.active');
+    staticActives.forEach(function(li) {
+        li.classList.remove('active');
+    });
+    
+    var staticActiveLinks = document.querySelectorAll('#sidebar-menu a.active');
+    staticActiveLinks.forEach(function(a) {
+        a.classList.remove('active');
+    });
+
+    // Find and set active link
+    var links = document.querySelectorAll('#sidebar-menu a');
+    var isMatched = false;
+
+    links.forEach(function(link) {
+        if (link.href === currentUrl && link.getAttribute('href') !== 'javascript:void(0);') {
+            link.parentElement.classList.add('active');
+            link.classList.add('active'); // Add to a tag too if needed
+            
+            // If it's a submenu child, highlight parent and open the submenu
+            var parentUl = link.closest('ul');
+            if (parentUl && parentUl.parentElement.tagName === 'LI' && parentUl.parentElement.classList.contains('submenu')) {
+                parentUl.parentElement.classList.add('active');
+                
+                var parentA = parentUl.parentElement.querySelector('a');
+                if (parentA) {
+                    parentA.classList.add('active');
+                    parentA.classList.add('subdrop');
+                }
+                
+                parentUl.style.display = 'block'; // Make submenu visible
+            }
+            isMatched = true;
+        }
+    });
+
+    // Fallback: if no match, highlight dashboard
+    if (!isMatched) {
+        var dashLink = document.querySelector('#sidebar-menu a[href="{{ route("home") }}"]');
+        if (dashLink) {
+            dashLink.parentElement.classList.add('active');
+            dashLink.classList.add('active');
+        }
+    }
+});
+</script>
