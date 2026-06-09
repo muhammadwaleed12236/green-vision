@@ -49,10 +49,14 @@
                             <table class="table table-bordered align-middle text-center" id="purchaseTable">
                                 <thead>
                                     <tr>
-                                        <th style="width:250px">Item Name</th>
-                                        <th>Quantity</th>
-                                        <th>Unit</th>
-                                        <th>Price/ Unit</th>
+                                        <th style="width:100px">Item</th>
+                                        <th>Type</th>
+                                        <th>Measurement</th>
+                                        <th>Rate</th>
+                                        {{-- <th>Carton Qty</th> --}}
+                                        <th>Feet (pcs)</th>
+                                        <th>Gross Total</th>
+                                        <th>Discount</th>
                                         <th>Amount</th>
                                         <th>Action</th>
                                     </tr>
@@ -62,8 +66,8 @@
                                 </tbody>
                                 <tfoot>
                                     <tr>
-                                        <td colspan="4" class="text-end fw-bold">Grand Total:</td>
-                                        <td colspan="2"><input type="number"
+                                        <td colspan="6" class="text-end fw-bold">Grand Total:</td>
+                                        <td colspan="3"><input type="number"
                                                 class="form-control form-control-lg fw-bold text-center" id="grandTotal"
                                                 name="grand_total" readonly></td>
                                         <td></td>
@@ -138,12 +142,32 @@
     }
 
     /* Column Widths */
-    #purchaseTable th:nth-child(1), #purchaseTable td:nth-child(1) { width: 250px; } /* Item Name */
-    #purchaseTable th:nth-child(2), #purchaseTable td:nth-child(2) { width: 100px; } /* Quantity */
-    #purchaseTable th:nth-child(3), #purchaseTable td:nth-child(3) { width: 100px; } /* Unit */
-    #purchaseTable th:nth-child(4), #purchaseTable td:nth-child(4) { width: 120px; } /* Price/ Unit */
-    #purchaseTable th:nth-child(5), #purchaseTable td:nth-child(5) { width: 150px; } /* Amount */
-    #purchaseTable th:nth-child(6), #purchaseTable td:nth-child(6) { width: 80px; } /* Action */
+    #purchaseTable th:nth-child(1),
+    #purchaseTable td:nth-child(1) { width: 180px; } /* Item */
+
+    #purchaseTable th:nth-child(2),
+    #purchaseTable td:nth-child(2) { width: 100px; } /* Type */
+
+    #purchaseTable th:nth-child(3),
+    #purchaseTable td:nth-child(3) { width: 150px; } /* Measurement */
+
+    #purchaseTable th:nth-child(4),
+    #purchaseTable td:nth-child(4) { width: 90px; } /* Rate */
+
+    #purchaseTable th:nth-child(5),
+    #purchaseTable td:nth-child(5) { width: 90px; } /* Feet (pcs) */
+
+    #purchaseTable th:nth-child(6),
+    #purchaseTable td:nth-child(6) { width: 110px; } /* Gross Total */
+
+    #purchaseTable th:nth-child(7),
+    #purchaseTable td:nth-child(7) { width: 90px; } /* Discount */
+
+    #purchaseTable th:nth-child(8),
+    #purchaseTable td:nth-child(8) { width: 100px; } /* Amount */
+
+    #purchaseTable th:nth-child(9),
+    #purchaseTable td:nth-child(9) { width: 80px; } /* Action */
 
     /* Input Styling in Table */
     #purchaseTable .form-control {
@@ -368,24 +392,36 @@
             <div class="autocomplete-list d-none"></div>
         </td>
 
-        <!-- Quantity -->
-        <td>
-            <input type="number" class="form-control pcx" name="pcs[]" min="0">
-        </td>
-
-        <!-- Unit -->
+        <!-- TYPE -->
         <td>
             <input type="text"
-                   class="form-control product_mode text-center"
+                   class="form-control product_mode"
                    name="product_mode[]"
                    readonly>
-            <input type="hidden" class="measurement" name="measurement[]">
-            <input type="hidden" class="gross-total" name="gross_total[]">
-            <input type="hidden" class="discount" name="discount[]" value="0">
+        </td>
+
+        <!-- MEASUREMENT -->
+        <td>
+            <input type="text"
+                   class="form-control measurement"
+                   name="measurement[]"
+                   readonly>
         </td>
 
         <td>
             <input type="number" class="form-control rate" name="rate[]" min="0">
+        </td>
+
+        <td>
+            <input type="number" class="form-control pcx" name="pcs[]" min="0">
+        </td>
+
+        <td>
+            <input type="number" class="form-control gross-total" name="gross_total[]" readonly>
+        </td>
+
+        <td>
+            <input type="number" class="form-control discount" name="discount[]" min="0">
         </td>
 
         <td>
@@ -476,12 +512,8 @@
             row.find('.item-input').val(it.item_name);
             row.find('.item-id').val(it.id);
 
-            // UNIT
-            let unitVal = it.product_mode || '';
-            if (unitVal === 'measurements') unitVal = 'Sq.ft';
-            else if (unitVal === 'simple') unitVal = 'Pcs';
-            
-            row.find('.product_mode').val(unitVal);
+            // TYPE
+            row.find('.product_mode').val(it.product_mode || '');
 
             // MEASUREMENT
             if (it.height && it.width && it.area) {

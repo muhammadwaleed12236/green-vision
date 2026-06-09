@@ -1,100 +1,4 @@
 @include('admin_panel.include.header_include')
-
-<style>
-    /* Simple styles for custom autocomplete dropdown */
-    .autocomplete-list {
-        position: absolute;
-        z-index: 9999;
-        background: #fff;
-        border: 1px solid #ddd;
-        max-height: 220px;
-        overflow-y: auto;
-        width: 100%;
-        border-radius: 4px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-    }
-    .autocomplete-item {
-        padding: 8px 12px;
-        cursor: pointer;
-        border-bottom: 1px solid #eee;
-    }
-    .autocomplete-item:last-child {
-        border-bottom: none;
-    }
-    .autocomplete-item:hover,
-    .autocomplete-item.active {
-        background: #e9ecef;
-    }
-
-    .row-relative {
-        position: relative;
-    }
-
-    /* General Table Styling */
-    #saleTable {
-        width: 100%;
-        table-layout: fixed;
-    }
-
-    #saleTable th {
-        font-weight: 600;
-        background-color: #f8f9fa;
-        color: #333;
-        border-bottom: 2px solid #dee2e6;
-        padding: 10px 5px !important;
-        font-size: 13px;
-        text-align: center;
-        white-space: nowrap;
-        vertical-align: middle;
-    }
-
-    #saleTable td {
-        vertical-align: middle;
-        padding: 8px 6px !important;
-    }
-
-    /* Column Widths */
-    #saleTable th:nth-child(1), #saleTable td:nth-child(1) { width: 250px; } /* Item Name */
-    #saleTable th:nth-child(2), #saleTable td:nth-child(2) { width: 100px; } /* Quantity */
-    #saleTable th:nth-child(3), #saleTable td:nth-child(3) { width: 100px; } /* Unit */
-    #saleTable th:nth-child(4), #saleTable td:nth-child(4) { width: 120px; } /* Price/ Unit */
-    #saleTable th:nth-child(5), #saleTable td:nth-child(5) { width: 150px; } /* Amount */
-    #saleTable th:nth-child(6), #saleTable td:nth-child(6) { width: 80px; }  /* Action */
-
-    /* Input & Select Styling */
-    #saleTable .form-control {
-        border-radius: 4px;
-        border: 1px solid #ced4da;
-        font-size: 13px;
-        padding: 6px 8px;
-        height: 34px; /* Consistent height */
-        width: 100% !important;
-    }
-
-    #saleTable .form-control:focus {
-        border-color: #637381;
-        box-shadow: none;
-    }
-
-    /* Readonly inputs styling */
-    .readonly-box {
-        background-color: #f8f9fa !important;
-        color: #6c757d;
-        cursor: default;
-    }
-
-    /* Action Buttons */
-    #saleTable .remove-row {
-        padding: 4px 10px;
-        font-size: 12px;
-        white-space: nowrap;
-    }
-
-    #saleTable tbody tr:hover {
-        background-color: #f5f5f5;
-    }
-</style>
-
 <div class="main-wrapper">
     @include('admin_panel.include.navbar_include')
     @include('admin_panel.include.admin_sidebar_include')
@@ -116,18 +20,18 @@
                     </div>
                     @endif
 
-                    <form action="{{ route('store-sale') }}" method="POST" id="saleForm">
+                    <form action="{{ route('store-sale') }}" method="POST">
                         @csrf
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Invoice Date</label>
-                                <input type="date" class="form-control" name="Date" id="Date" value="{{ date('Y-m-d') }}">
+                                <input type="date" class="form-control" name="Date" id="Date">
                             </div>
 
                             <div class="col-md-6 mb-3">
                                 <label for="distributor" class="form-label">Select Distributor</label>
-                                <select class="form-control" name="distributor_id" id="distributor" required>
+                                <select class="form-control" name="distributor_id" id="distributor">
                                     <option value="">Select Distributor</option>
                                     @foreach($Distributors as $distributor)
                                     <option value="{{ $distributor->id }}"
@@ -145,19 +49,19 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">City</label>
-                                <input type="text" class="form-control readonly-box" name="distributor_city" id="city" readonly>
+                                <input type="text" class="form-control" name="distributor_city" id="city" readonly>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Area</label>
-                                <input type="text" class="form-control readonly-box" name="distributor_area" id="area" readonly>
+                                <input type="text" class="form-control" name="distributor_area" id="area" readonly>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Address</label>
-                                <input type="text" class="form-control readonly-box" name="distributor_address" id="address" readonly>
+                                <input type="text" class="form-control" name="distributor_address" id="address" readonly>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Phone</label>
-                                <input type="text" class="form-control readonly-box" name="distributor_phone" id="phone" readonly>
+                                <input type="text" class="form-control" name="distributor_phone" id="phone" readonly>
                             </div>
                         </div>
 
@@ -165,7 +69,7 @@
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Order Booker</label>
                                 <select class="form-control" name="Booker" id="Booker" required>
-                                    <option value="" disabled selected>Select Booker</option>
+                                    <option disabled>Select Booker</option>
                                     @foreach($Staffs as $Staff)
                                     <option value="{{ $Staff->name }}">{{ $Staff->name }}</option>
                                     @endforeach
@@ -175,7 +79,7 @@
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Saleman</label>
                                 <select class="form-control" name="Saleman" id="Saleman" required>
-                                    <option value="" disabled selected>Select Salesman</option>
+                                    <option disabled>Select Salesman</option>
                                     @foreach($Staffs as $Staff)
                                     <option value="{{ $Staff->name }}">{{ $Staff->name }}</option>
                                     @endforeach
@@ -185,59 +89,94 @@
 
                         <hr>
                         <div class="table-responsive">
-                            <table class="table table-bordered align-middle text-center" id="saleTable">
+                            <table class="table table-bordered align-middle text-center" id="purchaseTable">
                                 <thead>
                                     <tr>
-                                        <th>Item Name</th>
-                                        <th>Quantity</th>
-                                        <th>Unit</th>
-                                        <th>Price/ Unit</th>
+                                        <th>Category</th>
+                                        <th>Sub Category</th>
+                                        <th>Code</th>
+                                        <th>Item</th>
+                                        <th>Measurement</th>
+                                        <th>Packing</th>
+                                        <th>Carton Qty</th>
+                                        <th>Pcs Qty</th>
+                                        <th>Liter</th>
+                                        <th>Rate</th>
+                                        <th>Disc Rs</th>
                                         <th>Amount</th>
                                         <th>Action</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <!-- rows injected by JS -->
+                                    <tr>
+                                        <td>
+                                            <select class="form-control form-control-lg category-select" name="category[]" style="width: 150px;">
+                                                <option value="">Select Category</option>
+                                                @foreach($categories as $category)
+                                                <option value="{{ $category->category_name }}">{{ $category->category_name }}</option>
+                                                @endforeach
+                                            </select>
+                                        </td>
+                                        <td>
+                                            <select class="form-control form-control-lg subcategory-select" name="subcategory[]" style="width: 150px;">
+                                                <option>Select Subcategory</option>
+                                            </select>
+                                        </td>
+                                        <td><input type="text" class="form-control form-control-lg code" name="code[]" style="width: 130px;" readonly></td>
+                                        <td>
+                                            <select class="form-control form-control-lg item-select" name="item[]" style="width: 400px;">
+                                                <option>Select Item</option>
+                                            </select>
+                                        </td>
+                                        <td><input type="text" class="form-control form-control-lg size" name="size[]" style="width: 180px;" readonly></td>
+                                        <td><input type="number" class="form-control form-control-lg pcs-carton" name="pcs_carton[]" style="width: 180px;" readonly></td>
+                                        <td><input type="number" class="form-control form-control-lg carton-qty" name="carton_qty[]" style="width: 180px;"></td>
+                                        <td><input type="number" class="form-control form-control-lg pcx" name="pcs[]" style="width: 180px;"></td>
+                                        <td><input type="number" class="form-control form-control-lg liter" name="liter[]" step="any" style="width: 180px;"></td>
+                                        <td><input type="number" class="form-control form-control-lg rate" name="rate[]" style="width: 180px;"></td>
+                                        <td><input type="number" class="form-control form-control-lg discount" name="discount[]" style="width: 180px;"></td>
+                                        <td><input type="number" class="form-control form-control-lg amount" name="amount[]" style="width: 180px;" readonly></td>
+                                        <td><button type="button" class="btn btn-danger remove-row">Delete</button></td>
+                                    </tr>
                                 </tbody>
                                 <tfoot>
                                     <tr>
-                                        <td colspan="4" class="text-end fw-bold">Grand Total:</td>
-                                        <td>
-                                            <input type="number" class="form-control fw-bold text-end readonly-box" id="grandTotal" name="grand_total" readonly value="0">
+                                        <td colspan="8" class="text-end fw-bold">Grand Total:</td>
+                                        <td colspan="2">
+                                            <input type="number" class="form-control form-control-lg fw-bold text-center" id="grandTotal" name="grand_total" readonly>
                                         </td>
-                                        <td></td>
                                     </tr>
                                     <tr>
-                                        <td colspan="4" class="text-end fw-bold">Discount:</td>
-                                        <td>
+                                        <td colspan="8" class="text-end fw-bold">Discount:</td>
+                                        <td colspan="2">
                                             <div class="input-group">
-                                                <input type="number" class="form-control fw-bold text-end" id="discountValue" name="discount_value" value="0">
-                                                <select id="discountType" class="form-control" style="max-width: 80px;">
+                                                <input type="number" class="form-control form-control-lg fw-bold text-center" id="discountValue" name="discount_value" value="0">
+                                                <select id="discountType" class="form-control form-control-lg">
                                                     <option value="pkr">PKR</option>
                                                     <option value="percent">%</option>
                                                 </select>
                                             </div>
                                         </td>
-                                        <td></td>
                                     </tr>
                                     <tr>
-                                        <td colspan="4" class="text-end fw-bold">Scheme:</td>
-                                        <td>
-                                            <input type="number" class="form-control fw-bold text-end" id="schemeValue" name="scheme_value" value="0">
+                                        <td colspan="8" class="text-end fw-bold">Scheme:</td>
+                                        <td colspan="2">
+                                            <input type="number" class="form-control form-control-lg fw-bold text-center" id="schemeValue" name="scheme_value" value="0">
                                         </td>
-                                        <td></td>
                                     </tr>
                                     <tr>
-                                        <td colspan="4" class="text-end fw-bold">Net Amount:</td>
-                                        <td>
-                                            <input type="number" class="form-control fw-bold text-end readonly-box" id="netAmount" name="net_amount" readonly value="0">
+                                        <td colspan="8" class="text-end fw-bold">Net Amount:</td>
+                                        <td colspan="2">
+                                            <input type="number" class="form-control form-control-lg fw-bold text-center" id="netAmount" name="net_amount" readonly>
                                         </td>
-                                        <td></td>
                                     </tr>
+
                                 </tfoot>
+
                             </table>
                         </div>
 
+                        <button type="button" class="btn btn-success mt-3" id="addRow">Add More</button>
                         <div class="d-flex justify-content-end mt-3">
                             <button type="submit" class="btn btn-primary btn-lg">Submit</button>
                         </div>
@@ -249,8 +188,7 @@
 </div>
 @include('admin_panel.include.footer_include')
 
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
+<!-- JavaScript to Auto-Fill Distributor Details -->
 <script>
     document.getElementById('distributor').addEventListener('change', function() {
         let selectedOption = this.options[this.selectedIndex];
@@ -261,193 +199,221 @@
         document.getElementById('phone').value = selectedOption.getAttribute('data-phone') || '';
     });
 
+
     $(document).ready(function() {
+        // Add New Row
+        $(document).on('click', '#addRow', function() {
+            let newRow = `
+    <tr>
+        <td>
+            <select class="form-control form-control-lg category-select" name="category[]" style="width: 150px;">
+                                                <option value="">Select Category</option>
+                                                @foreach($categories as $category)
+                                                <option value="{{ $category->category_name }}">{{ $category->category_name }}</option>
+                                                @endforeach
+                                            </select>
+        </td>
+        <td>
+            <select class="form-control form-control-lg subcategory-select" name="subcategory[]" style="width: 150px;">
+                                                <option>Select Subcategory</option>
+                                            </select>
+        </td>
+        <td>
+                                            <input type="text" class="form-control form-control-lg code" name="code[]" style="width: 130px;" readonly>
+                                        </td>
+        <td>
+                                            <select class="form-control form-control-lg item-select" name="item[]" style="width: 400px;">
+                                                <option>Select Item</option>
+                                            </select>
+                                        </td>
+                                        <td><input type="text" class="form-control form-control-lg size" name="size[]" style="width: 180px;" readonly></td>
+                                        <td><input type="number" class="form-control form-control-lg pcs-carton" name="pcs_carton[]" style="width: 180px;" readonly></td>
+                                        <td><input type="number" class="form-control form-control-lg carton-qty" name="carton_qty[]" style="width: 180px;"></td>
+                                        <td><input type="number" class="form-control form-control-lg pcx" name="pcs[]" style="width: 180px;"></td>
+                                        <td><input type="number" class="form-control form-control-lg liter" name="liter[]" step="any" style="width: 180px;"></td>
+                                        <td><input type="number" class="form-control form-control-lg rate" name="rate[]" style="width: 180px;"></td>
+                                        <td><input type="number" class="form-control form-control-lg discount" name="discount[]" style="width: 180px;"></td>
+                                        <td><input type="number" class="form-control form-control-lg amount" name="amount[]" style="width: 180px;" readonly></td>
+        <td><button type="button" class="btn btn-danger remove-row">Delete</button></td>
+    </tr>`;
 
-        // ========== ROW CREATION ==========
-        function createRowHtml() {
-            return `
-                <tr class="sale-row">
-                    <td style="position:relative;">
-                        <input type="text" class="form-control item-input" name="item_name[]" autocomplete="off" placeholder="Type item name">
-                        <div class="autocomplete-list d-none"></div>
-                    </td>
-                    <td>
-                        <input type="number" class="form-control qty text-center" name="pcs[]" min="0">
-                    </td>
-                    <td>
-                        <input type="text" class="form-control unit text-center readonly-box" name="product_mode[]" readonly>
-                    </td>
-                    <td>
-                        <input type="number" class="form-control rate text-end" name="rate[]" min="0">
-                    </td>
-                    <td>
-                        <input type="number" class="form-control amount text-end readonly-box" name="amount[]" readonly>
-                    </td>
-                    <td>
-                        <button type="button" class="btn btn-danger btn-sm remove-row">Delete</button>
-                    </td>
-                </tr>`;
-        }
-
-        // Initial 5 rows
-        for (let i = 0; i < 5; i++) {
-            $('#saleTable tbody').append(createRowHtml());
-        }
-
-        function appendNewRow() {
-            $('#saleTable tbody').append(createRowHtml());
-        }
-
-        // Remove row
-        $(document).on('click', '.remove-row', function () {
-            let rowCount = $('#saleTable tbody tr').length;
-            if (rowCount > 1) {
-                $(this).closest('tr').remove();
-                calculateGrandTotal();
-            } else {
-                Swal.fire('Cannot Delete', 'At least one row must remain.', 'warning');
-            }
+            $("#purchaseTable tbody").append(newRow);
         });
 
-        // ========== AUTOCOMPLETE SEARCH ==========
-        $(document).on('input', '.item-input', function () {
-            let input = $(this);
-            let row = input.closest('tr');
-            let list = row.find('.autocomplete-list');
-            let q = input.val().trim();
 
-            if (!q) {
-                list.addClass('d-none');
-                return;
-            }
+        // Remove row functionality
+        $(document).on('click', '.remove-row', function() {
+            $(this).closest('tr').remove();
+            calculateGrandTotal(); // Recalculate grand total after row removal
+        });
 
-            $.ajax({
-                url: "{{ route('get.items') }}",
-                type: "GET",
-                data: { q: q },
-                success: function (res) {
-                    if (!Array.isArray(res) || res.length === 0) {
-                        list.addClass('d-none');
-                        return;
+        // Fetch Subcategories on Category Change
+        $(document).on('change', '.category-select', function() {
+            let categoryName = $(this).val();
+            let subCategoryDropdown = $(this).closest('tr').find('.subcategory-select');
+
+            if (categoryName) {
+                $.ajax({
+                    url: "{{ route('get.subcategories', ':categoryname') }}".replace(':categoryname', categoryName),
+                    type: 'GET',
+                    success: function(response) {
+                        subCategoryDropdown.html('<option value="">Select Sub Category</option>');
+                        $.each(response, function(index, name) {
+                            subCategoryDropdown.append(`<option value="${name}">${name}</option>`);
+                        });
+                    },
+                    error: function() {
+                        alert('Error fetching subcategories.');
                     }
-
-                    list.empty().removeClass('d-none');
-                    res.forEach(it => {
-                        let el = $(`<div class="autocomplete-item">${it.item_name}</div>`);
-                        el.data('item', it);
-                        list.append(el);
-                    });
-                }
-            });
-        });
-
-        $(document).on('click', function (e) {
-            if (!$(e.target).closest('.item-input, .autocomplete-list').length) {
-                $('.autocomplete-list').addClass('d-none');
+                });
+            } else {
+                subCategoryDropdown.html('<option value="">Select Sub Category</option>');
             }
         });
 
-        $(document).on('click', '.autocomplete-item', function () {
-            let it = $(this).data('item');
-            let row = $(this).closest('tr');
+        // Fetch Items on Subcategory Change
+        $(document).on('change', '.subcategory-select', function() {
+            let subCategoryName = $(this).val();
+            let categoryName = $(this).closest('tr').find('.category-select').val();
+            let itemDropdown = $(this).closest('tr').find('.item-select');
 
-            row.find('.item-input').val(it.item_name);
+            if (subCategoryName && categoryName) {
+                $.ajax({
+                    url: "{{ route('get.items') }}",
+                    type: 'GET',
+                    data: {
+                        category_name: categoryName,
+                        sub_category_name: subCategoryName
+                    },
+                    success: function(response) {
+                        itemDropdown.html('<option value="">Select Item</option>');
+                        $.each(response, function(index, item) {
+                            // itemDropdown.append(`<option value="${item.item_name}" data-pcs="${item.pcs_in_carton}" data-code="${item.item_code}" data-size	="${item.size}"  data-rp="${item.retail_price}">${item.item_name}</option>`);
+                            itemDropdown.append(`<option value="${item.item_name}" data-pcs="${item.pcs_in_carton}" data-code="${item.item_code}" data-size="${item.size}" data-rp="${item.retail_price}">${item.item_name}</option>`);
 
-            let unitVal = it.product_mode || '';
-            if (unitVal === 'measurements') unitVal = 'Sq.ft';
-            else if (unitVal === 'simple') unitVal = 'Pcs';
-            row.find('.unit').val(unitVal);
-
-            row.find('.rate').val(parseInt(it.wholesale_price) || parseInt(it.retail_price) || 0);
-            
-            if (!row.find('.qty').val()) {
-                row.find('.qty').val(1);
+                        });
+                    },
+                    error: function() {
+                        alert('Error fetching items.');
+                    }
+                });
+            } else {
+                itemDropdown.html('<option value="">Select Item</option>');
             }
-
-            row.find('.autocomplete-list').addClass('d-none');
-
-            calculateRow(row);
-            autoAddIfNeeded();
         });
 
-        // ========== CALCULATIONS ==========
-        $(document).on('input', '.rate, .qty', function () {
+        // Fetch PCS when Item is Selected
+        $(document).on('change', '.item-select', function() {
+            let pcsValue = $(this).find(":selected").data('pcs') || 0;
+            $(this).closest('tr').find('.pcs-carton').val(pcsValue);
+        });
+
+        $(document).on('change', '.item-select', function() {
+            let rpValue = $(this).find(":selected").data('rp') || 0;
+            $(this).closest('tr').find('.rate').val(rpValue);
+        });
+
+        $(document).on('change', '.item-select', function() {
+            let codeValue = $(this).find(":selected").data('code') || 0;
+            $(this).closest('tr').find('.code').val(codeValue);
+        });
+
+        $(document).on('change', '.item-select', function() {
+            let selectedOption = $(this).find(":selected");
+            let sizeValue = selectedOption.data('size') || 0;
+
+            console.log("Selected Item:", selectedOption.text());
+            console.log("Size Value:", sizeValue);
+
+            $(this).closest('tr').find('.size').prop('readonly', false).val(sizeValue).prop('readonly', true);
+        });
+
+
+
+        $(document).on('input', '.carton-qty, .pcs-carton, .size, .pcx, .rate, .discount', function() {
             let row = $(this).closest('tr');
-            calculateRow(row);
-            autoAddIfNeeded();
-        });
 
-        function calculateRow(row) {
+            let cartonQty = parseFloat(row.find('.carton-qty').val()) || 0;
+            let packing = parseFloat(row.find('.pcs-carton').val()) || 0;
+            let pcsQty = parseFloat(row.find('.pcx').val()) || 0;
             let rate = parseFloat(row.find('.rate').val()) || 0;
-            let qty = parseFloat(row.find('.qty').val()) || 0;
+            let discount = parseFloat(row.find('.discount').val()) || 0;
+            let sizeText = row.find('.size').val().toLowerCase().trim();
+            let measurement = 0;
 
-            let finalAmount = rate * qty;
-            row.find('.amount').val(finalAmount.toFixed(2));
+            if (sizeText.includes('ml')) {
+                measurement = parseFloat(sizeText.replace(/[^0-9.]/g, '')) / 1000;
+            } else if (sizeText.includes('l')) {
+                measurement = parseFloat(sizeText.replace(/[^0-9.]/g, ''));
+            } else {
+                measurement = parseFloat(sizeText) || 0;
+            }
 
+            // ✅ **Updated Liter Calculation**
+            let litersFromCartons = cartonQty * packing * measurement;
+            let litersFromPcs = pcsQty * measurement;
+            let totalLiters = litersFromCartons + litersFromPcs;
+
+            // 🟢 Remove trailing zeros (17.50 → 17.5, 16.80 → 16.8)
+            row.find('.liter').val(parseFloat(totalLiters.toFixed(2)).toString());
+
+            // 🧮 **Carton Amount Calculation**
+            let cartonAmount = rate * cartonQty;
+
+            // 🔢 **Per Piece Rate Calculation**
+            let perPieceRate = (packing > 0) ? (rate / packing) : 0;
+
+            // 💰 **Pcs Amount Calculation**
+            let pcsAmount = perPieceRate * pcsQty;
+
+            // 📊 **Total Before Discount**
+            let totalBeforeDiscount = cartonAmount + pcsAmount;
+
+            // 💸 **Final Amount After Applying Discount**
+            let finalAmount = totalBeforeDiscount - discount;
+
+            // 🟢 Remove trailing zeros from amount field
+            row.find('.amount').val(parseFloat(finalAmount.toFixed(2)).toString());
+
+            // Recalculate Grand Total
             calculateGrandTotal();
-        }
+        });
 
         function calculateGrandTotal() {
-            let total = 0;
-            $('.amount').each(function () {
-                total += parseFloat($(this).val()) || 0;
+            let grandTotal = 0;
+            $(".amount").each(function() {
+                grandTotal += parseFloat($(this).val()) || 0;
             });
 
-            $('#grandTotal').val(total.toFixed(2));
+            // 🟢 Remove trailing zeros from Grand Total
+            $("#grandTotal").val(parseFloat(grandTotal.toFixed(2)).toString());
 
+            // 🟢 Set Net Amount same as Grand Total initially
+            $('#netAmount').val(parseFloat(grandTotal.toFixed(2)).toString());
+        }
+
+
+        // Function to Calculate Net Amount (including Discount & Scheme)
+        $(document).on('input', '#discountValue, #discountType, #schemeValue', function() {
+            let grandTotal = parseFloat($('#grandTotal').val()) || 0;
             let discountValue = parseFloat($('#discountValue').val()) || 0;
             let discountType = $('#discountType').val();
             let schemeValue = parseFloat($('#schemeValue').val()) || 0;
             let discountAmount = 0;
 
             if (discountType === "percent") {
-                discountAmount = (total * discountValue) / 100;
+                discountAmount = (grandTotal * discountValue) / 100;
             } else {
                 discountAmount = discountValue;
             }
 
-            let netAmount = total - discountAmount - schemeValue;
-            $('#netAmount').val(netAmount.toFixed(2));
-        }
+            let netAmount = grandTotal - discountAmount - schemeValue;
 
-        $('#discountValue, #discountType, #schemeValue').on('input change', calculateGrandTotal);
-
-        // ========== AUTO ADD ROW WHEN NEEDED ==========
-        function isRowEmpty(row) {
-            let itemName = row.find('.item-input').val().trim();
-            let rate = parseFloat(row.find('.rate').val()) || 0;
-            let qty = parseFloat(row.find('.qty').val()) || 0;
-
-            return !itemName && rate === 0 && qty === 0;
-        }
-
-        function autoAddIfNeeded() {
-            let rows = $('#saleTable tbody tr');
-            let emptyRowExists = false;
-
-            rows.each(function () {
-                if (isRowEmpty($(this))) {
-                    emptyRowExists = true;
-                    return false;
-                }
-            });
-
-            if (!emptyRowExists) {
-                appendNewRow();
-            }
-        }
-
-        $('#saleForm').on('submit', function(e) {
-            let validItems = 0;
-            $('.item-input').each(function() {
-                if ($(this).val().trim() !== '') validItems++;
-            });
-
-            if (validItems === 0) {
-                e.preventDefault();
-                Swal.fire('Error', 'Please add at least one item.', 'error');
-                return false;
-            }
+            // 🟢 Remove trailing zeros from Net Amount
+            $('#netAmount').val(parseFloat(netAmount.toFixed(2)).toString());
         });
+
+
+
     });
 </script>

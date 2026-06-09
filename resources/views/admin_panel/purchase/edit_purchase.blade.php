@@ -63,10 +63,13 @@
                             <table class="table table-bordered align-middle text-center" id="purchaseTable">
                                 <thead>
                                     <tr>
-                                        <th style="width:250px">Item Name</th>
-                                        <th>Quantity</th>
-                                        <th>Unit</th>
-                                        <th>Price/ Unit</th>
+                                        <th>Item</th>
+                                        <th>Type</th>
+                                        <th>Measurement</th>
+                                        <th>Rate</th>
+                                        <th>Feet (pcs)</th>
+                                        <th>Gross Total</th>
+                                        <th>Discount</th>
                                         <th>Amount</th>
                                         <th>Action</th>
                                     </tr>
@@ -76,8 +79,8 @@
                                 </tbody>
                                 <tfoot>
                                     <tr>
-                                        <td colspan="4" class="text-end fw-bold">Grand Total:</td>
-                                        <td colspan="2">
+                                        <td colspan="6" class="text-end fw-bold">Grand Total:</td>
+                                        <td colspan="3">
                                             <input type="number" class="form-control form-control-lg fw-bold text-center"
                                                 id="grandTotal" name="grand_total"
                                                 value="{{ $purchase->grand_total }}" readonly>
@@ -153,12 +156,15 @@
     }
 
     /* Column Widths */
-    #purchaseTable th:nth-child(1), #purchaseTable td:nth-child(1) { width: 250px; }
+    #purchaseTable th:nth-child(1), #purchaseTable td:nth-child(1) { width: 180px; }
     #purchaseTable th:nth-child(2), #purchaseTable td:nth-child(2) { width: 100px; }
-    #purchaseTable th:nth-child(3), #purchaseTable td:nth-child(3) { width: 100px; }
-    #purchaseTable th:nth-child(4), #purchaseTable td:nth-child(4) { width: 120px; }
-    #purchaseTable th:nth-child(5), #purchaseTable td:nth-child(5) { width: 150px; }
-    #purchaseTable th:nth-child(6), #purchaseTable td:nth-child(6) { width: 80px; }
+    #purchaseTable th:nth-child(3), #purchaseTable td:nth-child(3) { width: 150px; }
+    #purchaseTable th:nth-child(4), #purchaseTable td:nth-child(4) { width: 90px; }
+    #purchaseTable th:nth-child(5), #purchaseTable td:nth-child(5) { width: 90px; }
+    #purchaseTable th:nth-child(6), #purchaseTable td:nth-child(6) { width: 110px; }
+    #purchaseTable th:nth-child(7), #purchaseTable td:nth-child(7) { width: 90px; }
+    #purchaseTable th:nth-child(8), #purchaseTable td:nth-child(8) { width: 100px; }
+    #purchaseTable th:nth-child(9), #purchaseTable td:nth-child(9) { width: 80px; }
 
     #purchaseTable .form-control {
         width: 100% !important;
@@ -216,17 +222,25 @@ $(document).ready(function () {
                 <div class="autocomplete-list d-none"></div>
             </td>
             <td>
-                <input type="number" class="form-control pcx" name="pcs[]" min="0" value="${pcs}">
+                <input type="text" class="form-control product_mode" name="product_mode[]"
+                    value="${productMode}" readonly>
             </td>
             <td>
-                <input type="text" class="form-control product_mode text-center" name="product_mode[]"
-                    value="${productMode}" readonly>
-                <input type="hidden" class="measurement" name="measurement[]" value="${measurement}">
-                <input type="hidden" class="gross-total" name="gross_total[]" value="${grossTotal}">
-                <input type="hidden" class="discount" name="discount[]" value="${discount}">
+                <input type="text" class="form-control measurement" name="measurement[]"
+                    value="${measurement}" readonly>
             </td>
             <td>
                 <input type="number" class="form-control rate" name="rate[]" min="0" value="${rate}">
+            </td>
+            <td>
+                <input type="number" class="form-control pcx" name="pcs[]" min="0" value="${pcs}">
+            </td>
+            <td>
+                <input type="number" class="form-control gross-total" name="gross_total[]"
+                    value="${grossTotal}" readonly>
+            </td>
+            <td>
+                <input type="number" class="form-control discount" name="discount[]" min="0" value="${discount}">
             </td>
             <td>
                 <input type="number" class="form-control amount" name="amount[]"
@@ -243,13 +257,9 @@ $(document).ready(function () {
     // Populate existing data
     if (existingItems.length > 0) {
         existingItems.forEach((item, index) => {
-            let pMode = existingProductModes[index] || '';
-            if (pMode === 'measurements') pMode = 'Sq.ft';
-            else if (pMode === 'simple') pMode = 'Pcs';
-
             let html = createRowHtml(
                 item || '',
-                pMode,
+                existingProductModes[index] || '',
                 '', // measurement will be fetched if needed
                 existingRates[index] || '',
                 existingPcs[index] || '',
@@ -341,11 +351,7 @@ $(document).ready(function () {
 
         row.find('.item-input').val(it.item_name);
         row.find('.item-id').val(it.id);
-        let unitVal = it.product_mode || '';
-        if (unitVal === 'measurements') unitVal = 'Sq.ft';
-        else if (unitVal === 'simple') unitVal = 'Pcs';
-
-        row.find('.product_mode').val(unitVal);
+        row.find('.product_mode').val(it.product_mode || '');
 
         if (it.height && it.width && it.area) {
             row.find('.measurement').val(`${it.height} × ${it.width} = ${it.area} Sq.ft`);

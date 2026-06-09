@@ -43,9 +43,17 @@ class SaleController extends Controller
                 'discount_value' => 'required|numeric',
                 'scheme_value' => 'required|numeric',
                 'net_amount' => 'required|numeric',
-                'item_name' => 'required|array',
+                'category' => 'required|array',
+                'subcategory' => 'required|array',
+                'code' => 'required|array',
+                'item' => 'required|array',
+                'size' => 'required|array',
+                'pcs_carton' => 'required|array',
+                'carton_qty' => 'required|array',
                 'pcs' => 'required|array',
+                'liter' => 'required|array',
                 'rate' => 'required|array',
+                'discount' => 'required|array',
                 'amount' => 'required|array',
             ]);
 
@@ -61,17 +69,17 @@ class SaleController extends Controller
                 'distributor_phone' => $request->distributor_phone,
                 'Booker' => $request->Booker,
                 'Saleman' => $request->Saleman,
-                'category' => json_encode([]),
-                'subcategory' => json_encode([]),
-                'code' => json_encode([]),
-                'item' => json_encode($request->item_name),
-                'size' => json_encode([]),
-                'pcs_carton' => json_encode([]),
-                'carton_qty' => json_encode([]),
+                'category' => json_encode($request->category),
+                'subcategory' => json_encode($request->subcategory),
+                'code' => json_encode($request->code),
+                'item' => json_encode($request->item),
+                'size' => json_encode($request->size),
+                'pcs_carton' => json_encode($request->pcs_carton),
+                'carton_qty' => json_encode($request->carton_qty),
                 'pcs' => json_encode($request->pcs),
-                'liter' => json_encode([]),
+                'liter' => json_encode($request->liter),
                 'rate' => json_encode($request->rate),
-                'discount' => json_encode([]),
+                'discount' => json_encode($request->discount),
                 'amount' => json_encode($request->amount),
                 'grand_total' => $request->grand_total,
                 'discount_value' => $request->discount_value,
@@ -79,14 +87,18 @@ class SaleController extends Controller
                 'net_amount' => $request->net_amount,
             ]);
             // Stock Update Logic
-            foreach ($request->item_name as $index => $item_name) {
-                $product = Product::where('item_name', $item_name)->first();
+            foreach ($request->code as $index => $item_code) {
+                $product = Product::where('item_code', $item_code)->first();
                 if ($product) {
+                    $cartonQty = (int) $request->carton_qty[$index];
                     $pcsSold = (int) $request->pcs[$index];
 
-                    $product->initial_stock -= $pcsSold;
+                    // Stock Calculation
+                    $product->carton_quantity -= $cartonQty;
+                    $product->initial_stock -= ($cartonQty * $product->pcs_in_carton) + $pcsSold;
 
                     // Ensure stock doesn't go negative
+                    $product->carton_quantity = max($product->carton_quantity, 0);
                     $product->initial_stock = max($product->initial_stock, 0);
 
                     $product->save();
@@ -113,37 +125,52 @@ class SaleController extends Controller
                 ]
             );
 
-            foreach ($request->item_name as $index => $item_name) {
+            foreach ($request->code as $index => $item_code) {
+                $category = $request->category[$index];
+                $subcategory = $request->subcategory[$index];
+                $item = $request->item[$index];
+                $size = $request->size[$index];
+                $pcs_carton = (int) $request->pcs_carton[$index];
+                $carton_qty = (int) $request->carton_qty[$index];
                 $pcs = (int) $request->pcs[$index];
+                $liter = (int) $request->liter[$index];
                 $rate = $request->rate[$index];
+
+                // Calculate total initial stock in pieces
+                $initial_stock = ($carton_qty * $pcs_carton) + $pcs;
 
                 $distributorProduct = \App\Models\DistributorProduct::where([
                     'distributor_id' => $request->distributor_id,
-                    'item' => $item_name,
+                    'category' => $category,
+                    'subcategory' => $subcategory,
+                    'code' => $item_code,
+                    'item' => $item,
+                    'size' => $size,
                 ])->first();
 
                 if ($distributorProduct) {
                     // Update existing stock
+                    $distributorProduct->carton_quantity += $carton_qty;
                     $distributorProduct->pcs += $pcs;
 
                     // Update initial stock
-                    $distributorProduct->initial_stock += $pcs;
+                    $distributorProduct->initial_stock += $initial_stock;
 
                     $distributorProduct->save();
                 } else {
                     // Create new stock entry
                     \App\Models\DistributorProduct::create([
                         'distributor_id' => $request->distributor_id,
-                        'category' => '',
-                        'subcategory' => '',
-                        'code' => '',
-                        'item' => $item_name,
-                        'size' => '',
+                        'category' => $category,
+                        'subcategory' => $subcategory,
+                        'code' => $item_code,
+                        'item' => $item,
+                        'size' => $size,
                         'price' => $rate,
-                        'pcs_carton' => 0,
-                        'carton_quantity' => 0,
+                        'pcs_carton' => $pcs_carton,
+                        'carton_quantity' => $carton_qty,
                         'pcs' => $pcs,
-                        'initial_stock' => $pcs, // new field
+                        'initial_stock' => $initial_stock, // new field
                     ]);
                 }
             }
@@ -232,9 +259,17 @@ class SaleController extends Controller
                 'discount_value' => 'required|numeric',
                 'scheme_value' => 'required|numeric',
                 'net_amount' => 'required|numeric',
-                'item_name' => 'required|array',
+                'category' => 'required|array',
+                'subcategory' => 'required|array',
+                'code' => 'required|array',
+                'item' => 'required|array',
+                'size' => 'required|array',
+                'pcs_carton' => 'required|array',
+                'carton_qty' => 'required|array',
                 'pcs' => 'required|array',
+                'liter' => 'required|array',
                 'rate' => 'required|array',
+                'discount' => 'required|array',
                 'amount' => 'required|array',
             ]);
 
@@ -244,7 +279,7 @@ class SaleController extends Controller
             $oldAmounts = json_decode($sale->amount, true) ?? [];
 
             // STEP 2: NEW values from request
-            $newItems = $request->item_name;
+            $newItems = $request->item;
             $newAmounts = $request->amount;
 
             // STEP 3: Calculate difference before updating
@@ -282,17 +317,6 @@ class SaleController extends Controller
                 ]);
             }
 
-            // Revert Old Stock Before Updating with new data
-            $oldPcs = json_decode($sale->pcs, true) ?? [];
-            foreach ($oldItems as $index => $itemName) {
-                $product = Product::where('item_name', $itemName)->first();
-                if ($product) {
-                    $pcsToRevert = (int) ($oldPcs[$index] ?? 0);
-                    $product->initial_stock += $pcsToRevert;
-                    $product->save();
-                }
-            }
-
             // Update sale data
             $sale->update([
                 'Date' => $request->Date,
@@ -303,18 +327,18 @@ class SaleController extends Controller
                 'distributor_phone' => $request->distributor_phone,
                 'Booker' => $request->Booker,
                 'Saleman' => $request->Saleman,
-                'category' => json_encode([]),
-                'subcategory' => json_encode([]),
-                'code' => json_encode([]),
-                'item' => json_encode($request->item_name),
-                'size' => json_encode([]),
-                'pcs_carton' => json_encode([]),
-                'carton_qty' => json_encode([]),
-                'pcs' => json_encode($request->pcs),
-                'liter' => json_encode([]),
-                'rate' => json_encode($request->rate),
-                'discount' => json_encode([]),
-                'amount' => json_encode($request->amount),
+                'category' => $request->category,
+                'subcategory' => $request->subcategory,
+                'code' => $request->code,
+                'item' => $request->item,
+                'size' => $request->size,
+                'pcs_carton' => $request->pcs_carton,
+                'carton_qty' => $request->carton_qty,
+                'pcs' => $request->pcs,
+                'liter' => $request->liter,
+                'rate' => $request->rate,
+                'discount' => $request->discount,
+                'amount' => $request->amount,
                 'grand_total' => $request->grand_total,
                 'discount_value' => $request->discount_value,
                 'scheme_value' => $request->scheme_value,
@@ -322,14 +346,18 @@ class SaleController extends Controller
             ]);
 
             // Update stock quantities based on new data
-            foreach ($request->item_name as $index => $item_name) {
-                $product = Product::where('item_name', $item_name)->first();
+            foreach ($request->code as $index => $item_code) {
+                $product = Product::where('item_code', $item_code)->first();
                 if ($product) {
+                    $cartonQty = (int) $request->carton_qty[$index];
                     $pcsSold = (int) ($request->pcs[$index] ?? 0);
 
-                    $product->initial_stock -= $pcsSold;
+                    // Adjust stock - **You may want to first revert old sale stock quantities**
+                    $product->carton_quantity -= $cartonQty;
+                    $product->initial_stock -= ($cartonQty * $product->pcs_in_carton) + $pcsSold;
 
                     // Prevent negative stock
+                    $product->carton_quantity = max($product->carton_quantity, 0);
                     $product->initial_stock = max($product->initial_stock, 0);
 
                     $product->save();
@@ -350,18 +378,31 @@ class SaleController extends Controller
         $netAmount = $sale->net_amount;
 
         // Step 1: Decode product-related arrays
+        $categories = json_decode($sale->category);
+        $subcategories = json_decode($sale->subcategory);
+        $codes = json_decode($sale->code);
         $items = json_decode($sale->item);
+        $sizes = json_decode($sale->size);
+        $cartonQtys = json_decode($sale->carton_qty);
         $pcs = json_decode($sale->pcs);
 
         // Step 2: Loop through all products in the sale
-        for ($i = 0; $i < count($items); $i++) {
-            $product = Product::where('item_name', $items[$i])->first();
+        for ($i = 0; $i < count($codes); $i++) {
+            $product = Product::where('item_code', $codes[$i])
+                ->where('item_name', $items[$i])
+                ->where('category', $categories[$i])
+                ->where('sub_category', $subcategories[$i])
+                ->where('size', $sizes[$i])
+                ->first();
 
             if ($product) {
+                $cartonQty = (int) $cartonQtys[$i];
                 $pcsReturned = (int) $pcs[$i];
+                $pcsPerCarton = (int) $product->pcs_in_carton;
 
                 // Restore stock as it was reduced during sale
-                $product->initial_stock += $pcsReturned;
+                $product->carton_quantity += $cartonQty;
+                $product->initial_stock += ($cartonQty * $pcsPerCarton) + $pcsReturned;
 
                 $product->save();
             }

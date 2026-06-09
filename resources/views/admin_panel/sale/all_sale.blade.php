@@ -37,7 +37,7 @@
                                     <th>Address | Phone</th>
                                     <th>Booker</th>
                                     <th>Saleman</th>
-
+                                    <th>Category</th>
                                     <th>Items</th>
                                     <th>Total Amount</th>
                                     <th>Action</th>
@@ -57,7 +57,12 @@
                                     <td>{{ $sale->distributor_address }} <br> {{ $sale->distributor_phone }}</td>
                                     <td>{{ $sale->Booker }}</td>
                                     <td>{{ $sale->Saleman }}</td>
-
+                                    <td>
+                                        @php
+                                        $categories = json_decode($sale->category, true);
+                                        @endphp
+                                        {{ is_array($categories) ? implode(', ', $categories) : $categories }}
+                                    </td>
                                     <td>
                                         @php
                                         $items = json_decode($sale->item, true);

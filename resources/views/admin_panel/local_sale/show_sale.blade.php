@@ -272,10 +272,10 @@
             <thead>
                 <tr>
                     <th style="text-align: center; width: 5%;">#</th>
-                    <th style="width: 45%;">Item Name</th>
-                    <th style="text-align: center; width: 10%;">Quantity</th>
-                    <th style="text-align: center; width: 10%;">Unit</th>
-                    <th style="text-align: right; width: 15%;">Price/ Unit</th>
+                    <th style="width: 45%;">Description</th>
+                    <th style="text-align: center; width: 10%;">Qty</th>
+                    <th style="text-align: center; width: 10%;">Sq.Ft</th>
+                    <th style="text-align: right; width: 15%;">Rate</th>
                     <th style="text-align: right; width: 15%;">Amount</th>
                 </tr>
             </thead>
@@ -283,7 +283,7 @@
                 @php
                     $items = json_decode($sale->item) ?? [];
                     $qtys = json_decode($sale->qty) ?? [];
-                    $units = json_decode($sale->unit) ?? [];
+                    $manual_sqfts = json_decode($sale->manual_sqft) ?? [];
                     $rates = json_decode($sale->rate) ?? [];
                     $amounts = json_decode($sale->amount) ?? [];
                 @endphp
@@ -293,9 +293,9 @@
                         <td style="text-align: center;">{{ $loop->iteration }}</td>
                         <td><strong>{{ $item }}</strong></td>
                         <td style="text-align: center;">{{ $qtys[$i] ?? '1' }}</td>
-                        <td style="text-align: center;">{{ !empty($units[$i]) ? ucfirst($units[$i]) : '-' }}</td>
-                        <td style="text-align: right;">Rs {{ number_format((float)($rates[$i] ?? 0), 2) }}</td>
-                        <td style="text-align: right;"><strong>Rs {{ number_format((float)($amounts[$i] ?? 0), 2) }}</strong></td>
+                        <td style="text-align: center;">{{ !empty($manual_sqfts[$i]) ? $manual_sqfts[$i] : '-' }}</td>
+                        <td style="text-align: right;">{{ number_format((float)($rates[$i] ?? 0), 2) }}</td>
+                        <td style="text-align: right;"><strong>{{ number_format((float)($amounts[$i] ?? 0), 2) }}</strong></td>
                     </tr>
                     @endif
                 @endforeach

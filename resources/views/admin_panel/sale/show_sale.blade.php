@@ -52,30 +52,46 @@
                         <table class="table table-striped">
                             <thead>
                                 <tr>
-                                    <th>#</th>
-                                    <th>Item Name</th>
-                                    <th>Quantity</th>
-                                    <th>Unit</th>
-                                    <th>Price/ Unit</th>
-                                    <th>Amount</th>
+                                    <th>Category</th>
+                                    <th>Subcategory</th>
+                                    <th>Code</th>
+                                    <th>Item</th>
+                                    <th>Size</th>
+                                    <th>Packing</th>
+                                    <th>Carton Qty</th>
+                                    <th>Pcs</th>
+                                    <th>Rate</th>
+                                    <th>Discount</th>
+                                    <th>Total</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @php
-                                    $items = json_decode($sale->item, true) ?? [];
-                                    $pcs = json_decode($sale->pcs, true) ?? [];
-                                    if(empty($pcs)) $pcs = json_decode($sale->carton_qty, true) ?? [];
-                                    $rates = json_decode($sale->rate, true) ?? [];
-                                    $amounts = json_decode($sale->amount, true) ?? [];
+                                    $categories = json_decode($sale->category, true);
+                                    $subcategories = json_decode($sale->subcategory, true);
+                                    $codes = json_decode($sale->code, true);
+                                    $items = json_decode($sale->item, true);
+                                    $sizes = json_decode($sale->size, true);
+                                    $packings = json_decode($sale->pcs_carton, true);
+                                    $carton_qtys = json_decode($sale->carton_qty, true);
+                                    $pcs = json_decode($sale->pcs, true);
+                                    $rates = json_decode($sale->rate, true);
+                                    $discounts = json_decode($sale->discount, true);
+                                    $amounts = json_decode($sale->amount, true);
                                 @endphp
 
-                                @foreach ($items as $index => $item)
+                                @foreach ($categories as $index => $category)
                                     <tr>
-                                        <td>{{ $loop->iteration }}</td>
-                                        <td>{{ $item }}</td>
-                                        <td>{{ $pcs[$index] ?? '1' }}</td>
-                                        <td>Pcs</td>
+                                        <td>{{ $category }}</td>
+                                        <td>{{ $subcategories[$index] ?? '-' }}</td>
+                                        <td>{{ $codes[$index] ?? '-' }}</td>
+                                        <td>{{ $items[$index] ?? '-' }}</td>
+                                        <td>{{ $sizes[$index] ?? '-' }}</td>
+                                        <td>{{ $packings[$index] ?? '-' }}</td>
+                                        <td>{{ $carton_qtys[$index] ?? '-' }}</td>
+                                        <td>{{ $pcs[$index] ?? '-' }}</td>
                                         <td>{{ number_format($rates[$index] ?? 0, 2) }}</td>
+                                        <td>{{ number_format($discounts[$index] ?? 0, 2) }}</td>
                                         <td>{{ number_format($amounts[$index] ?? 0, 2) }}</td>
                                     </tr>
                                 @endforeach

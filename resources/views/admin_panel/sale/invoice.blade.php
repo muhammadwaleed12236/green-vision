@@ -46,30 +46,27 @@
                     <table class="table table-bordered">
                         <thead class="table-light">
                             <tr class="text-center">
-                                <th style="border: 1px solid #000;">#</th>
-                                <th style="border: 1px solid #000;">Item Name</th>
-                                <th style="border: 1px solid #000;">Quantity</th>
-                                <th style="border: 1px solid #000;">Unit</th>
-                                <th style="border: 1px solid #000;">Price/ Unit</th>
+                                <th style="border: 1px solid #000;">Code</th>
+                                <th style="border: 1px solid #000;">Item Description</th>
+                                <th style="border: 1px solid #000;">Packing</th>
+                                <th style="border: 1px solid #000;">Carton Qty</th>
+                                <th style="border: 1px solid #000;">Pcs Qty</th>
+                                <th style="border: 1px solid #000;">Rate</th>
+                                <th style="border: 1px solid #000;">Disc Rs</th>
                                 <th style="border: 1px solid #000;">Amount</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @php
-                                $items = json_decode($sale->item) ?? [];
-                                $pcs = json_decode($sale->pcs) ?? [];
-                                if(empty($pcs)) $pcs = json_decode($sale->carton_qty) ?? [];
-                                $rates = json_decode($sale->rate) ?? [];
-                                $amounts = json_decode($sale->amount) ?? [];
-                            @endphp
-                            @foreach($items as $index => $item)
+                            @foreach(json_decode($sale->item) as $index => $item)
                             <tr>
-                                <td class="text-center" style="border: 1px solid #000;">{{ $loop->iteration }}</td>
+                                <td style="border: 1px solid #000;">{{ json_decode($sale->code)[$index] ?? 'N/A' }}</td>
                                 <td style="border: 1px solid #000;">{{ $item }}</td>
-                                <td class="text-center" style="border: 1px solid #000;">{{ $pcs[$index] ?? '1' }}</td>
-                                <td class="text-center" style="border: 1px solid #000;">Pcs</td>
-                                <td class="text-end" style="border: 1px solid #000;">{{ number_format((float)($rates[$index] ?? 0), 2) }}</td>
-                                <td class="text-end" style="border: 1px solid #000;">{{ number_format((float)($amounts[$index] ?? 0), 2) }}</td>
+                                <td class="text-center" style="border: 1px solid #000;">{{ json_decode($sale->pcs_carton)[$index] ?? '' }}</td>
+                                <td class="text-center" style="border: 1px solid #000;">{{ json_decode($sale->carton_qty)[$index] ?? '' }}</td>
+                                <td class="text-center" style="border: 1px solid #000;">{{ json_decode($sale->pcs)[$index] ?? '' }}</td>
+                                <td class="text-center" style="border: 1px solid #000;">{{ json_decode($sale->rate)[$index] ?? '' }}</td>
+                                <td class="text-center" style="border: 1px solid #000;">{{ json_decode($sale->discount)[$index] ?? '0' }}</td>
+                                <td class="text-end" style="border: 1px solid #000;">{{ json_decode($sale->amount)[$index] ?? '' }}</td>
                             </tr>
                             @endforeach
 
@@ -81,15 +78,15 @@
 
                             @if($distributorLedger)
                             <tr>
-                                <td colspan="3"></td>
-                                <td class="fw-bold text-danger" colspan="2" style="border: 2px solid #000;">Previous Balance:</td>
+                                <td colspan="5"></td>
+                                <td class="fw-bold text-danger" colspan="3" style="border: 2px solid #000;">Previous Balance:</td>
                                 <td class="fw-bold text-end text-danger" style="border: 2px solid #000;">
                                     {{ number_format($calculatedPrevious, 2) }}
                                 </td>
                             </tr>
                             <tr>
-                                <td colspan="3"></td>
-                                <td class="fw-bold text-danger" colspan="2" style="border: 2px solid #000;">Closing Balance:</td>
+                                <td colspan="5"></td>
+                                <td class="fw-bold text-danger" colspan="3" style="border: 2px solid #000;">Closing Balance:</td>
                                 <td class="fw-bold text-end text-danger" style="border: 2px solid #000;">
                                     {{ number_format($closing, 2) }}
                                 </td>
@@ -98,27 +95,39 @@
 
                         </tbody>
                         @php
+                        $cartonTotal = collect(json_decode($sale->carton_qty))->sum();
+                        $literTotal = collect(json_decode($sale->liter))->sum();
                         @endphp
                         <tfoot class="table-light">
                             <tr>
-                                <td colspan="3"></td>
-                                <td class="fw-bold" colspan="2" style="border: 2px solid #000;">Gross Amount:</td>
+                                <td colspan="5"></td>
+                                <td class="fw-bold" colspan="3" style="border: 2px solid #000;">Gross Amount:</td>
                                 <td class="fw-bold text-end" style="border: 2px solid #000;">{{ $sale->grand_total }}</td>
                             </tr>
                             <tr>
-                                <td colspan="3"></td>
-                                <td class="fw-bold" colspan="2" style="border: 2px solid #000;">Discount Amount:</td>
+                                <td colspan="5"></td>
+                                <td class="fw-bold" colspan="3" style="border: 2px solid #000;">Discount Amount:</td>
                                 <td class="fw-bold text-end" style="border: 2px solid #000;">{{ $sale->discount_value }}</td>
                             </tr>
                             <tr>
-                                <td colspan="3"></td>
-                                <td class="fw-bold" colspan="2" style="border: 2px solid #000;">Scheme Amount:</td>
+                                <td colspan="5"></td>
+                                <td class="fw-bold" colspan="3" style="border: 2px solid #000;">Scheme Amount:</td>
                                 <td class="fw-bold text-end" style="border: 2px solid #000;">{{ $sale->scheme_value	 }}</td>
                             </tr>
                             <tr>
-                                <td colspan="3"></td>
-                                <td class="fw-bold" colspan="2" style="border: 2px solid #000;">Net Amount:</td>
+                                <td colspan="5"></td>
+                                <td class="fw-bold" colspan="3" style="border: 2px solid #000;">Net Amount:</td>
                                 <td class="fw-bold text-end" style="border: 2px solid #000;">{{ $sale->net_amount }}</td>
+                            </tr>
+                            <tr>
+                                <td colspan="5"></td>
+                                <td class="fw-bold" colspan="3" style="border: 2px solid #000;">Carton Total:</td>
+                                <td class="fw-bold text-end" style="border: 2px solid #000;">{{ $cartonTotal }}</td>
+                            </tr>
+                            <tr>
+                                <td colspan="5"></td>
+                                <td class="fw-bold" colspan="3" style="border: 2px solid #000;">Liter Total:</td>
+                                <td class="fw-bold text-end" style="border: 2px solid #000;">{{ $literTotal }}</td>
                             </tr>
                         </tfoot>
                     </table>

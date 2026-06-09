@@ -1,42 +1,9 @@
 @include('admin_panel.include.header_include')
 
 <style>
-    /* Simple styles for custom autocomplete dropdown */
-    .autocomplete-list {
-        position: absolute;
-        z-index: 9999;
-        background: #fff;
-        border: 1px solid #ddd;
-        max-height: 220px;
-        overflow-y: auto;
-        width: 100%;
-        border-radius: 4px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-    }
-    .autocomplete-item {
-        padding: 8px 12px;
-        cursor: pointer;
-        border-bottom: 1px solid #eee;
-    }
-    .autocomplete-item:last-child {
-        border-bottom: none;
-    }
-    .autocomplete-item:hover,
-    .autocomplete-item.active {
-        background: #e9ecef;
-    }
-
-    .row-relative {
-        position: relative;
-    }
-
     /* General Table Styling */
-    #saleTable {
-        width: 100%;
-        table-layout: fixed;
-    }
-
-    #saleTable th {
+    .sale-table th {
+        /* vertical-alig/n: middle; */
         font-weight: 600;
         background-color: #f8f9fa;
         color: #333;
@@ -44,34 +11,36 @@
         padding: 10px 5px !important;
         font-size: 13px;
         text-align: center;
-        white-space: nowrap;
-        vertical-align: middle;
     }
 
-    #saleTable td {
+    .sale-table td {
         vertical-align: middle;
-        padding: 8px 6px !important;
+        padding: 8px 5px !important;
     }
 
     /* Column Widths */
-    #saleTable th:nth-child(1), #saleTable td:nth-child(1) { width: 250px; } /* Item Name */
-    #saleTable th:nth-child(2), #saleTable td:nth-child(2) { width: 100px; } /* Quantity */
-    #saleTable th:nth-child(3), #saleTable td:nth-child(3) { width: 100px; } /* Unit */
-    #saleTable th:nth-child(4), #saleTable td:nth-child(4) { width: 120px; } /* Price/ Unit */
-    #saleTable th:nth-child(5), #saleTable td:nth-child(5) { width: 150px; } /* Amount */
-    #saleTable th:nth-child(6), #saleTable td:nth-child(6) { width: 80px; }  /* Action */
+    .sale-table th:nth-child(1) { width: 12%; } /* Type */
+    .sale-table th:nth-child(2) { width: 20%; } /* Item */
+    .sale-table th:nth-child(3) { width: 7%; }  /* H */
+    .sale-table th:nth-child(4) { width: 7%; }  /* W */
+    .sale-table th:nth-child(5) { width: 8%; }  /* Unit */
+    .sale-table th:nth-child(6) { width: 8%; }  /* Area */
+    .sale-table th:nth-child(7) { width: 9%; } /* Manual */
+    .sale-table th:nth-child(8) { width: 9%; }  /* Rate */
+    .sale-table th:nth-child(9) { width: 12%; } /* Qty */
+    .sale-table th:nth-child(10) { width: 10%; } /* Total */
+    .sale-table th:nth-child(11) { width: 5%; }  /* Action */
 
     /* Input & Select Styling */
-    #saleTable .form-control {
+    .sale-table .form-control {
         border-radius: 4px;
         border: 1px solid #ced4da;
         font-size: 13px;
         padding: 6px 8px;
         height: 34px; /* Consistent height */
-        width: 100% !important;
     }
 
-    #saleTable .form-control:focus {
+    .sale-table .form-control:focus {
         border-color: #637381;
         box-shadow: none;
     }
@@ -83,15 +52,60 @@
         cursor: default;
     }
 
-    /* Action Buttons */
-    #saleTable .remove-row {
-        padding: 4px 10px;
-        font-size: 12px;
-        white-space: nowrap;
+    /* Qty Box Styling */
+    .qty-box {
+        display: flex;
+        gap: 0;
+        align-items: center;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        overflow: hidden;
+    }
+    
+    .qty-box .btn {
+        padding: 0 8px;
+        height: 32px;
+        border-radius: 0;
+        font-weight: bold;
+        background: #f1f3f5;
+        border: none;
+        color: #333;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 
-    #saleTable tbody tr:hover {
-        background-color: #f5f5f5;
+    .qty-box .btn:hover {
+        background: #e2e6ea;
+    }
+
+    .qty-box .qty {
+        border: none;
+        border-right: 1px solid #ced4da;
+        border-left: 1px solid #ced4da;
+        border-radius: 0;
+        height: 32px;
+        padding: 0;
+        width: 100%;
+        text-align: center;
+    }
+
+    .btn-action {
+        width: 28px;
+        height: 28px;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 4px;
+        font-size: 16px;
+        line-height: 1;
+    }
+
+    /* Type Select styling specifically */
+    .row-type {
+        font-weight: 500;
+        color: #212529;
     }
 </style>
 
@@ -104,7 +118,7 @@
 
             <h4 class="mb-3">🧾 Job Order</h4>
 
-            <form method="POST" action="{{ route('store-local-sale') }}" id="saleForm">
+            <form method="POST" action="{{ route('store-local-sale') }}">
                 @csrf
 
                 <div class="container-fluid">
@@ -184,20 +198,61 @@
                 <div class="card mb-3">
                     <div class="card-body p-0">
                         <div class="table-responsive">
-                            <table class="table table-bordered align-middle text-center" id="saleTable">
+                            <table class="table table-borderless mb-0 sale-table">
                                 <thead>
                                     <tr class="bg-light">
+                                        <th>Type</th>
                                         <th>Item Name</th>
-                                        <th>Quantity</th>
+                                        <th>H</th>
+                                        <th>W</th>
                                         <th>Unit</th>
-                                        <th>Price/ Unit</th>
-                                        <th>Amount</th>
+                                        <th>Area (ft²)</th>
+                                        <th>Manual SqFt</th>
+                                        <th>Rate</th>
+                                        <th>Qty</th>
+                                        <th>Total</th>
                                         <th>Action</th>
                                     </tr>
                                 </thead>
 
-                                <tbody>
-                                    <!-- Rows injected via JS -->
+                                <tbody id="saleTableBody">
+                                @for($i=0; $i<5; $i++)
+                                    <tr class="sale-row">
+                                        <td>
+                                            <select class="form-control row-type">
+                                                <option value="" disabled selected>Select Type</option>
+                                                <option value="glass">Measurements</option>
+                                                <option value="other">Other</option>
+                                            </select>
+                                        </td>
+                                        <td><input name="item_name[]" class="form-control" placeholder="Item"></td>
+                                        <td><input name="height[]" class="form-control height text-center"></td>
+                                        <td><input name="width[]" class="form-control width text-center"></td>
+                                        <td>
+                                            <select name="unit[]" class="form-control unit p-1">
+                                                <option value="ft" selected>Ft</option>
+                                                <option value="inch">In</option>
+                                            </select>
+                                        </td>
+                                        <td><input class="form-control area readonly-box text-center" readonly tabindex="-1"></td>
+                                        <td><input name="manual_sqft[]" class="form-control manual-sqft text-center" placeholder="--"></td>
+                                        <td><input name="rate[]" class="form-control rate text-end" placeholder="0.00"></td>
+                                        <td>
+                                            <div class="qty-box">
+                                                <button type="button" class="btn qty-minus">−</button>
+                                                <input name="qty[]" class="form-control qty" value="1" placeholder="0">
+                                                <button type="button" class="btn qty-plus">+</button>
+                                            </div>
+                                        </td>
+                                        <td><input name="amount[]" class="form-control item-total readonly-box text-end" readonly tabindex="-1" value="0.00"></td>
+                                        <td>
+                                            <div class="d-flex gap-1 justify-content-center">
+                                                <button type="button" class="btn btn-success btn-action add-row">+</button>
+                                                <button type="button" class="btn btn-danger btn-action remove-row">×</button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @endfor
                                 </tbody>
                             </table>
                         </div>
@@ -231,12 +286,12 @@
 
                             <div class="col-md-3">
                                 <label>Discount</label>
-                                <input name="gross_discount" class="form-control discount" value="0">
+                                <input name="gross_discount" class="form-control" value="0">
                             </div>
 
                             <div class="col-md-3">
                                 <label>Advance</label>
-                                <input id="advance" name="advance_amount" class="form-control advance">
+                                <input id="advance" name="advance_amount" class="form-control">
                             </div>
 
                             <div class="col-md-3">
@@ -248,7 +303,7 @@
                 </div>
 
                 <input type="hidden" name="net_amount" id="netAmount">
-                <button class="btn btn-primary" type="submit">Save Job Order</button>
+                <button class="btn btn-primary">Save Job Order</button>
             </form>
         </div>
     </div>
@@ -290,8 +345,6 @@
 @include('admin_panel.include.footer_include')
 
 <script>
-$(document).ready(function () {
-    // ========== PARTY TYPE SELECTION ==========
     $('#partyType').on('change', function () {
         let t = this.value;
 
@@ -319,7 +372,7 @@ $(document).ready(function () {
             $('#remaining').closest('.col-md-3').addClass('d-none');
         }
 
-        calculateGrandTotal();
+        calcGrand();
     });
 
     $('#partyType').trigger('change');
@@ -336,192 +389,197 @@ $(document).ready(function () {
         $('#address').val(o.data('address') || '');
     });
 
-    // ========== ROW CREATION ==========
-    function createRowHtml() {
-        return `
-            <tr class="sale-row">
-                <td style="position:relative;">
-                    <input type="text" class="form-control item-input" name="item_name[]" autocomplete="off" placeholder="Type item name">
-                    <div class="autocomplete-list d-none"></div>
-                </td>
-                <td>
-                    <input type="number" class="form-control qty text-center" name="qty[]" min="0">
-                </td>
-                <td>
-                    <input type="text" class="form-control unit text-center" name="unit[]" readonly>
-                </td>
-                <td>
-                    <input type="number" class="form-control rate text-end" name="rate[]" min="0">
-                </td>
-                <td>
-                    <input type="number" class="form-control amount text-end" name="amount[]" readonly>
-                </td>
-                <td>
-                    <button type="button" class="btn btn-danger btn-sm remove-row">Delete</button>
-                </td>
-            </tr>`;
-    }
+    function toFeet(value, unit) {
+        if (!value) return 0;
 
-    // Initial 5 rows
-    for (let i = 0; i < 5; i++) {
-        $('#saleTable tbody').append(createRowHtml());
-    }
+        value = value.toString().trim();
+        let parts = value.split('.');
 
-    function appendNewRow() {
-        $('#saleTable tbody').append(createRowHtml());
-        let newRow = $('#saleTable tbody tr').last();
-        newRow[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
+        let whole = parseInt(parts[0]) || 0;
+        let decimal = parts[1] ? parseInt(parts[1]) : 0;
 
-    // Remove row
-    $(document).on('click', '.remove-row', function () {
-        let rowCount = $('#saleTable tbody tr').length;
-        if (rowCount > 1) {
-            $(this).closest('tr').remove();
-            calculateGrandTotal();
-        } else {
-            Swal.fire('Cannot Delete', 'At least one row must remain.', 'warning');
-        }
-    });
-
-    // ========== AUTOCOMPLETE SEARCH ==========
-    $(document).on('input', '.item-input', function () {
-        let input = $(this);
-        let row = input.closest('tr');
-        let list = row.find('.autocomplete-list');
-        let q = input.val().trim();
-
-        if (!q) {
-            list.addClass('d-none');
-            return;
+        if (unit === 'ft') {
+            return whole + (decimal / 12);
         }
 
-        $.ajax({
-            url: "{{ route('get.items') }}",
-            type: "GET",
-            data: { q: q },
-            success: function (res) {
-                if (!Array.isArray(res) || res.length === 0) {
-                    list.addClass('d-none');
-                    return;
-                }
+        let inches = whole + (decimal / 25.4);
+        return inches / 12;
+    }
 
-                list.empty().removeClass('d-none');
-                res.forEach(it => {
-                    let el = $(`<div class="autocomplete-item">${it.item_name}</div>`);
-                    el.data('item', it);
-                    list.append(el);
-                });
-            }
-        });
-    });
+    // Toggle Input State based on Type
+    $(document).on('change', '.row-type', function() {
+        let r = $(this).closest('tr');
+        let type = $(this).val();
 
-    $(document).on('click', function (e) {
-        if (!$(e.target).closest('.item-input, .autocomplete-list').length) {
-            $('.autocomplete-list').addClass('d-none');
+        // Reset Styles first
+        r.find('.height, .width, .unit, .manual-sqft').prop('readonly', false).css('background-color', '');
+        r.find('.unit').prop('disabled', false);
+
+        if (!type) {
+             // If Select Type (empty)
+             // Initialize as disabled if empty
+             r.find('.height, .width, .unit, .manual-sqft, .rate, .qty').prop('readonly', true).css('background-color', '#f8f9fa');
+             r.find('.unit').prop('disabled', true);
+             return;
         }
-    });
 
-    $(document).on('click', '.autocomplete-item', function () {
-        let it = $(this).data('item');
-        let row = $(this).closest('tr');
+        // Re-enable common fields in case they were disabled by empty check
+        r.find('.rate, .qty').prop('readonly', false).css('background-color', '');
 
-        row.find('.item-input').val(it.item_name);
-
-        let unitVal = it.product_mode || '';
-        if (unitVal === 'measurements') unitVal = 'Sq.ft';
-        else if (unitVal === 'simple') unitVal = 'Pcs';
-        row.find('.unit').val(unitVal);
-
-        row.find('.rate').val(parseInt(it.retail_price) || 0);
+        if (type === 'other') { // Was 'hardware'
+            // Disable Height, Width, Manual Sqft, Unit
+            r.find('.height, .width, .unit, .manual-sqft, .area').prop('readonly', true).val('').css('background-color', '#f0f0f0');
+            r.find('.unit').prop('disabled', true);
+             // Default Qty to 1 if empty
+             if(!r.find('.qty').val()) r.find('.qty').val(1);
+        } else if (type === 'glass') { // Means 'Measurements'
+            // Enable Height, Width, Manual Sqft
+             r.find('.area').prop('readonly', true); // Area always readonly
+        }
         
-        if (!row.find('.qty').val()) {
-            row.find('.qty').val(1);
+        calcRow(r);
+    });
+
+    function calcRow(r) {
+        let type = r.find('.row-type').val();
+        let rate = parseFloat(r.find('.rate').val()) || 0;
+        let qty = parseFloat(r.find('.qty').val());
+
+        // Default Qty to 1 if empty/invalid
+        if (isNaN(qty) || qty < 0) qty = 1;
+
+        if (type === 'other') {
+            // Simple Calculation: Rate * Qty
+            let total = rate * qty;
+            r.find('.item-total').val(total.toFixed(2));
+            r.find('.area').val('-'); // clear area
+        } else if(type === 'glass') { // Measurements
+            // Glass Calculation
+            let unit = r.find('.unit').val();
+            let hInput = r.find('.height').val();
+            let wInput = r.find('.width').val();
+            let mInput = r.find('.manual-sqft').val();
+
+            let h = toFeet(hInput, unit);
+            let w = toFeet(wInput, unit);
+            let area = h * w;
+            r.find('.area').val(area ? area.toFixed(2) : '');
+
+            let manualSqft = parseFloat(mInput) || 0;
+            let finalArea = manualSqft > 0 ? manualSqft : area;
+            
+            let total = finalArea * rate * qty;
+            r.find('.item-total').val(total.toFixed(2));
+        } else {
+            // No type selected
+            r.find('.item-total').val('');
         }
 
-        row.find('.autocomplete-list').addClass('d-none');
-
-        calculateRow(row);
-        autoAddIfNeeded();
-    });
-
-    // ========== CALCULATIONS ==========
-    $(document).on('input', '.rate, .qty', function () {
-        let row = $(this).closest('tr');
-        calculateRow(row);
-        autoAddIfNeeded();
-    });
-
-    function calculateRow(row) {
-        let rate = parseFloat(row.find('.rate').val()) || 0;
-        let qty = parseFloat(row.find('.qty').val()) || 0;
-
-        let finalAmount = rate * qty;
-        row.find('.amount').val(finalAmount.toFixed(2));
-
-        calculateGrandTotal();
+        calcGrand();
     }
 
-    function calculateGrandTotal() {
-        let total = 0;
-        $('.amount').each(function () {
-            total += parseFloat($(this).val()) || 0;
+    $(document).on('input change', '.height,.width,.unit,.rate,.qty,.manual-sqft', e => {
+        calcRow($(e.target).closest('tr'));
+    });
+
+    // Auto-Append Logic: Detect input in last row
+    $(document).on('input', '.sale-row:last input', function() {
+        let lastRow = $('.sale-row:last');
+        let hasValue = false;
+        lastRow.find('input').each(function() {
+            if($(this).val()) hasValue = true;
         });
 
-        $('#grandTotal').val(total.toFixed(2));
+        if(hasValue) {
+            addNewRow();
+        }
+    });
 
-        let discount = parseFloat($('.discount').val()) || 0;
-        let net = total - discount;
+    function addNewRow() {
+        let r = $('.sale-row:first').clone();
+        r.find('input').val('');
+        
+        // Item name should always be editable
+        r.find('[name="item_name[]"]').prop('readonly', false).css('background-color', '');
+        
+        // Other fields start disabled until type is selected
+        r.find('.height, .width, .manual-sqft, .rate').prop('readonly', true).css('background-color', '#f8f9fa');
+        r.find('.qty').val(1).prop('readonly', true).css('background-color', '#f8f9fa');
+        r.find('.manual-sqft').val('');
+        r.find('.area').prop('readonly', true);
+        
+        // Reset type to empty default
+        r.find('.row-type').val(''); 
+        r.find('.unit').prop('disabled', true).val('ft');
+        
+        $('#saleTableBody').append(r);
+    }
+
+    $(document).on('click', '.qty-plus', e => {
+        let r = $(e.target).closest('tr');
+        r.find('.qty').val(+r.find('.qty').val() + 1);
+        calcRow(r);
+    });
+
+    $(document).on('click', '.qty-minus', e => {
+        let r = $(e.target).closest('tr');
+        r.find('.qty').val(Math.max(1, +r.find('.qty').val() - 1));
+        calcRow(r);
+    });
+
+    $('.add-row').click(() => {
+        addNewRow();
+    });
+
+    $(document).on('click', '.remove-row', e => {
+        if ($('.sale-row').length > 1) {
+            $(e.target).closest('tr').remove();
+            calcGrand();
+        }
+    });
+
+    function calcGrand() {
+        let g = 0;
+        $('.item-total').each((_, e) => g += +e.value || 0);
+        let d = +$('[name="gross_discount"]').val() || 0;
+        let net = g - d;
+        $('#grandTotal').val(g.toFixed(2));
         $('#netAmount').val(net.toFixed(2));
+        let adv = +$('#advance').val() || 0;
+        $('#remaining').val((net - adv).toFixed(2));
+    }
 
-        let advance = parseFloat($('.advance').val()) || 0;
+    $('#advance,[name="gross_discount"]').on('input', calcGrand);
+
+    $('form').on('submit', function () {
+        calcGrand();
         
-        if ($('#partyType').val() === 'walkin') {
-            $('#advance').val(net.toFixed(2));
-            $('#remaining').val('0.00');
-        } else {
-            $('#remaining').val((net - advance).toFixed(2));
-        }
-    }
-
-    $('.discount, .advance').on('input', calculateGrandTotal);
-
-    // ========== AUTO ADD ROW WHEN NEEDED ==========
-    function isRowEmpty(row) {
-        let itemName = row.find('.item-input').val().trim();
-        let rate = parseFloat(row.find('.rate').val()) || 0;
-        let qty = parseFloat(row.find('.qty').val()) || 0;
-
-        return !itemName && rate === 0 && qty === 0;
-    }
-
-    function autoAddIfNeeded() {
-        let rows = $('#saleTable tbody tr');
-        let emptyRowExists = false;
-
-        rows.each(function () {
-            if (isRowEmpty($(this))) {
-                emptyRowExists = true;
-                return false;
-            }
-        });
-
-        if (!emptyRowExists) {
-            appendNewRow();
-        }
-    }
-
-    $('#saleForm').on('submit', function(e) {
+        // Remove empty rows before submitting to avoid validation errors or cluttered DB
+        // Check filtering logic if needed, but for now just submit all.
+        // Actually, Controller should filter out empty items.
+        // Let's ensure at least one row has data.
         let validItems = 0;
-        $('.item-input').each(function() {
-            if ($(this).val().trim() !== '') validItems++;
+        $('.sale-row').each(function() {
+             if($(this).find('[name="item_name[]"]').val()) validItems++;
         });
 
         if (validItems === 0) {
-            e.preventDefault();
-            Swal.fire('Error', 'Please add at least one item.', 'error');
+            Swal.fire('Error', 'Please add at least one item', 'error');
             return false;
         }
+        
+        // Enable disabled selects (like unit) just in case, so they submit
+        $('.unit').prop('disabled', false);
     });
-});
+    // Initial State Check for first load
+    $(document).ready(function() {
+         $('.sale-row').each(function() {
+             let type = $(this).find('.row-type').val();
+             if(!type) {
+                 // Initialize as disabled if empty
+                 $(this).find('.height, .width, .unit, .manual-sqft, .rate, .qty').prop('readonly', true).css('background-color', '#f8f9fa');
+                 $(this).find('.unit').prop('disabled', true);
+             }
+         });
+    });
 </script>
