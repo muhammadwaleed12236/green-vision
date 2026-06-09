@@ -49,16 +49,13 @@
                             <table class="table table-bordered align-middle text-center" id="purchaseTable">
                                 <thead>
                                     <tr>
-                                        <th style="width:100px">Item</th>
-                                        <th>Type</th>
-                                        <th>Measurement</th>
-                                        <th>Rate</th>
-                                        {{-- <th>Carton Qty</th> --}}
-                                        <th>Feet (pcs)</th>
-                                        <th>Gross Total</th>
-                                        <th>Discount</th>
-                                        <th>Amount</th>
-                                        <th>Action</th>
+                                        <th style="width: 50px">#</th>
+                                        <th>Product Name</th>
+                                        <th>Quantity</th>
+                                        <th>Unit</th>
+                                        <th>Price/unit</th>
+                                        <th>amount</th>
+                                        <th style="width: 80px">Action</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -66,8 +63,8 @@
                                 </tbody>
                                 <tfoot>
                                     <tr>
-                                        <td colspan="6" class="text-end fw-bold">Grand Total:</td>
-                                        <td colspan="3"><input type="number"
+                                        <td colspan="5" class="text-end fw-bold">Grand Total:</td>
+                                        <td><input type="number"
                                                 class="form-control form-control-lg fw-bold text-center" id="grandTotal"
                                                 name="grand_total" readonly></td>
                                         <td></td>
@@ -143,31 +140,25 @@
 
     /* Column Widths */
     #purchaseTable th:nth-child(1),
-    #purchaseTable td:nth-child(1) { width: 180px; } /* Item */
+    #purchaseTable td:nth-child(1) { width: 50px; } /* # */
 
     #purchaseTable th:nth-child(2),
-    #purchaseTable td:nth-child(2) { width: 100px; } /* Type */
+    #purchaseTable td:nth-child(2) { width: 220px; } /* Product Name */
 
     #purchaseTable th:nth-child(3),
-    #purchaseTable td:nth-child(3) { width: 150px; } /* Measurement */
+    #purchaseTable td:nth-child(3) { width: 100px; } /* Quantity */
 
     #purchaseTable th:nth-child(4),
-    #purchaseTable td:nth-child(4) { width: 90px; } /* Rate */
+    #purchaseTable td:nth-child(4) { width: 100px; } /* Unit */
 
     #purchaseTable th:nth-child(5),
-    #purchaseTable td:nth-child(5) { width: 90px; } /* Feet (pcs) */
+    #purchaseTable td:nth-child(5) { width: 110px; } /* Price/unit */
 
     #purchaseTable th:nth-child(6),
-    #purchaseTable td:nth-child(6) { width: 110px; } /* Gross Total */
+    #purchaseTable td:nth-child(6) { width: 120px; } /* amount */
 
     #purchaseTable th:nth-child(7),
-    #purchaseTable td:nth-child(7) { width: 90px; } /* Discount */
-
-    #purchaseTable th:nth-child(8),
-    #purchaseTable td:nth-child(8) { width: 100px; } /* Amount */
-
-    #purchaseTable th:nth-child(9),
-    #purchaseTable td:nth-child(9) { width: 80px; } /* Action */
+    #purchaseTable td:nth-child(7) { width: 80px; } /* Action */
 
     /* Input Styling in Table */
     #purchaseTable .form-control {
@@ -246,9 +237,9 @@
                 let pcs = parseInt(row.find('.pcx').val()) || 0;
                 let rate = parseInt(row.find('.rate').val()) || 0;
 
-                // If item has name, it must have feet/pcs
+                // If item has name, it must have quantity
                 if (itemName && pcs <= 0) {
-                    errors.push('Item "' + itemName + '" requires Feet (pcs) value');
+                    errors.push('Item "' + itemName + '" requires Quantity');
                 }
 
                 // Check if at least one valid item exists
@@ -382,30 +373,29 @@
         // Make reset function globally accessible
         window.resetForm = resetForm;
 
+        function updateRowNumbers() {
+            $('#purchaseTable tbody tr').each(function (index) {
+                $(this).find('.row-index').text(index + 1);
+            });
+        }
+
         // ========== ROW CREATION ==========
         function createRowHtml() {
             return `
     <tr class="purchase-row">
+        <td class="row-index text-center fw-semibold" style="vertical-align: middle;"></td>
         <td style="position:relative;">
             <input type="hidden" name="item_id[]" class="item-id">
             <input type="text" class="form-control item-input" name="item_name[]" autocomplete="off" placeholder="Type item name">
             <div class="autocomplete-list d-none"></div>
         </td>
 
-        <!-- TYPE -->
         <td>
-            <input type="text"
-                   class="form-control product_mode"
-                   name="product_mode[]"
-                   readonly>
+            <input type="number" class="form-control pcx" name="pcs[]" min="1" value="1">
         </td>
 
-        <!-- MEASUREMENT -->
         <td>
-            <input type="text"
-                   class="form-control measurement"
-                   name="measurement[]"
-                   readonly>
+            <input type="text" class="form-control product_mode" name="product_mode[]" placeholder="e.g. pcs, box">
         </td>
 
         <td>
@@ -413,19 +403,12 @@
         </td>
 
         <td>
-            <input type="number" class="form-control pcx" name="pcs[]" min="0">
-        </td>
-
-        <td>
-            <input type="number" class="form-control gross-total" name="gross_total[]" readonly>
-        </td>
-
-        <td>
-            <input type="number" class="form-control discount" name="discount[]" min="0">
-        </td>
-
-        <td>
             <input type="number" class="form-control amount" name="amount[]" readonly>
+            <!-- Hidden backward-compatible inputs -->
+            <input type="hidden" name="measurement[]" class="measurement" value="">
+            <input type="hidden" name="gross_total[]" class="gross-total" value="0">
+            <input type="hidden" name="discount[]" class="discount" value="0">
+            <input type="hidden" name="pcs_carton[]" class="pcs-carton" value="0">
         </td>
 
         <td>
@@ -438,9 +421,11 @@
         for (let i = 0; i < 5; i++) {
             $('#purchaseTable tbody').append(createRowHtml());
         }
+        updateRowNumbers();
 
         function appendNewRow() {
             $('#purchaseTable tbody').append(createRowHtml());
+            updateRowNumbers();
             // Scroll to new row
             let newRow = $('#purchaseTable tbody tr').last();
             newRow[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -451,6 +436,7 @@
             let rowCount = $('#purchaseTable tbody tr').length;
             if (rowCount > 1) {
                 $(this).closest('tr').remove();
+                updateRowNumbers();
                 calculateGrandTotal();
             } else {
                 if (typeof Swal !== 'undefined') {
@@ -542,15 +528,12 @@
         });
 
         function calculateRow(row) {
-            let rate = parseInt(row.find('.rate').val()) || 0;
-            let pcs = parseInt(row.find('.pcx').val()) || 0;
-            let discount = parseInt(row.find('.discount').val()) || 0;
+            let rate = parseFloat(row.find('.rate').val()) || 0;
+            let pcs = parseFloat(row.find('.pcx').val()) || 0;
 
             let gross = rate * pcs;
             row.find('.gross-total').val(gross);
-
-            let finalAmount = gross - discount;
-            row.find('.amount').val(finalAmount);
+            row.find('.amount').val(gross);
 
             calculateGrandTotal();
         }

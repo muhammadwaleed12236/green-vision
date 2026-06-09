@@ -152,10 +152,12 @@
                     <thead>
                         <tr>
                             <th width="5%">#</th>
-                            <th width="40%">Item Name</th>
-                            <th width="15%">Unit</th>
-                            <th width="20%">Price/ Unit</th>
-                            <th width="20%" class="text-center">Action</th>
+                            <th width="35%">Product Name</th>
+                            <th width="12%" class="text-center">Quantity</th>
+                            <th width="10%">Unit</th>
+                            <th width="15%">Price/unit</th>
+                            <th width="15%">Amount</th>
+                            <th width="8%" class="text-center">Action</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -169,22 +171,30 @@
                                     <br><small class="text-muted">{{ $item->description }}</small>
                                 @endif
                             </td>
+                            <td>
+                                <input type="number" class="form-control form-control-sm text-center row-qty" value="1" min="1" style="max-width: 85px; margin: 0 auto;">
+                            </td>
                             <td>{{ $item->unit ? ucfirst($item->unit) : '-' }}</td>
                             <td>
-                                <span class="price-tag">Rs {{ number_format($item->rate, 0) }}</span>
+                                <span class="row-rate" data-rate="{{ $item->rate }}">Rs {{ number_format($item->rate, 2) }}</span>
+                            </td>
+                            <td>
+                                <span class="row-amount fw-bold text-success">Rs {{ number_format($item->rate, 2) }}</span>
                             </td>
                             <td class="text-center">
-                                <button class="action-btn edit" onclick="editItem({{ $item->id }})" title="Edit">
-                                    <i class="fas fa-pen"></i>
-                                </button>
-                                <button class="action-btn delete" onclick="deleteItem({{ $item->id }})" title="Delete">
-                                    <i class="fas fa-trash"></i>
-                                </button>
+                                <div class="d-flex gap-1 justify-content-center">
+                                    <button class="action-btn edit" onclick="editItem({{ $item->id }})" title="Edit">
+                                        <i class="fas fa-pen"></i>
+                                    </button>
+                                    <button class="action-btn delete" onclick="deleteItem({{ $item->id }})" title="Delete">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="4">
+                            <td colspan="7">
                                 <div class="empty-state">
                                     <i class="fas fa-tags"></i>
                                     <h5 class="text-muted">No Price Items Found</h5>
@@ -263,6 +273,16 @@ let priceModal;
 
 document.addEventListener('DOMContentLoaded', function() {
     priceModal = new bootstrap.Modal(document.getElementById('priceModal'));
+
+    // Interactive quantity & amount calculation
+    $(document).on('input change', '.row-qty', function() {
+        let row = $(this).closest('tr');
+        let qty = parseFloat($(this).val()) || 0;
+        let rate = parseFloat(row.find('.row-rate').data('rate')) || 0;
+        let amount = qty * rate;
+        
+        row.find('.row-amount').text('Rs ' + amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+    });
 });
 
 // Search Table
