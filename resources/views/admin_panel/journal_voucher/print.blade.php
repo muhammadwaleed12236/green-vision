@@ -154,7 +154,7 @@
 
         <div class="company-info">
             <div>
-                <img src="{{ asset('assets/img/logo.png') }}" alt="Green Vision Logo" style="height: 50px; max-width: 250px; object-fit: contain;">
+                <img src="{{ asset('assets/img/logo.png') }}" alt="Green Vision Logo" style="height: 100px; max-width: 250px; object-fit: contain;">
             </div>
             <div class="voucher-date">
                 <label>Date</label>

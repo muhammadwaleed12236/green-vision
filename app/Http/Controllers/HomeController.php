@@ -141,7 +141,7 @@ class HomeController extends Controller
         });
 
         // Top Products for chart (top 5)
-        $topProducts = $topSellingItems->take(5);
+        $topProducts = $topSellingItems->take(5)->values();
 
         // =========================
         // Recent Sales

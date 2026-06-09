@@ -313,7 +313,7 @@
         let titleX = (pageWidth - textWidth) / 2; // Center title
 
         // ✅ Add Logo at Center
-        let logoUrl = "{{ url('logo.jpeg') }}"; // Logo URL
+        let logoUrl = "{{ url('logo.png') }}"; // Logo URL
         let logoWidth = 100; // Adjust width as needed
         let logoHeight = 30; // Adjust height as needed
         let logoX = (pageWidth - logoWidth) / 2; // Center logo
@@ -321,7 +321,7 @@
         let img = new Image();
         img.src = logoUrl;
         img.onload = function () {
-            pdf.addImage(img, 'JPEG', logoX, 10, logoWidth, logoHeight); // Logo position
+            pdf.addImage(img, 'PNG', logoX, 10, logoWidth, logoHeight); // Logo position
 
             // ✅ Add Title Below Logo
             pdf.setFontSize(16);
