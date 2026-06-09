@@ -130,6 +130,7 @@ Route::delete('/cash-book/delete/{id}', [App\Http\Controllers\CashBookController
 // Product
 Route::get('/product', [ProductController::class, 'product'])->name('product');
 Route::post('/store-product', [ProductController::class, 'store_product'])->name('store-product');
+Route::post('/store-unit', [ProductController::class, 'store_unit'])->name('store-unit');
 Route::put('/product/update/{id}', [ProductController::class, 'update'])->name('product.update');
 Route::get('/fetch-subcategories', [ProductController::class, 'fetchSubCategories'])->name('fetch-subcategories');
 Route::get('/products/{id}/edit', [ProductController::class, 'edit'])->name('products.edit');

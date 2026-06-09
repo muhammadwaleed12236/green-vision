@@ -11,9 +11,11 @@
             <div class="page-header">
                 <div class="page-title">
                     <h4>Product List</h4>
-                    <h6>Simple & Measurement Based Products</h6>
                 </div>
-                <div class="page-btn">
+                <div class="page-btn d-flex gap-2">
+                    <button class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#addUnitModal">
+                        + Add Unit
+                    </button>
                     <button class="btn btn-added" data-bs-toggle="modal" data-bs-target="#addProductModal">
                         + Add Product
                     </button>
@@ -33,8 +35,7 @@
                             <tr>
                                 <th>#</th>
                                 <th>Item Name</th>
-                                <th>Mode</th>
-                                <th>Measurement</th>
+                                <th>Unit</th>
                                 <th>Purchase</th>
                                 <th>Sale</th>
                                 <th>Action</th>
@@ -45,41 +46,14 @@
                                 <tr>
                                     <td>{{ $k + 1 }}</td>
                                     <td>{{ $p->item_name }}</td>
-                                    <td>{{ ucfirst($p->product_mode) }}</td>
-
-                                    <td>
-                                        @if($p->product_mode == 'measurements')
-                                            {{ number_format($p->height, 2) }} × {{ number_format($p->width, 2) }} = {{ number_format($p->area, 2) }} Sq.ft
-                                        @else
-                                            —
-                                        @endif
-                                    </td>
-
-                                    <td>
-                                        @if($p->product_mode == 'measurements')
-                                            {{ number_format($p->wholesale_price, 2) }} × {{ number_format($p->area, 2) }}
-                                            = <b>{{ number_format($p->wholesale_price * $p->area, 2) }}</b>
-                                        @else
-                                            {{ number_format($p->wholesale_price, 2) }}
-                                        @endif
-                                    </td>
-
-                                    <td>
-                                        @if($p->product_mode == 'measurements')
-                                            {{ number_format($p->retail_price, 2) }} × {{ number_format($p->area, 2) }}
-                                            = <b>{{ number_format($p->retail_price * $p->area, 2) }}</b>
-                                        @else
-                                            {{ number_format($p->retail_price, 2) }}
-                                        @endif
-                                    </td>
+                                    <td>{{ $p->unit ?? '—' }}</td>
+                                    <td>Rs. {{ number_format($p->wholesale_price, 2) }}</td>
+                                    <td>Rs. {{ number_format($p->retail_price, 2) }}</td>
                                     <td>
                                         <button class="btn btn-sm btn-primary editProductBtn"
                                                 data-id="{{ $p->id }}"
                                                 data-name="{{ $p->item_name }}"
-                                                data-mode="{{ $p->product_mode }}"
-                                                data-height="{{ $p->height }}"
-                                                data-width="{{ $p->width }}"
-                                                data-area="{{ $p->area }}"
+                                                data-unit="{{ $p->unit }}"
                                                 data-wholesale="{{ $p->wholesale_price }}"
                                                 data-retail="{{ $p->retail_price }}"
                                                 data-bs-toggle="modal"
@@ -117,78 +91,32 @@
 
                 <div class="modal-body">
 
-                    <!-- {{-- ITEM NAME --}} -->
-                    <div class="mb-3">
-                        <label class="form-label">Item Name</label>
-                        <input type="text" class="form-control" name="item_name" required>
-                    </div>
-
-                    <!-- {{-- PRODUCT MODE --}} -->
-                    <div class="mb-3">
-                        <label class="form-label">Product Mode</label>
-                        <select class="form-control" name="product_mode" id="productMode">
-                            <option value="simple">Simple (Per Unit)</option>
-                            <option value="measurements">Measurements (Height × Width)</option>
-                        </select>
-                    </div>
-
-                    <!-- {{-- SIMPLE MODE  --}} -->
-                    <div id="simpleFields">
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label>Purchase Price</label>
-                                <input type="number" step="0.01" class="form-control" name="wholesale_price" id="simple_wholesale_price" required>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label>Sale Price</label>
-                                <input type="number" step="0.01" class="form-control" name="retail_price" id="simple_retail_price" required>
-                            </div>
+                    <!-- {{-- ITEM NAME & UNIT --}} -->
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Item Name</label>
+                            <input type="text" class="form-control" name="item_name" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Unit</label>
+                            <select class="form-control unitDropdown" name="unit">
+                                <option value="">Select Unit</option>
+                                @foreach($units ?? [] as $u)
+                                    <option value="{{ $u->name }}">{{ $u->name }}</option>
+                                @endforeach
+                            </select>
                         </div>
                     </div>
 
-                    {{-- MEASUREMENTS MODE --}}
-                    <div id="measurementFields" style="display:none">
-                        <hr>
-
-                        <div class="row">
-                            <div class="col-md-3 mb-3">
-                                <label>Height (ft)</label>
-                                <input type="number" step="0.01" id="height" name="height" class="form-control">
-                            </div>
-
-                            <div class="col-md-3 mb-3">
-                                <label>Width (ft)</label>
-                                <input type="number" step="0.01" id="width" name="width" class="form-control">
-                            </div>
-
-                            <div class="col-md-3 mb-3">
-                                <label>Area (Sq.ft)</label>
-                                <input type="number" id="area" name="area" readonly class="form-control">
-                            </div>
+                    <!-- {{-- PRICES --}} -->
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Purchase Price</label>
+                            <input type="number" step="0.01" class="form-control" name="wholesale_price" required>
                         </div>
-
-                        <div class="row">
-                            <div class="col-md-3 mb-3">
-                                <label>Purchase / Sq.ft</label>
-                                <input type="number" step="0.01" id="wholesale_price" name="wholesale_price"
-                                    class="form-control">
-                            </div>
-
-                            <div class="col-md-3 mb-3">
-                                <label>Sale / Sq.ft</label>
-                                <input type="number" step="0.01" id="retail_price" name="retail_price"
-                                    class="form-control">
-                            </div>
-
-                            <div class="col-md-3 mb-3">
-                                <label>Total Purchase</label>
-                                <input type="number" id="purchase_total" readonly class="form-control">
-                            </div>
-
-                            <div class="col-md-3 mb-3">
-                                <label>Total Sale</label>
-                                <input type="number" id="sale_total" readonly class="form-control">
-                            </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Sale Price</label>
+                            <input type="number" step="0.01" class="form-control" name="retail_price" required>
                         </div>
                     </div>
 
@@ -217,69 +145,32 @@
                 </div>
 
                 <div class="modal-body">
-                    {{-- ITEM NAME --}}
-                    <div class="mb-3">
-                        <label class="form-label">Item Name</label>
-                        <input type="text" class="form-control" name="item_name" id="edit_item_name" required>
-                    </div>
-
-                    {{-- PRODUCT MODE --}}
-                    <div class="mb-3">
-                        <label class="form-label">Product Mode</label>
-                        <select class="form-control" name="product_mode" id="edit_productMode">
-                            <option value="simple">Simple (Per Unit)</option>
-                            <option value="measurements">Measurements (Height × Width)</option>
-                        </select>
-                    </div>
-
-                    {{-- SIMPLE MODE --}}
-                    <div id="edit_simpleFields">
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label>Purchase Price</label>
-                                <input type="number" step="0.01" class="form-control" name="wholesale_price" id="edit_wholesale_simple" required>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label>Sale Price</label>
-                                <input type="number" step="0.01" class="form-control" name="retail_price" id="edit_retail_simple" required>
-                            </div>
+                    {{-- ITEM NAME & UNIT --}}
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Item Name</label>
+                            <input type="text" class="form-control" name="item_name" id="edit_item_name" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Unit</label>
+                            <select class="form-control unitDropdown" name="unit" id="edit_unit">
+                                <option value="">Select Unit</option>
+                                @foreach($units ?? [] as $u)
+                                    <option value="{{ $u->name }}">{{ $u->name }}</option>
+                                @endforeach
+                            </select>
                         </div>
                     </div>
 
-                    {{-- MEASUREMENTS MODE --}}
-                    <div id="edit_measurementFields" style="display:none">
-                        <hr>
-                        <div class="row">
-                            <div class="col-md-3 mb-3">
-                                <label>Height (ft)</label>
-                                <input type="number" step="0.01" id="edit_height" name="height" class="form-control">
-                            </div>
-                            <div class="col-md-3 mb-3">
-                                <label>Width (ft)</label>
-                                <input type="number" step="0.01" id="edit_width" name="width" class="form-control">
-                            </div>
-                            <div class="col-md-3 mb-3">
-                                <label>Area (Sq.ft)</label>
-                                <input type="number" id="edit_area" name="area" readonly class="form-control">
-                            </div>
+                    {{-- PRICES --}}
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Purchase Price</label>
+                            <input type="number" step="0.01" class="form-control" name="wholesale_price" id="edit_wholesale_price" required>
                         </div>
-                        <div class="row">
-                            <div class="col-md-3 mb-3">
-                                <label>Purchase / Sq.ft</label>
-                                <input type="number" step="0.01" id="edit_wholesale_price" name="wholesale_price" class="form-control">
-                            </div>
-                            <div class="col-md-3 mb-3">
-                                <label>Sale / Sq.ft</label>
-                                <input type="number" step="0.01" id="edit_retail_price" name="retail_price" class="form-control">
-                            </div>
-                            <div class="col-md-3 mb-3">
-                                <label>Total Purchase</label>
-                                <input type="number" id="edit_purchase_total" readonly class="form-control">
-                            </div>
-                            <div class="col-md-3 mb-3">
-                                <label>Total Sale</label>
-                                <input type="number" id="edit_sale_total" readonly class="form-control">
-                            </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Sale Price</label>
+                            <input type="number" step="0.01" class="form-control" name="retail_price" id="edit_retail_price" required>
                         </div>
                     </div>
                 </div>
@@ -292,78 +183,38 @@
     </div>
 </div>
 
+{{-- ADD UNIT MODAL --}}
+<div class="modal fade" id="addUnitModal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="addUnitForm">
+                @csrf
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Unit</h5>
+                    <button type="button" class="btn-close text-black" data-bs-dismiss="modal">X</button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Unit Name</label>
+                        <input type="text" class="form-control" name="name" id="new_unit_name" required placeholder="e.g. Kg, Box, Pcs">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary" id="saveUnitBtn">Save Unit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 @include('admin_panel.include.footer_include')
 
 {{-- JS --}}
 <script>
-    function resetMeasurementFields() {
-        $('#height, #width, #area, #wholesale_price, #retail_price, #purchase_total, #sale_total')
-            .val('');
-    }
-
-    function calculateMeasurement() {
-        let h = parseFloat($('#height').val()) || 0;
-        let w = parseFloat($('#width').val()) || 0;
-        let area = h * w;
-
-        if (area > 0) {
-            $('#area').val(area.toFixed(2));
-        } else {
-            $('#area').val('');
-        }
-
-        let purchaseRate = parseFloat($('#wholesale_price').val()) || 0;
-        let saleRate = parseFloat($('#retail_price').val()) || 0;
-
-        $('#purchase_total').val(
-            area > 0 && purchaseRate > 0 ? (area * purchaseRate).toFixed(2) : ''
-        );
-
-        $('#sale_total').val(
-            area > 0 && saleRate > 0 ? (area * saleRate).toFixed(2) : ''
-        );
-    }
-
-    // Initialize: Disable measurement fields by default (simple mode is default)
-    $(document).ready(function() {
-        $('#height, #width, #wholesale_price, #retail_price').prop('disabled', true);
-        $('#area').prop('disabled', true);
-    });
-
-    $('#productMode').on('change', function () {
-        if (this.value === 'measurements') {
-            $('#measurementFields').show();
-            $('#simpleFields').hide();
-            resetMeasurementFields();
-            
-            // Disable simple fields so they don't submit
-            $('#simple_wholesale_price, #simple_retail_price').prop('disabled', true).removeAttr('required');
-            
-            // Enable and require measurement fields (area is readonly but must be enabled to submit)
-            $('#height, #width, #wholesale_price, #retail_price, #area').prop('disabled', false);
-            $('#height, #width, #wholesale_price, #retail_price').attr('required', true);
-        } else {
-            $('#measurementFields').hide();
-            $('#simpleFields').show();
-            
-            // Enable and require simple fields
-            $('#simple_wholesale_price, #simple_retail_price').prop('disabled', false).attr('required', true);
-            
-            // Disable measurement fields so they don't submit
-            $('#height, #width, #wholesale_price, #retail_price, #area').prop('disabled', true).removeAttr('required');
-        }
-    });
-
-    $('#height, #width, #wholesale_price, #retail_price').on('input', calculateMeasurement);
-
-
     $(document).on("click", ".editProductBtn", function () {
         let id = $(this).data("id");
         let name = $(this).data("name");
-        let mode = $(this).data("mode");
-        let height = $(this).data("height");
-        let width = $(this).data("width");
-        let area = $(this).data("area");
+        let unit = $(this).data("unit");
         let wholesale = $(this).data("wholesale");
         let retail = $(this).data("retail");
 
@@ -372,19 +223,7 @@
         
         $("#edit_product_id").val(id);
         $("#edit_item_name").val(name);
-        $("#edit_productMode").val(mode);
-
-        if (mode === 'measurements') {
-            $('#edit_measurementFields').show();
-            $('#edit_simpleFields').hide();
-
-            $("#edit_height").val(height);
-            $("#edit_width").val(width);
-            $("#edit_area").val(area);
-            $("#edit_wholesale_price").val(wholesale);
-            $("#edit_retail_price").val(retail);
-
-            // Disable simple fields
+        $("#edit_unit").val(unit);
             $('#edit_wholesale_simple, #edit_retail_simple').prop('disabled', true).removeAttr('required');
             // Enable measurement fields (area is readonly but must be enabled to submit)
             $('#edit_height, #edit_width, #edit_wholesale_price, #edit_retail_price, #edit_area').prop('disabled', false);
@@ -451,6 +290,48 @@
     }
 
 $('#edit_height, #edit_width, #edit_wholesale_price, #edit_retail_price').on('input', calculateEditMeasurement);
+
+    // AJAX Form Submit for Add Unit
+    $('#addUnitForm').on('submit', function(e) {
+        e.preventDefault();
+        let btn = $('#saveUnitBtn');
+        btn.prop('disabled', true).text('Saving...');
+        
+        $.ajax({
+            url: "{{ route('store-unit') }}",
+            type: "POST",
+            data: $(this).serialize(),
+            success: function(response) {
+                if (response.status === 'success') {
+                    // Add new option to unit dropdowns
+                    let newOption = new Option(response.unit.name, response.unit.name, false, true);
+                    $('.unitDropdown').append(newOption).trigger('change');
+                    
+                    // Close modal & reset form
+                    $('#addUnitModal').modal('hide');
+                    $('#addUnitForm')[0].reset();
+                    
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success',
+                        text: 'Unit added successfully',
+                        timer: 1500,
+                        showConfirmButton: false
+                    });
+                }
+            },
+            error: function(xhr) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: xhr.responseJSON?.message || 'Failed to add unit'
+                });
+            },
+            complete: function() {
+                btn.prop('disabled', false).text('Save Unit');
+            }
+        });
+    });
 </script>
 
 <script>

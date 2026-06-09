@@ -18,12 +18,14 @@ class ProductController extends Controller
             $products = Product::where('admin_or_user_id', $user->id)
                               ->whereNull('deleted_at')
                               ->get();
+            $units = \App\Models\Unit::all();
 
-            return view('admin_panel.product.add_product', compact('products'));
+            return view('admin_panel.product.add_product', compact('products', 'units'));
         } elseif ($user->usertype === 'distributor') {
             $products = \App\Models\DistributorProduct::where('distributor_id', $user->user_id)->get();
+            $units = \App\Models\Unit::all();
 
-            return view('admin_panel.product.distributor_product_stock', compact('products'));
+            return view('admin_panel.product.distributor_product_stock', compact('products', 'units'));
         }
 
         return redirect()->back();
@@ -37,12 +39,8 @@ class ProductController extends Controller
         // Validate the request
         $request->validate([
             'item_name' => 'required|string|max:255',
-            'product_mode' => 'required|in:simple,measurements',
             'wholesale_price' => 'required|numeric|min:0',
             'retail_price' => 'required|numeric|min:0',
-            'height' => 'nullable|numeric|min:0',
-            'width' => 'nullable|numeric|min:0',
-            'area' => 'nullable|numeric|min:0',
         ]);
 
         // Generate item code
@@ -51,26 +49,13 @@ class ProductController extends Controller
         // Check if a soft-deleted product with this code exists
         $existingProduct = Product::withTrashed()->where('item_code', $itemCode)->first();
         
-        // Prepare data based on product mode
         $data = [
             'admin_or_user_id' => Auth::id(),
             'item_name' => $request->item_name,
-            'product_mode' => $request->product_mode,
+            'unit' => $request->unit,
             'wholesale_price' => $request->wholesale_price,
             'retail_price' => $request->retail_price,
         ];
-
-        // Set measurement fields based on product mode
-        if ($request->product_mode === 'measurements') {
-            $data['height'] = $request->height;
-            $data['width'] = $request->width;
-            $data['area'] = $request->area;
-        } else {
-            // For simple products, set measurement fields to null
-            $data['height'] = null;
-            $data['width'] = null;
-            $data['area'] = null;
-        }
 
         // If soft-deleted product exists, restore and update it
         if ($existingProduct && $existingProduct->trashed()) {
@@ -87,40 +72,22 @@ class ProductController extends Controller
 
     public function update_product(Request $request)
     {
-        // Validate the request
         $request->validate([
             'product_id' => 'required|exists:products,id',
             'item_name' => 'required|string|max:255',
-            'product_mode' => 'required|in:simple,measurements',
             'wholesale_price' => 'required|numeric|min:0',
             'retail_price' => 'required|numeric|min:0',
-            'height' => 'nullable|numeric|min:0',
-            'width' => 'nullable|numeric|min:0',
-            'area' => 'nullable|numeric|min:0',
         ]);
 
         // Get product ID from request
         $id = $request->product_id;
 
-        // Prepare data based on product mode
         $data = [
             'item_name' => $request->item_name,
-            'product_mode' => $request->product_mode,
+            'unit' => $request->unit,
             'wholesale_price' => $request->wholesale_price,
             'retail_price' => $request->retail_price,
         ];
-
-        // Set measurement fields based on product mode
-        if ($request->product_mode === 'measurements') {
-            $data['height'] = $request->height;
-            $data['width'] = $request->width;
-            $data['area'] = $request->area;
-        } else {
-            // For simple products, set measurement fields to null
-            $data['height'] = null;
-            $data['width'] = null;
-            $data['area'] = null;
-        }
 
         Product::where('id', $id)->update($data);
 
@@ -146,5 +113,22 @@ class ProductController extends Controller
         $product->delete();
 
         return response()->json(['status' => 'success', 'message' => 'Product deleted successfully.']);
+    }
+
+    public function store_unit(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+        ]);
+
+        $unit = \App\Models\Unit::create([
+            'name' => $request->name,
+            'admin_or_user_id' => Auth::id(),
+        ]);
+
+        return response()->json([
+            'status' => 'success',
+            'unit' => $unit
+        ]);
     }
 }

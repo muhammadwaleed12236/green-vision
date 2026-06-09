@@ -192,7 +192,7 @@ $(document).ready(function () {
     const existingPcs = @json(json_decode($purchase->pcs ?? '[]', true) ?: []);
     const existingDiscounts = @json(json_decode($purchase->discount ?? '[]', true) ?: []);
     const existingAmounts = @json(json_decode($purchase->amount ?? '[]', true) ?: []);
-    const existingProductModes = @json(json_decode($purchase->product_mode ?? '[]', true) ?: []);
+    const existingUnits = @json(json_decode($purchase->product_mode ?? '[]', true) ?: []);
     const existingGrossTotals = @json(json_decode($purchase->gross_total ?? '[]', true) ?: []);
 
     // Prevent Enter key from submitting form
@@ -228,8 +228,8 @@ $(document).ready(function () {
                 <input type="number" class="form-control pcx" name="pcs[]" min="1" value="${pcs || 1}">
             </td>
             <td>
-                <input type="text" class="form-control product_mode" name="product_mode[]"
-                    value="${productMode}" placeholder="e.g. pcs, box">
+                <input type="text" class="form-control unit" name="unit[]"
+                    value="${unit}" placeholder="e.g. pcs, box">
             </td>
             <td>
                 <input type="number" class="form-control rate" name="rate[]" min="0" value="${rate}">
@@ -256,7 +256,7 @@ $(document).ready(function () {
         existingItems.forEach((item, index) => {
             let html = createRowHtml(
                 item || '',
-                existingProductModes[index] || '',
+                existingUnits[index] || '',
                 '', // measurement will be fetched if needed
                 existingRates[index] || '',
                 existingPcs[index] || '',
@@ -351,7 +351,7 @@ $(document).ready(function () {
 
         row.find('.item-input').val(it.item_name);
         row.find('.item-id').val(it.id);
-        row.find('.product_mode').val(it.product_mode || '');
+        row.find('.unit').val(it.unit || '');
 
         if (it.height && it.width && it.area) {
             row.find('.measurement').val(`${it.height} × ${it.width} = ${it.area} Sq.ft`);

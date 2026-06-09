@@ -39,7 +39,7 @@ class PurchaseController extends Controller
     {
         $q = $request->get('q', null);
 
-        $query = Product::query()->select('id', 'item_name', 'retail_price', 'wholesale_price', 'product_mode', 'height', 'width', 'area');
+        $query = Product::query()->select('id', 'item_name', 'retail_price', 'wholesale_price', 'unit');
 
         if ($q === null || $q === '') {
             $items = $query->orderBy('item_name')->limit(200)->get();

@@ -54,7 +54,7 @@
                                         <th>Quantity</th>
                                         <th>Unit</th>
                                         <th>Price/unit</th>
-                                        <th>amount</th>
+                                        <th>Amount</th>
                                         <th style="width: 80px">Action</th>
                                     </tr>
                                 </thead>
@@ -395,7 +395,7 @@
         </td>
 
         <td>
-            <input type="text" class="form-control product_mode" name="product_mode[]" placeholder="e.g. pcs, box">
+            <input type="text" class="form-control unit" name="unit[]" placeholder="e.g. pcs, box">
         </td>
 
         <td>
@@ -499,7 +499,7 @@
             row.find('.item-id').val(it.id);
 
             // TYPE
-            row.find('.product_mode').val(it.product_mode || '');
+            row.find('.unit').val(it.unit || 'pcs');
 
             // MEASUREMENT
             if (it.height && it.width && it.area) {

@@ -131,12 +131,7 @@
                                                 </div>
                                             </td>
                                             <td>
-                                                <select name="unit[]" class="form-control unit">
-                                                    <option value="pcs" {{ ($units[$i] ?? '') == 'pcs' ? 'selected' : '' }}>Pcs</option>
-                                                    <option value="ft" {{ ($units[$i] ?? '') == 'ft' ? 'selected' : '' }}>Ft</option>
-                                                    <option value="inch" {{ ($units[$i] ?? '') == 'inch' ? 'selected' : '' }}>In</option>
-                                                    <option value="box" {{ ($units[$i] ?? '') == 'box' ? 'selected' : '' }}>Box</option>
-                                                </select>
+                                                <input name="unit[]" class="form-control unit text-center" value="{{ $units[$i] ?? '' }}">
                                             </td>
                                             <td>
                                                 <input name="rate[]" class="form-control rate" value="{{ $rates[$i] ?? 0 }}">

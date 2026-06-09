@@ -52,7 +52,7 @@
 @foreach(json_decode($purchase->item) as $i => $item)
 <tr>
     <td class="text-center">{{ $item }}</td>
-    <td class="text-center">{{ json_decode($purchase->product_mode)[$i] ?? 0 }}</td>
+    <td class="text-center">{{ json_decode($purchase->product_mode)[$i] ?? '' }}</td>
     <td class="text-center">{{ json_decode($purchase->pcs)[$i] ?? 0 }}</td>
     <td class="text-center">{{ number_format(json_decode($purchase->rate)[$i] ?? 0,2) }}</td>
     <td class="text-center">{{ number_format(json_decode($purchase->amount)[$i] ?? 0,2) }}</td>

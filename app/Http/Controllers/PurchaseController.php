@@ -40,7 +40,7 @@ class PurchaseController extends Controller
         $q = $request->get('q', null);
 
         // base query - limit to current admin/user's products if you need (optional)
-        $query = Product::query()->select('id', 'item_name', 'retail_price', 'wholesale_price', 'product_mode', 'height', 'width', 'area');
+        $query = Product::query()->select('id', 'item_name', 'retail_price', 'wholesale_price', 'unit');
     
         if ($q === null || $q === '') {
             // return limited set (don't return everything)
@@ -90,7 +90,7 @@ class PurchaseController extends Controller
         // ================= ITEMS (FILTER EMPTY ROWS) =================
         $item_names = $request->item_name ?? [];
         $rates = $request->rate ?? [];
-        $cartons = $request->product_mode ?? [];
+        $cartons = $request->unit ?? [];
         $pcs = $request->pcs ?? [];
         $discounts = $request->discount ?? [];
         $amounts = $request->amount ?? [];
@@ -116,7 +116,7 @@ class PurchaseController extends Controller
                     $rows[] = [
                         'item_name' => $name,
                         'rate' => $rates[$i] ?? 0,
-                        'product_mode' => $cartons[$i] ?? 0,
+                        'product_mode' => $cartons[$i] ?? '',
                         'pcs' => $itemPcs,
                         'discount' => $discounts[$i] ?? 0,
                         'amount' => $amounts[$i] ?? 0,
@@ -313,7 +313,7 @@ class PurchaseController extends Controller
         // ================= ITEMS (FILTER EMPTY ROWS) =================
         $item_names = $request->item_name ?? [];
         $rates = $request->rate ?? [];
-        $productModes = $request->product_mode ?? [];
+        $productModes = $request->unit ?? [];
         $pcs = $request->pcs ?? [];
         $discounts = $request->discount ?? [];
         $amounts = $request->amount ?? [];

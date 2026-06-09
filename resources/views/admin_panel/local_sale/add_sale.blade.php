@@ -244,12 +244,7 @@
                                             </div>
                                         </td>
                                         <td>
-                                            <select name="unit[]" class="form-control unit p-1">
-                                                <option value="pcs" selected>Pcs</option>
-                                                <option value="ft">Ft</option>
-                                                <option value="inch">In</option>
-                                                <option value="box">Box</option>
-                                            </select>
+                                            <input type="text" name="unit[]" class="form-control unit p-1 text-center" placeholder="Unit">
                                         </td>
                                         <td><input name="rate[]" class="form-control rate text-end" placeholder="0.00"></td>
                                         <td><input name="amount[]" class="form-control item-total readonly-box text-end" readonly tabindex="-1" value="0.00"></td>
@@ -438,7 +433,7 @@
         r.find('.qty').val(1);
         r.find('.rate').val('');
         r.find('.item-total').val('0.00');
-        r.find('.unit').val('pcs');
+        r.find('.unit').val(it.unit || '');
         r.find('.autocomplete-list').addClass('d-none').empty();
         
         $('#saleTableBody').append(r);
@@ -549,6 +544,7 @@
             // Rate logic
             let price = parseFloat(it.retail_price) || parseFloat(it.wholesale_price) || 0;
             row.find('.rate').val(price);
+            row.find('.unit').val(it.unit || 'pcs');
 
             row.find('.autocomplete-list').addClass('d-none');
 
