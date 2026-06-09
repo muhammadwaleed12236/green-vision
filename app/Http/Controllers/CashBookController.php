@@ -15,28 +15,39 @@ class CashBookController extends Controller
         }
 
         $user = Auth::user();
-        $selectedDate = $request->date ?? date('Y-m-d');
-        
-        // Get entries for selected date
-        $entries = CashBook::where('admin_or_user_id', $user->id)
-                          ->whereNull('deleted_at')
-                          ->whereDate('date', $selectedDate)
-                          ->orderBy('id', 'asc')
-                          ->get();
+        $selectedMonth = $request->month ?? date('Y-m');
 
-        // Opening balance is always 0 for each new day
-        $openingBalance = 0;
-        
-        // Calculate running balance for the day starting from 0
+        // Parse selected month
+        $startDate = \Carbon\Carbon::parse($selectedMonth . '-01')->startOfMonth();
+        $endDate   = $startDate->copy()->endOfMonth();
+
+        // Get all entries for selected month grouped by day
+        $monthlyEntries = CashBook::selectRaw('DATE(date) as entry_date,
+                                               SUM(debit) as total_debit,
+                                               SUM(credit) as total_credit,
+                                               (SUM(debit) - SUM(credit)) as daily_balance')
+                            ->where('admin_or_user_id', $user->id)
+                            ->whereNull('deleted_at')
+                            ->whereBetween('date', [$startDate, $endDate])
+                            ->groupBy('entry_date')
+                            ->orderBy('entry_date', 'asc')
+                            ->get();
+
+        // Calculate running balance across the month
         $runningBalance = 0;
-        foreach ($entries as $entry) {
-            $runningBalance += ($entry->debit - $entry->credit);
-            $entry->running_balance = $runningBalance;
+        foreach ($monthlyEntries as $row) {
+            $runningBalance += $row->daily_balance;
+            $row->running_balance = $runningBalance;
         }
-        
-        $closingBalance = $runningBalance;
 
-        return view('admin_panel.cashbook.index', compact('entries', 'selectedDate', 'openingBalance', 'closingBalance'));
+        $openingBalance = 0;
+        $closingBalance = $runningBalance;
+        $totalDebit     = $monthlyEntries->sum('total_debit');
+        $totalCredit    = $monthlyEntries->sum('total_credit');
+
+        return view('admin_panel.cashbook.index', compact(
+            'monthlyEntries', 'selectedMonth', 'openingBalance', 'closingBalance', 'totalDebit', 'totalCredit'
+        ));
     }
 
     public function history()

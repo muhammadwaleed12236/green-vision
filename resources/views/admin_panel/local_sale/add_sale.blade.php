@@ -19,17 +19,13 @@
     }
 
     /* Column Widths */
-    .sale-table th:nth-child(1) { width: 12%; } /* Type */
-    .sale-table th:nth-child(2) { width: 20%; } /* Item */
-    .sale-table th:nth-child(3) { width: 7%; }  /* H */
-    .sale-table th:nth-child(4) { width: 7%; }  /* W */
-    .sale-table th:nth-child(5) { width: 8%; }  /* Unit */
-    .sale-table th:nth-child(6) { width: 8%; }  /* Area */
-    .sale-table th:nth-child(7) { width: 9%; } /* Manual */
-    .sale-table th:nth-child(8) { width: 9%; }  /* Rate */
-    .sale-table th:nth-child(9) { width: 12%; } /* Qty */
-    .sale-table th:nth-child(10) { width: 10%; } /* Total */
-    .sale-table th:nth-child(11) { width: 5%; }  /* Action */
+    .sale-table th:nth-child(1) { width: 5%; }  /* # */
+    .sale-table th:nth-child(2) { width: 45%; } /* Product Name */
+    .sale-table th:nth-child(3) { width: 15%; } /* Quantity */
+    .sale-table th:nth-child(4) { width: 10%; } /* Unit */
+    .sale-table th:nth-child(5) { width: 12%; } /* Price/unit */
+    .sale-table th:nth-child(6) { width: 12%; } /* amount */
+    .sale-table th:nth-child(7) { width: 5%; }  /* Action */
 
     /* Input & Select Styling */
     .sale-table .form-control {
@@ -201,42 +197,21 @@
                             <table class="table table-borderless mb-0 sale-table">
                                 <thead>
                                     <tr class="bg-light">
-                                        <th>Type</th>
-                                        <th>Item Name</th>
-                                        <th>H</th>
-                                        <th>W</th>
+                                        <th class="text-center">#</th>
+                                        <th>Product Name</th>
+                                        <th class="text-center">Quantity</th>
                                         <th>Unit</th>
-                                        <th>Area (ft²)</th>
-                                        <th>Manual SqFt</th>
-                                        <th>Rate</th>
-                                        <th>Qty</th>
-                                        <th>Total</th>
-                                        <th>Action</th>
+                                        <th class="text-end">Price/unit</th>
+                                        <th class="text-end">amount</th>
+                                        <th class="text-center">Action</th>
                                     </tr>
                                 </thead>
 
                                 <tbody id="saleTableBody">
                                 @for($i=0; $i<5; $i++)
                                     <tr class="sale-row">
-                                        <td>
-                                            <select class="form-control row-type">
-                                                <option value="" disabled selected>Select Type</option>
-                                                <option value="glass">Measurements</option>
-                                                <option value="other">Other</option>
-                                            </select>
-                                        </td>
-                                        <td><input name="item_name[]" class="form-control" placeholder="Item"></td>
-                                        <td><input name="height[]" class="form-control height text-center"></td>
-                                        <td><input name="width[]" class="form-control width text-center"></td>
-                                        <td>
-                                            <select name="unit[]" class="form-control unit p-1">
-                                                <option value="ft" selected>Ft</option>
-                                                <option value="inch">In</option>
-                                            </select>
-                                        </td>
-                                        <td><input class="form-control area readonly-box text-center" readonly tabindex="-1"></td>
-                                        <td><input name="manual_sqft[]" class="form-control manual-sqft text-center" placeholder="--"></td>
-                                        <td><input name="rate[]" class="form-control rate text-end" placeholder="0.00"></td>
+                                        <td class="text-center"><span class="row-index">{{ $i + 1 }}</span></td>
+                                        <td><input name="item_name[]" class="form-control" placeholder="Product Name"></td>
                                         <td>
                                             <div class="qty-box">
                                                 <button type="button" class="btn qty-minus">−</button>
@@ -244,6 +219,15 @@
                                                 <button type="button" class="btn qty-plus">+</button>
                                             </div>
                                         </td>
+                                        <td>
+                                            <select name="unit[]" class="form-control unit p-1">
+                                                <option value="pcs" selected>Pcs</option>
+                                                <option value="ft">Ft</option>
+                                                <option value="inch">In</option>
+                                                <option value="box">Box</option>
+                                            </select>
+                                        </td>
+                                        <td><input name="rate[]" class="form-control rate text-end" placeholder="0.00"></td>
                                         <td><input name="amount[]" class="form-control item-total readonly-box text-end" readonly tabindex="-1" value="0.00"></td>
                                         <td>
                                             <div class="d-flex gap-1 justify-content-center">
@@ -389,96 +373,19 @@
         $('#address').val(o.data('address') || '');
     });
 
-    function toFeet(value, unit) {
-        if (!value) return 0;
-
-        value = value.toString().trim();
-        let parts = value.split('.');
-
-        let whole = parseInt(parts[0]) || 0;
-        let decimal = parts[1] ? parseInt(parts[1]) : 0;
-
-        if (unit === 'ft') {
-            return whole + (decimal / 12);
-        }
-
-        let inches = whole + (decimal / 25.4);
-        return inches / 12;
-    }
-
-    // Toggle Input State based on Type
-    $(document).on('change', '.row-type', function() {
-        let r = $(this).closest('tr');
-        let type = $(this).val();
-
-        // Reset Styles first
-        r.find('.height, .width, .unit, .manual-sqft').prop('readonly', false).css('background-color', '');
-        r.find('.unit').prop('disabled', false);
-
-        if (!type) {
-             // If Select Type (empty)
-             // Initialize as disabled if empty
-             r.find('.height, .width, .unit, .manual-sqft, .rate, .qty').prop('readonly', true).css('background-color', '#f8f9fa');
-             r.find('.unit').prop('disabled', true);
-             return;
-        }
-
-        // Re-enable common fields in case they were disabled by empty check
-        r.find('.rate, .qty').prop('readonly', false).css('background-color', '');
-
-        if (type === 'other') { // Was 'hardware'
-            // Disable Height, Width, Manual Sqft, Unit
-            r.find('.height, .width, .unit, .manual-sqft, .area').prop('readonly', true).val('').css('background-color', '#f0f0f0');
-            r.find('.unit').prop('disabled', true);
-             // Default Qty to 1 if empty
-             if(!r.find('.qty').val()) r.find('.qty').val(1);
-        } else if (type === 'glass') { // Means 'Measurements'
-            // Enable Height, Width, Manual Sqft
-             r.find('.area').prop('readonly', true); // Area always readonly
-        }
-        
-        calcRow(r);
-    });
-
     function calcRow(r) {
-        let type = r.find('.row-type').val();
         let rate = parseFloat(r.find('.rate').val()) || 0;
         let qty = parseFloat(r.find('.qty').val());
 
-        // Default Qty to 1 if empty/invalid
         if (isNaN(qty) || qty < 0) qty = 1;
 
-        if (type === 'other') {
-            // Simple Calculation: Rate * Qty
-            let total = rate * qty;
-            r.find('.item-total').val(total.toFixed(2));
-            r.find('.area').val('-'); // clear area
-        } else if(type === 'glass') { // Measurements
-            // Glass Calculation
-            let unit = r.find('.unit').val();
-            let hInput = r.find('.height').val();
-            let wInput = r.find('.width').val();
-            let mInput = r.find('.manual-sqft').val();
-
-            let h = toFeet(hInput, unit);
-            let w = toFeet(wInput, unit);
-            let area = h * w;
-            r.find('.area').val(area ? area.toFixed(2) : '');
-
-            let manualSqft = parseFloat(mInput) || 0;
-            let finalArea = manualSqft > 0 ? manualSqft : area;
-            
-            let total = finalArea * rate * qty;
-            r.find('.item-total').val(total.toFixed(2));
-        } else {
-            // No type selected
-            r.find('.item-total').val('');
-        }
+        let total = rate * qty;
+        r.find('.item-total').val(total.toFixed(2));
 
         calcGrand();
     }
 
-    $(document).on('input change', '.height,.width,.unit,.rate,.qty,.manual-sqft', e => {
+    $(document).on('input change', '.rate,.qty', e => {
         calcRow($(e.target).closest('tr'));
     });
 
@@ -495,24 +402,22 @@
         }
     });
 
+    function updateRowNumbers() {
+        $('.sale-row').each(function(index) {
+            $(this).find('.row-index').text(index + 1);
+        });
+    }
+
     function addNewRow() {
         let r = $('.sale-row:first').clone();
         r.find('input').val('');
-        
-        // Item name should always be editable
-        r.find('[name="item_name[]"]').prop('readonly', false).css('background-color', '');
-        
-        // Other fields start disabled until type is selected
-        r.find('.height, .width, .manual-sqft, .rate').prop('readonly', true).css('background-color', '#f8f9fa');
-        r.find('.qty').val(1).prop('readonly', true).css('background-color', '#f8f9fa');
-        r.find('.manual-sqft').val('');
-        r.find('.area').prop('readonly', true);
-        
-        // Reset type to empty default
-        r.find('.row-type').val(''); 
-        r.find('.unit').prop('disabled', true).val('ft');
+        r.find('.qty').val(1);
+        r.find('.rate').val('');
+        r.find('.item-total').val('0.00');
+        r.find('.unit').val('pcs');
         
         $('#saleTableBody').append(r);
+        updateRowNumbers();
     }
 
     $(document).on('click', '.qty-plus', e => {
@@ -535,6 +440,7 @@
         if ($('.sale-row').length > 1) {
             $(e.target).closest('tr').remove();
             calcGrand();
+            updateRowNumbers();
         }
     });
 
@@ -554,10 +460,6 @@
     $('form').on('submit', function () {
         calcGrand();
         
-        // Remove empty rows before submitting to avoid validation errors or cluttered DB
-        // Check filtering logic if needed, but for now just submit all.
-        // Actually, Controller should filter out empty items.
-        // Let's ensure at least one row has data.
         let validItems = 0;
         $('.sale-row').each(function() {
              if($(this).find('[name="item_name[]"]').val()) validItems++;
@@ -567,19 +469,9 @@
             Swal.fire('Error', 'Please add at least one item', 'error');
             return false;
         }
-        
-        // Enable disabled selects (like unit) just in case, so they submit
-        $('.unit').prop('disabled', false);
     });
-    // Initial State Check for first load
+
     $(document).ready(function() {
-         $('.sale-row').each(function() {
-             let type = $(this).find('.row-type').val();
-             if(!type) {
-                 // Initialize as disabled if empty
-                 $(this).find('.height, .width, .unit, .manual-sqft, .rate, .qty').prop('readonly', true).css('background-color', '#f8f9fa');
-                 $(this).find('.unit').prop('disabled', true);
-             }
-         });
+        updateRowNumbers();
     });
 </script>

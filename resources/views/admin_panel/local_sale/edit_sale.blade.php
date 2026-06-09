@@ -104,61 +104,25 @@
                             <table class="table table-bordered text-center mb-0">
                                 <thead class="table-light">
                                     <tr>
-                                        <th>Type</th>
-                                        <th>Item</th>
-                                        <th>H</th>
-                                        <th>W</th>
-                                        <th>Unit</th>
-                                        <th>Area</th>
-                                        <th>Rate</th>
-                                        <th>Qty</th>
-                                        <th>Total</th>
+                                        <th style="width: 5%;">#</th>
+                                        <th style="width: 45%;">Product Name</th>
+                                        <th style="width: 15%;">Quantity</th>
+                                        <th style="width: 10%;">Unit</th>
+                                        <th style="width: 12%;">Price/unit</th>
+                                        <th style="width: 12%;">amount</th>
                                     </tr>
                                 </thead>
 
                                 <tbody id="saleTableBody">
 
                                     @foreach($items as $i => $item)
-                                        @php
-                                            $hVal = $heights[$i] ?? '';
-                                            $wVal = $widths[$i] ?? '';
-                                            // Infer type: if H and W are empty/zero, likely Hardware
-                                            $isHardware = (empty($hVal) && empty($wVal)); 
-                                        @endphp
                                         <tr class="sale-row">
                                             <td>
-                                                <select class="form-control row-type" style="width: 100px;">
-                                                    <option value="glass" {{ !$isHardware ? 'selected' : '' }}>Glass</option>
-                                                    <option value="hardware" {{ $isHardware ? 'selected' : '' }}>Hardware</option>
-                                                </select>
+                                                <span class="row-index">{{ $i + 1 }}</span>
                                             </td>
                                             <td>
                                                 <input name="item[]" class="form-control readonly-box" value="{{ $item }}" readonly>
                                             </td>
-
-                                            <td>
-                                                <input name="height[]" class="form-control height" value="{{ $hVal }}" {{ $isHardware ? 'readonly' : '' }}>
-                                            </td>
-
-                                            <td>
-                                                <input name="width[]" class="form-control width" value="{{ $wVal }}" {{ $isHardware ? 'readonly' : '' }}>
-                                            </td>
-
-                                            <td>
-                                                <select name="unit[]" class="form-control unit" {{ $isHardware ? 'disabled' : '' }}>
-                                                    <option value="ft" {{ ($units[$i] ?? '') == 'ft' ? 'selected' : '' }}>Feet</option>
-                                                    <option value="inch" {{ ($units[$i] ?? '') == 'inch' ? 'selected' : '' }}>Inch</option>
-                                                </select>
-                                            </td>
-
-                                            <td>
-                                                <input class="form-control area readonly-box" readonly>
-                                            </td>
-
-                                            <td>
-                                                <input name="rate[]" class="form-control rate" value="{{ $rates[$i] ?? 0 }}">
-                                            </td>
-
                                             <td>
                                                 <div class="qty-box">
                                                     <button type="button" class="btn btn-sm btn-secondary qty-minus">−</button>
@@ -166,11 +130,20 @@
                                                     <button type="button" class="btn btn-sm btn-secondary qty-plus">+</button>
                                                 </div>
                                             </td>
-
+                                            <td>
+                                                <select name="unit[]" class="form-control unit">
+                                                    <option value="pcs" {{ ($units[$i] ?? '') == 'pcs' ? 'selected' : '' }}>Pcs</option>
+                                                    <option value="ft" {{ ($units[$i] ?? '') == 'ft' ? 'selected' : '' }}>Ft</option>
+                                                    <option value="inch" {{ ($units[$i] ?? '') == 'inch' ? 'selected' : '' }}>In</option>
+                                                    <option value="box" {{ ($units[$i] ?? '') == 'box' ? 'selected' : '' }}>Box</option>
+                                                </select>
+                                            </td>
+                                            <td>
+                                                <input name="rate[]" class="form-control rate" value="{{ $rates[$i] ?? 0 }}">
+                                            </td>
                                             <td>
                                                 <input name="amount[]" class="form-control item-total readonly-box" value="{{ $amounts[$i] ?? 0 }}" readonly>
                                             </td>
-
                                         </tr>
                                     @endforeach
 
@@ -232,60 +205,13 @@
 
 
 <script>
-    function toFeet(value, unit) {
-        if (!value) return 0;
-        value = value.toString().trim();
-        let parts = value.split('.');
-        let whole = parseFloat(parts[0]) || 0;
-        let decimal = parts[1] ? parseFloat(parts[1]) : 0;
-
-        if (unit === 'ft') {
-            return whole + (decimal / 12);
-        }
-        let inches = whole + (decimal / 25.4);
-        return inches / 12;
-    }
-
-    // Toggle Input State based on Type
-    $(document).on('change', '.row-type', function() {
-        let r = $(this).closest('tr');
-        let type = $(this).val();
-
-        if (type === 'hardware') {
-            // Disable Height, Width, Manual Sqft, Unit
-            r.find('.height, .width, .unit').prop('readonly', true).val('').css('background-color', '#f0f0f0');
-            r.find('.unit').prop('disabled', true);
-             // Default Qty to 1 if empty
-             if(!r.find('.qty').val()) r.find('.qty').val(1);
-        } else {
-            // Enable
-            r.find('.height, .width').prop('readonly', false).css('background-color', '');
-            r.find('.unit').prop('disabled', false);
-        }
-        calcRow(r);
-    });
-
     function calcRow(row) {
-        let type = row.find('.row-type').val();
         let rate = parseFloat(row.find('.rate').val()) || 0;
         let qty = parseFloat(row.find('.qty').val());
         if (isNaN(qty) || qty < 0) qty = 1;
 
-        if (type === 'hardware') {
-            // Simple Calculation: Rate * Qty
-            let total = rate * qty;
-            row.find('.item-total').val(total.toFixed(2));
-            row.find('.area').val('-'); // clear area
-        } else {
-             let h = toFeet(row.find('.height').val(), row.find('.unit').val());
-            let w = toFeet(row.find('.width').val(), row.find('.unit').val());
-            
-            let area = h * w;
-            row.find('.area').val(area ? area.toFixed(2) : '');
-            
-            let total = area * rate * qty;
-            row.find('.item-total').val(total.toFixed(2));
-        }
+        let total = rate * qty;
+        row.find('.item-total').val(total.toFixed(2));
 
         calcGrand();
     }
@@ -299,7 +225,7 @@
         $('#netAmount').val(total.toFixed(2));
     }
 
-    $(document).on('input change', '.height,.width,.unit,.rate,.qty', function () {
+    $(document).on('input change', '.rate,.qty', function () {
         calcRow($(this).closest('tr'));
     });
 
@@ -315,16 +241,10 @@
         calcRow(r);
     });
 
-    // 🔥 calculate all rows on load
+    // calculate all rows on load
     $(document).ready(function () {
         $('.sale-row').each(function () {
-            // Initialize readonly state based on existing value
-            // Already handled by blade logic but let's re-run calcRow to be sure
             calcRow($(this));
-        });
-        
-        $('form').on('submit', function() {
-              $('.unit').prop('disabled', false);
         });
     });
 </script>

@@ -116,4 +116,98 @@ class JournalVoucher extends Model
     {
         return $query->where('party_type', $type)->where('party_id', $id);
     }
+
+    /**
+     * Convert an amount into spelling words.
+     * Fallback helper if PHP's NumberFormatter class is not found.
+     *
+     * @param float|int $amount
+     * @return string
+     */
+    public static function amountInWords($amount)
+    {
+        $amount = (float) $amount;
+        if ($amount == 0) {
+            return 'zero';
+        }
+
+        if (class_exists(\NumberFormatter::class)) {
+            $formatter = \NumberFormatter::create('en', \NumberFormatter::SPELLOUT);
+            return $formatter->format($amount);
+        }
+
+        $units = ['', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen'];
+        $tens = ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety'];
+        $groups = ['', 'thousand', 'million', 'billion', 'trillion'];
+
+        // Split into integer and decimal parts
+        $integerPart = (int)floor($amount);
+        $decimalPart = (int)round(($amount - $integerPart) * 100);
+
+        $result = [];
+
+        if ($integerPart === 0) {
+            $result[] = 'zero';
+        } else {
+            $num_str = (string)$integerPart;
+            $num_len = strlen($num_str);
+            $group_count = (int)ceil($num_len / 3);
+            
+            $padded_num = str_pad($num_str, $group_count * 3, '0', STR_PAD_LEFT);
+            
+            for ($i = 0; $i < $group_count; $i++) {
+                $chunk = substr($padded_num, $i * 3, 3);
+                $h = (int)$chunk[0];
+                $t = (int)$chunk[1];
+                $u = (int)$chunk[2];
+                
+                $chunk_str = '';
+                if ($h > 0) {
+                    $chunk_str .= $units[$h] . ' hundred';
+                }
+                
+                if ($t > 0 || $u > 0) {
+                    if ($h > 0) {
+                        $chunk_str .= ' ';
+                    }
+                    
+                    $val = $t * 10 + $u;
+                    if ($val < 20) {
+                        $chunk_str .= $units[$val];
+                    } else {
+                        $chunk_str .= $tens[$t];
+                        if ($u > 0) {
+                            $chunk_str .= '-' . $units[$u];
+                        }
+                    }
+                }
+                
+                if ($chunk_str !== '') {
+                    $group_name = $groups[$group_count - 1 - $i];
+                    $result[] = $chunk_str . ($group_name ? ' ' . $group_name : '');
+                }
+            }
+        }
+
+        $word_representation = implode(' ', $result);
+        $word_representation = preg_replace('/\s+/', ' ', $word_representation);
+        $word_representation = trim($word_representation);
+
+        if ($decimalPart > 0) {
+            $dec_word = '';
+            if ($decimalPart < 20) {
+                $dec_word = $units[$decimalPart];
+            } else {
+                $t = (int)($decimalPart / 10);
+                $u = $decimalPart % 10;
+                $dec_word = $tens[$t];
+                if ($u > 0) {
+                    $dec_word .= '-' . $units[$u];
+                }
+            }
+            $word_representation .= ' point ' . $dec_word;
+        }
+
+        return $word_representation;
+    }
 }

@@ -464,7 +464,4 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-    </div>
-</div>
-
 @include('admin_panel.include.footer_include')

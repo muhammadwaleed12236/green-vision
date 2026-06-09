@@ -1,4 +1,4 @@
-@include('admin_panel.include.header_include')
+i@include('admin_panel.include.header_include')
 
 <div class="main-wrapper">
     @include('admin_panel.include.navbar_include')

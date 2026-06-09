@@ -271,18 +271,18 @@
             <thead>
                 <tr>
                     <th style="text-align: center; width: 5%;">#</th>
-                    <th style="width: 45%;">Description</th>
-                    <th style="text-align: center; width: 10%;">Qty</th>
-                    <th style="text-align: center; width: 10%;">Sq.Ft</th>
-                    <th style="text-align: right; width: 15%;">Rate</th>
-                    <th style="text-align: right; width: 15%;">Amount</th>
+                    <th style="width: 45%;">Product Name</th>
+                    <th style="text-align: center; width: 10%;">Quantity</th>
+                    <th style="text-align: center; width: 10%;">Unit</th>
+                    <th style="text-align: right; width: 15%;">Price/unit</th>
+                    <th style="text-align: right; width: 15%;">amount</th>
                 </tr>
             </thead>
             <tbody>
                 @php
                     $items = json_decode($sale->item) ?? [];
                     $qtys = json_decode($sale->qty) ?? [];
-                    $manual_sqfts = json_decode($sale->manual_sqft) ?? [];
+                    $units = json_decode($sale->unit) ?? [];
                     $rates = json_decode($sale->rate) ?? [];
                     $amounts = json_decode($sale->amount) ?? [];
                 @endphp
@@ -292,7 +292,7 @@
                         <td style="text-align: center;">{{ $loop->iteration }}</td>
                         <td><strong>{{ $item }}</strong></td>
                         <td style="text-align: center;">{{ $qtys[$i] ?? '1' }}</td>
-                        <td style="text-align: center;">{{ !empty($manual_sqfts[$i]) ? $manual_sqfts[$i] : '-' }}</td>
+                        <td style="text-align: center;">{{ strtoupper($units[$i] ?? 'pcs') }}</td>
                         <td style="text-align: right;">{{ number_format((float)($rates[$i] ?? 0), 2) }}</td>
                         <td style="text-align: right;"><strong>{{ number_format((float)($amounts[$i] ?? 0), 2) }}</strong></td>
                     </tr>

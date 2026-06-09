@@ -10,15 +10,15 @@
             {{-- PAGE HEADER --}}
             <div class="page-header">
                 <div class="page-title">
-                    <h4>Cash Book / Ledger - Daily</h4>
-                    <h6>Each day starts from 0 balance</h6>
+                    <h4>Cash Book / Ledger - Monthly</h4>
+                    <h6>Entries summarised by day for the selected month</h6>
                 </div>
                 <div class="page-btn d-flex gap-2 align-items-center">
                     <a href="{{ route('cash-book.history') }}" class="btn btn-info">
                         <i class="fa fa-history"></i> View History
                     </a>
                     <form method="GET" action="{{ route('cash-book') }}" class="d-flex gap-2">
-                        <input type="date" name="date" class="form-control" value="{{ $selectedDate }}" onchange="this.form.submit()">
+                        <input type="month" name="month" class="form-control" value="{{ $selectedMonth }}" onchange="this.form.submit()">
                     </form>
                     <button class="btn btn-added" data-bs-toggle="modal" data-bs-target="#addEntryModal">
                         + Add Entry
@@ -36,8 +36,8 @@
                     @endif
 
                     <div class="mb-3 d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">Date: {{ \Carbon\Carbon::parse($selectedDate)->format('d M Y, l') }}</h5>
-                        <div class="badge bg-success fs-6">Opening Balance: 0.00</div>
+                        <h5 class="mb-0">Month: {{ \Carbon\Carbon::parse($selectedMonth . '-01')->format('F Y') }}</h5>
+                        <div class="badge bg-success fs-6">Opening Balance: {{ number_format($openingBalance, 2) }}</div>
                     </div>
 
                     <div class="table-responsive">
@@ -45,63 +45,45 @@
                             <thead class="table-light">
                                 <tr>
                                     <th width="5%">#</th>
-                                    <th width="20%">Description</th>
-                                    <th width="15%">Debit (IN)</th>
-                                    <th width="15%">Credit (OUT)</th>
-                                    <th width="15%">Balance</th>
-                                    <th width="10%">Action</th>
+                                    <th width="20%">Date</th>
+                                    <th width="20%">Debit / IN</th>
+                                    <th width="20%">Credit / OUT</th>
+                                    <th width="20%">Running Balance</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @forelse($entries as $k => $entry)
+                                @forelse($monthlyEntries as $k => $row)
                                     <tr>
                                         <td>{{ $k + 1 }}</td>
-                                        <td>{{ $entry->description }}</td>
+                                        <td>{{ \Carbon\Carbon::parse($row->entry_date)->format('d M Y, l') }}</td>
                                         <td class="text-success fw-bold">
-                                            {{ $entry->debit > 0 ? number_format($entry->debit, 2) : '—' }}
+                                            {{ $row->total_debit > 0 ? number_format($row->total_debit, 2) : '—' }}
                                         </td>
                                         <td class="text-danger fw-bold">
-                                            {{ $entry->credit > 0 ? number_format($entry->credit, 2) : '—' }}
+                                            {{ $row->total_credit > 0 ? number_format($row->total_credit, 2) : '—' }}
                                         </td>
-                                        <td class="fw-bold {{ $entry->running_balance >= 0 ? 'text-success' : 'text-danger' }}">
-                                            {{ number_format($entry->running_balance, 2) }}
-                                        </td>
-                                        <td>
-                                            <button class="btn btn-sm btn-primary editEntryBtn"
-                                                    data-id="{{ $entry->id }}"
-                                                    data-date="{{ $entry->date }}"
-                                                    data-description="{{ $entry->description }}"
-                                                    data-debit="{{ $entry->debit }}"
-                                                    data-credit="{{ $entry->credit }}"
-                                                    data-bs-toggle="modal"
-                                                    data-bs-target="#editEntryModal">
-                                                <i class="fa fa-edit"></i>
-                                            </button>
-                                            <button class="btn btn-sm btn-danger deleteEntryBtn"
-                                                    data-id="{{ $entry->id }}">
-                                                <i class="fa fa-trash"></i>
-                                            </button>
+                                        <td class="fw-bold {{ $row->running_balance >= 0 ? 'text-success' : 'text-danger' }}">
+                                            {{ number_format($row->running_balance, 2) }}
                                         </td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="6" class="text-center text-muted">No entries for this date</td>
+                                        <td colspan="5" class="text-center text-muted">No entries for this month</td>
                                     </tr>
                                 @endforelse
                             </tbody>
                             <tfoot>
                                 <tr class="table-secondary fw-bold">
-                                    <th colspan="2" class="text-end">Total for Day:</th>
-                                    <th class="text-success">{{ number_format($entries->sum('debit'), 2) }}</th>
-                                    <th class="text-danger">{{ number_format($entries->sum('credit'), 2) }}</th>
-                                    <th colspan="2"></th>
+                                    <th colspan="2" class="text-end">Monthly Total:</th>
+                                    <th class="text-success">{{ number_format($totalDebit, 2) }}</th>
+                                    <th class="text-danger">{{ number_format($totalCredit, 2) }}</th>
+                                    <th></th>
                                 </tr>
                                 <tr class="table-success fw-bold fs-5">
-                                    <th colspan="4" class="text-end">Closing Balance:</th>
-                                    <th class="{{ $closingBalance >= 0 ? 'text-success' : 'text-danger' }}">
+                                    <th colspan="3" class="text-end">Closing Balance:</th>
+                                    <th colspan="2" class="{{ $closingBalance >= 0 ? 'text-success' : 'text-danger' }}">
                                         {{ number_format($closingBalance, 2) }}
                                     </th>
-                                    <th></th>
                                 </tr>
                             </tfoot>
                         </table>
@@ -128,7 +110,7 @@
                 <div class="modal-body">
                     <div class="mb-3">
                         <label class="form-label">Date</label>
-                        <input type="date" class="form-control" name="date" value="{{ $selectedDate }}" required>
+                        <input type="date" class="form-control" name="date" value="{{ $selectedMonth . '-' . date('d') }}" required>
                     </div>
 
                     <div class="mb-3">
@@ -160,101 +142,4 @@
     </div>
 </div>
 
-{{-- EDIT ENTRY MODAL --}}
-<div class="modal fade" id="editEntryModal">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <form method="POST" action="{{ route('cash-book.update') }}">
-                @csrf
-                <input type="hidden" name="entry_id" id="edit_entry_id">
-
-                <div class="modal-header">
-                    <h5 class="modal-title">Edit Entry</h5>
-                    <button type="button" class="btn-close text-black" data-bs-dismiss="modal">X</button>
-                </div>
-
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">Date</label>
-                        <input type="date" class="form-control" name="date" id="edit_date" required>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Description</label>
-                        <input type="text" class="form-control" name="description" id="edit_description" required>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Debit (Received)</label>
-                            <input type="number" step="0.01" class="form-control" name="debit" id="edit_debit" min="0">
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Credit (Paid)</label>
-                            <input type="number" step="0.01" class="form-control" name="credit" id="edit_credit" min="0">
-                        </div>
-                    </div>
-                </div>
-
-                <div class="modal-footer">
-                    <button type="submit" class="btn btn-primary">Update Entry</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
 @include('admin_panel.include.footer_include')
-
-<script>
-$(document).on("click", ".editEntryBtn", function () {
-    let id = $(this).data("id");
-    let date = $(this).data("date");
-    let description = $(this).data("description");
-    let debit = $(this).data("debit");
-    let credit = $(this).data("credit");
-
-    $("#edit_entry_id").val(id);
-    $("#edit_date").val(date);
-    $("#edit_description").val(description);
-    $("#edit_debit").val(debit);
-    $("#edit_credit").val(credit);
-});
-
-$(document).on("click", ".deleteEntryBtn", function (e) {
-    e.preventDefault();
-
-    let entryId = $(this).data("id");
-
-    Swal.fire({
-        title: "Are you sure?",
-        text: "This entry will be permanently deleted!",
-        icon: "warning",
-        showCancelButton: true,
-        confirmButtonColor: "#d33",
-        cancelButtonColor: "#3085d6",
-        confirmButtonText: "Yes, delete it!"
-    }).then((result) => {
-        if (result.isConfirmed) {
-            $.ajax({
-                url: "{{ route('cash-book.delete', ':id') }}".replace(':id', entryId),
-                type: "DELETE",
-                data: {
-                    _token: "{{ csrf_token() }}"
-                },
-                success: function (response) {
-                    if (response.status === 'success') {
-                        Swal.fire("Deleted!", response.message, "success")
-                            .then(() => location.reload());
-                    } else {
-                        Swal.fire("Error!", response.message, "error");
-                    }
-                },
-                error: function () {
-                    Swal.fire("Error!", "Something went wrong.", "error");
-                }
-            });
-        }
-    });
-});
-</script>

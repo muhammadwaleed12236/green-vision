@@ -171,7 +171,7 @@
             <!-- Welcome Header -->
             <div class="welcome-header d-flex align-items-center justify-content-between">
                 <div>
-                    <h3>Welcome Back, {{ Auth::user()->name }}! 👋</h3>
+                    <h3>Welcome Back!</h3>
                     <p>Here's what's happening with your business today.</p>
                 </div>
                 <div class="d-none d-md-block">

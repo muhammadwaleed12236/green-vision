@@ -176,7 +176,7 @@
                                             <span class="fw-bold text-primary">{{ $purchase->invoice_number }}</span>
                                         </td>
                                         <td>
-                                            <span class="text-light">{{ \Carbon\Carbon::parse($purchase->purchase_date)->format('d M Y') }}</span>
+                                            <span class="text-dark">{{ \Carbon\Carbon::parse($purchase->purchase_date)->format('d M Y') }}</span>
                                         </td>
                                         <td>
                                             <div class="d-flex align-items-center">

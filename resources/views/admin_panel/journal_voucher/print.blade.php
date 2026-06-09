@@ -173,7 +173,7 @@
                 <label>{{ $voucher->voucher_type == 'payment' ? 'Amount Paid' : 'Amount Received' }}</label>
                 <h2>PKR {{ number_format($voucher->voucher_type == 'payment' ? $voucher->debit_amount : $voucher->credit_amount, 0) }}</h2>
                 <div class="amount-words">
-                    ({{ ucwords(\NumberFormatter::create('en', \NumberFormatter::SPELLOUT)->format($voucher->voucher_type == 'payment' ? $voucher->debit_amount : $voucher->credit_amount)) }} Rupees Only)
+                    ({{ ucwords(\App\Models\JournalVoucher::amountInWords($voucher->voucher_type == 'payment' ? $voucher->debit_amount : $voucher->credit_amount)) }} Rupees Only)
                 </div>
             </div>
 
@@ -212,10 +212,7 @@
                     <div class="signature-line">Prepared By</div>
                 </div>
                 <div class="signature-box">
-                    <div class="signature-line">Checked By</div>
-                </div>
-                <div class="signature-box">
-                    <div class="signature-line">Approved By</div>
+                    <div class="signature-line">Received By</div>
                 </div>
             </div>
         </div>
