@@ -236,7 +236,7 @@ $(document).ready(function () {
             </td>
             <td>
                 <input type="number" class="form-control amount" name="amount[]"
-                    value="${amount}" readonly>
+                    value="${amount}">
                 <!-- Hidden backward-compatible inputs -->
                 <input type="hidden" name="measurement[]" class="measurement" value="${measurement}">
                 <input type="hidden" name="gross_total[]" class="gross-total" value="${grossTotal || 0}">
@@ -375,6 +375,10 @@ $(document).ready(function () {
         autoAddIfNeeded();
     });
 
+    $(document).on('input', '.amount', function () {
+        calculateGrandTotal();
+    });
+
     function calculateRow(row) {
         let rate = parseFloat(row.find('.rate').val()) || 0;
         let pcs = parseFloat(row.find('.pcx').val()) || 0;
@@ -431,8 +435,6 @@ $(document).ready(function () {
     });
 
     // Calculate totals for existing data
-    $('#purchaseTable tbody tr').each(function() {
-        calculateRow($(this));
-    });
+    calculateGrandTotal();
 });
 </script>

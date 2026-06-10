@@ -238,13 +238,8 @@
                 let pcs = parseInt(row.find('.pcx').val()) || 0;
                 let rate = parseInt(row.find('.rate').val()) || 0;
 
-                // If item has name, it must have quantity
-                if (itemName && pcs <= 0) {
-                    errors.push('Item "' + itemName + '" requires Quantity');
-                }
-
                 // Check if at least one valid item exists
-                if (itemName && pcs > 0 && rate > 0) {
+                if (itemName) {
                     hasValidItem = true;
                 }
             });
@@ -256,7 +251,7 @@
 
             // Check if at least one item exists
             if (!hasValidItem) {
-                errors.push('At least one complete item is required (with Item Name, Rate, and Feet)');
+                errors.push('At least one complete item is required (with Item Name)');
             }
 
             // Show client-side errors
@@ -397,7 +392,7 @@
         </td>
 
         <td>
-            <input type="number" class="form-control pcx" name="pcs[]" min="1" value="1">
+            <input type="number" class="form-control pcx" name="pcs[]" min="0" value="0">
         </td>
 
         <td>
@@ -409,7 +404,7 @@
         </td>
 
         <td>
-            <input type="number" class="form-control amount" name="amount[]" readonly>
+            <input type="number" class="form-control amount" name="amount[]">
             <!-- Hidden backward-compatible inputs -->
             <input type="hidden" name="measurement[]" class="measurement" value="">
             <input type="hidden" name="gross_total[]" class="gross-total" value="0">
@@ -553,6 +548,10 @@
             let row = $(this).closest('tr');
             calculateRow(row);
             autoAddIfNeeded();
+        });
+
+        $(document).on('input', '.amount', function () {
+            calculateGrandTotal();
         });
 
         function calculateRow(row) {

@@ -106,13 +106,8 @@ class PurchaseController extends Controller
             // Only process rows with data
             if (trim($name) !== '' || $itemRate > 0 || $itemPcs > 0) {
 
-                // Validate: If item has name, it must have pcs (feet)
-                if (trim($name) !== '' && $itemPcs <= 0) {
-                    $itemErrors[] = "Item \"{$name}\" requires Feet (pcs) value";
-                }
-
                 // Only add valid rows
-                if (trim($name) !== '' && $itemPcs > 0) {
+                if (trim($name) !== '') {
                     $rows[] = [
                         'item_name' => $name,
                         'rate' => $rates[$i] ?? 0,
@@ -141,7 +136,7 @@ class PurchaseController extends Controller
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
                     'success' => false,
-                    'errors' => ['items' => ['At least one complete item is required (with Item Name, Rate, and Feet)']]
+                    'errors' => ['items' => ['At least one complete item is required (with Item Name)']]
                 ], 422);
             }
             return back()->withErrors(['items' => 'At least one item is required']);
@@ -323,7 +318,7 @@ class PurchaseController extends Controller
         foreach ($item_names as $i => $name) {
             $itemPcs = (int) ($pcs[$i] ?? 0);
 
-            if (trim($name) !== '' && $itemPcs > 0) {
+            if (trim($name) !== '') {
                 $rows[] = [
                     'item_name' => $name,
                     'rate' => $rates[$i] ?? 0,

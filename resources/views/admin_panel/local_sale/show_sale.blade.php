@@ -292,8 +292,8 @@
                     <tr>
                         <td style="text-align: center;">{{ $loop->iteration }}</td>
                         <td><strong>{{ $item }}</strong></td>
-                        <td style="text-align: center;">{{ $qtys[$i] ?? '1' }}</td>
-                        <td style="text-align: center;">{{ strtoupper($units[$i] ?? 'pcs') }}</td>
+                        <td style="text-align: center;">{{ ($qtys[$i] ?? 0) == 0 ? '-' : $qtys[$i] }}</td>
+                        <td style="text-align: center;">{{ empty($units[$i]) ? '-' : strtoupper($units[$i]) }}</td>
                         <td style="text-align: right;">{{ number_format((float)($rates[$i] ?? 0), 2) }}</td>
                         <td style="text-align: right;"><strong>{{ number_format((float)($amounts[$i] ?? 0), 2) }}</strong></td>
                     </tr>

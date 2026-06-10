@@ -61,9 +61,9 @@ i@include('admin_panel.include.header_include')
                             <tr>
                                 <td style="border: 1px solid #000;">{{ json_decode($sale->code)[$index] ?? 'N/A' }}</td>
                                 <td style="border: 1px solid #000;">{{ $item }}</td>
-                                <td class="text-center" style="border: 1px solid #000;">{{ json_decode($sale->pcs_carton)[$index] ?? '' }}</td>
-                                <td class="text-center" style="border: 1px solid #000;">{{ json_decode($sale->carton_qty)[$index] ?? '' }}</td>
-                                <td class="text-center" style="border: 1px solid #000;">{{ json_decode($sale->pcs)[$index] ?? '' }}</td>
+                                <td class="text-center" style="border: 1px solid #000;">{{ empty(json_decode($sale->pcs_carton)[$index]) ? '-' : json_decode($sale->pcs_carton)[$index] }}</td>
+                                <td class="text-center" style="border: 1px solid #000;">{{ empty(json_decode($sale->carton_qty)[$index]) || json_decode($sale->carton_qty)[$index] == 0 ? '-' : json_decode($sale->carton_qty)[$index] }}</td>
+                                <td class="text-center" style="border: 1px solid #000;">{{ empty(json_decode($sale->pcs)[$index]) || json_decode($sale->pcs)[$index] == 0 ? '-' : json_decode($sale->pcs)[$index] }}</td>
                                 <td class="text-center" style="border: 1px solid #000;">{{ json_decode($sale->rate)[$index] ?? '' }}</td>
                                 <td class="text-center" style="border: 1px solid #000;">{{ json_decode($sale->discount)[$index] ?? '0' }}</td>
                                 <td class="text-end" style="border: 1px solid #000;">{{ json_decode($sale->amount)[$index] ?? '' }}</td>

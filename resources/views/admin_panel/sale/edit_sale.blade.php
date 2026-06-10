@@ -142,7 +142,7 @@
                                                 <input name="rate[]" class="form-control rate" value="{{ $rates[$i] ?? 0 }}">
                                             </td>
                                             <td>
-                                                <input name="amount[]" class="form-control item-total readonly-box" value="{{ $amounts[$i] ?? 0 }}" readonly>
+                                                <input name="amount[]" class="form-control item-total" value="{{ $amounts[$i] ?? 0 }}">
                                             </td>
                                         </tr>
                                     @endforeach
@@ -208,7 +208,7 @@
     function calcRow(row) {
         let rate = parseFloat(row.find('.rate').val()) || 0;
         let qty = parseFloat(row.find('.qty').val());
-        if (isNaN(qty) || qty < 0) qty = 1;
+        if (isNaN(qty) || qty < 0) qty = 0;
 
         let total = rate * qty;
         row.find('.item-total').val(total.toFixed(2));
@@ -229,6 +229,10 @@
         calcRow($(this).closest('tr'));
     });
 
+    $(document).on('input change', '.item-total', function () {
+        calcGrand();
+    });
+
     $(document).on('click', '.qty-plus', function () {
         let r = $(this).closest('tr');
         r.find('.qty').val(+r.find('.qty').val() + 1);
@@ -237,14 +241,12 @@
 
     $(document).on('click', '.qty-minus', function () {
         let r = $(this).closest('tr');
-        r.find('.qty').val(Math.max(1, +r.find('.qty').val() - 1));
+        r.find('.qty').val(Math.max(0, +r.find('.qty').val() - 1));
         calcRow(r);
     });
 
     // calculate all rows on load
     $(document).ready(function () {
-        $('.sale-row').each(function () {
-            calcRow($(this));
-        });
+        calcGrand();
     });
 </script>

@@ -239,7 +239,7 @@
                                         <td>
                                             <div class="qty-box">
                                                 <button type="button" class="btn qty-minus">−</button>
-                                                <input name="qty[]" class="form-control qty" value="1" placeholder="0">
+                                                <input name="qty[]" class="form-control qty" value="0" placeholder="0">
                                                 <button type="button" class="btn qty-plus">+</button>
                                             </div>
                                         </td>
@@ -252,7 +252,7 @@
                                             </select>
                                         </td>
                                         <td><input name="rate[]" class="form-control rate text-end" placeholder="0.00"></td>
-                                        <td><input name="amount[]" class="form-control item-total readonly-box text-end" readonly tabindex="-1" value="0.00"></td>
+                                        <td><input name="amount[]" class="form-control item-total text-end" value="0.00"></td>
                                         <td>
                                             <div class="d-flex gap-1 justify-content-center">
                                                 <button type="button" class="btn btn-success btn-action add-row">+</button>
@@ -401,7 +401,7 @@
         let rate = parseFloat(r.find('.rate').val()) || 0;
         let qty = parseFloat(r.find('.qty').val());
 
-        if (isNaN(qty) || qty < 0) qty = 1;
+        if (isNaN(qty) || qty < 0) qty = 0;
 
         let total = rate * qty;
         r.find('.item-total').val(total.toFixed(2));
@@ -411,6 +411,10 @@
 
     $(document).on('input change', '.rate,.qty', e => {
         calcRow($(e.target).closest('tr'));
+    });
+
+    $(document).on('input change', '.item-total', e => {
+        calcGrand();
     });
 
     // Auto-Append Logic: Detect input in last row
@@ -435,7 +439,7 @@
     function addNewRow() {
         let r = $('.sale-row:first').clone();
         r.find('input').val('');
-        r.find('.qty').val(1);
+        r.find('.qty').val(0);
         r.find('.rate').val('');
         r.find('.item-total').val('0.00');
         r.find('.unit').val('pcs');
@@ -453,7 +457,7 @@
 
     $(document).on('click', '.qty-minus', e => {
         let r = $(e.target).closest('tr');
-        r.find('.qty').val(Math.max(1, +r.find('.qty').val() - 1));
+        r.find('.qty').val(Math.max(0, +r.find('.qty').val() - 1));
         calcRow(r);
     });
 

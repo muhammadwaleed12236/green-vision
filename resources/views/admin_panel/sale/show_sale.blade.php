@@ -87,9 +87,9 @@
                                         <td>{{ $codes[$index] ?? '-' }}</td>
                                         <td>{{ $items[$index] ?? '-' }}</td>
                                         <td>{{ $sizes[$index] ?? '-' }}</td>
-                                        <td>{{ $packings[$index] ?? '-' }}</td>
-                                        <td>{{ $carton_qtys[$index] ?? '-' }}</td>
-                                        <td>{{ $pcs[$index] ?? '-' }}</td>
+                                        <td>{{ empty($packings[$index]) ? '-' : $packings[$index] }}</td>
+                                        <td>{{ empty($carton_qtys[$index]) || $carton_qtys[$index] == 0 ? '-' : $carton_qtys[$index] }}</td>
+                                        <td>{{ empty($pcs[$index]) || $pcs[$index] == 0 ? '-' : $pcs[$index] }}</td>
                                         <td>{{ number_format($rates[$index] ?? 0, 2) }}</td>
                                         <td>{{ number_format($discounts[$index] ?? 0, 2) }}</td>
                                         <td>{{ number_format($amounts[$index] ?? 0, 2) }}</td>
