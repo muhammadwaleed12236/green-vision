@@ -411,4 +411,22 @@ class CustomerController extends Controller
             'payments' => $payments
         ]);
     }
+
+    public function transactionHistory($id)
+    {
+        $customer = Customer::findOrFail($id);
+
+        // All local (job order) sales for this customer
+        $localSales = \App\Models\LocalSale::where('customer_id', $id)
+            ->orderBy('sale_date', 'desc')
+            ->get();
+
+        // Distributor Sales don't link directly to customer — empty for now
+        $distSales = collect();
+
+        // Ledger summary
+        $ledger = CustomerLedger::where('customer_id', $id)->first();
+
+        return view('admin_panel.customer.transaction_history', compact('customer', 'localSales', 'distSales', 'ledger'));
+    }
 }

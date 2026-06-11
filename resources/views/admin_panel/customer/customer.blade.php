@@ -58,7 +58,10 @@
                                         @if(Auth::check() && Auth::user()->usertype == 'salesman')
                                             <span class="btn btn-danger btn-sm">No Action Given</span>
                                         @endif
-
+                                        <a href="{{ route('customer.transaction.history', $customer->id) }}"
+                                           class="btn btn-sm btn-info text-white" title="Transaction History">
+                                            <i class="fa fa-history"></i> History
+                                        </a>
                                     </td>
                                 </tr>
                             @endforeach

@@ -18,6 +18,11 @@ class Sale extends Model
         return $this->belongsTo(Distributor::class, 'distributor_id');
     }
 
+    public function assignedSalesman()
+    {
+        return $this->belongsTo(Salesman::class, 'assigned_salesman_id');
+    }
+
     public static function generateSaleInvoiceNo()
     {
         // Define the prefix for the invoice number

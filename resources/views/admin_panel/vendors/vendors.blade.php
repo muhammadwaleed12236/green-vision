@@ -70,6 +70,10 @@
                                             @else
                                                 <button class="btn btn-sm btn-danger" disabled>No Action</button>
                                             @endif
+                                            <a href="{{ route('vendor.transaction.history', $Vendor->id) }}"
+                                               class="btn btn-sm btn-warning text-white" title="Transaction History">
+                                                <i class="fa fa-history"></i> History
+                                            </a>
                                         </td>
                                     </tr>
                                 @endforeach

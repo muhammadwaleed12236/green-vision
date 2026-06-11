@@ -385,4 +385,19 @@ class VendorController extends Controller
 
         return response()->json(['success' => 'VendorBuilty deleted successfully.']);
     }
+
+    public function transactionHistory($id)
+    {
+        $vendor = Vendor::findOrFail($id);
+
+        // All purchases from this vendor
+        $purchases = Purchase::where('party_code', $vendor->Party_code)
+            ->orderBy('purchase_date', 'desc')
+            ->get();
+
+        // Ledger summary
+        $ledger = VendorLedger::where('vendor_id', $id)->first();
+
+        return view('admin_panel.vendors.transaction_history', compact('vendor', 'purchases', 'ledger'));
+    }
 }

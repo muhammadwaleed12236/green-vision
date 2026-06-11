@@ -173,6 +173,8 @@ Route::get('/sale/edit/{id}', [SaleController::class, 'saleEdit'])->name('sale.e
 // web.php
 Route::get('/sale/delete/{id}', [SaleController::class, 'delete'])->name('sale.delete');
 Route::put('/sale/update/{id}', [SaleController::class, 'saleupdate'])->name('sale.update');
+Route::post('/sale/assign/{id}', [SaleController::class, 'assignSalesman'])->name('sale.assign');
+Route::get('/sale/cancel/{id}', [SaleController::class, 'cancelSale'])->name('sale.cancel');
 
 Route::get('/add-sale-return', [SaleReturnController::class, 'add_sale_return'])->name('add-sale-return');
 Route::get('/get-sale-invoices', [SaleReturnController::class, 'getSaleInvoices'])->name('get-sale-invoices');
@@ -227,6 +229,7 @@ Route::get('/amount-paid-vendors', [VendorController::class, 'amount_paid_vendor
 Route::get('/vendor/ledger/{id}', [VendorController::class, 'getLedger'])->name('vendor.ledger');
 Route::post('/update-vendor-payment', [VendorController::class, 'update_vendor_payment'])->name('update-vendor-payment');
 Route::delete('/delete-vendor-payment/{id}', [VendorController::class, 'delete_vendor_payment'])->name('delete-vendor-payment');
+Route::get('/vendor/transaction-history/{id}', [VendorController::class, 'transactionHistory'])->name('vendor.transaction.history');
 
 Route::get('/vendors-builty', [VendorController::class, 'vendors_builty'])->name('vendors-builty');
 Route::post('/store-vendors-builty', [VendorController::class, 'store_vendors_builty'])->name('store-vendors-builty');
@@ -244,6 +247,7 @@ Route::get('/customer-ledger', [CustomerController::class, 'customer_ledger'])->
 Route::post('/customer-recovery-store', [CustomerController::class, 'customer_recovery_store'])->name('customer-recovery-store');
 Route::get('/customer-recovery', [CustomerController::class, 'customer_recovery'])->name('customer-recovery');
 Route::get('/customer-payment-history', [CustomerController::class, 'getCustomerPaymentHistory'])->name('customer-payment-history');
+Route::get('/customer/transaction-history/{id}', [CustomerController::class, 'transactionHistory'])->name('customer.transaction.history');
 Route::get('/customer/edit/{id}', [CustomerController::class, 'getCustomerData'])->name('customer.edit');
 Route::put('/customer-recovery/{id}', [CustomerController::class, 'updateRecovery'])->name('customer_recovery.update');
 

@@ -187,17 +187,19 @@ class SaleController extends Controller
             $user = Auth::user();
             if ($user->usertype === 'admin') {
                 $Sales = Sale::where('admin_or_user_id', $user->id)
-                    ->with('distributor')
+                    ->with('distributor', 'assignedSalesman')
                     ->get();
             } elseif ($user->usertype === 'distributor') {
                 $Sales = Sale::where('distributor_id', $user->user_id)
-                    ->with('distributor')
+                    ->with('distributor', 'assignedSalesman')
                     ->get();
             } else {
                 return redirect()->back()->with('error', 'Unauthorized access');
             }
 
-            return view('admin_panel.sale.all_sale', compact('Sales'));
+            $Staffs = Salesman::where('admin_or_user_id', $user->id)->get();
+
+            return view('admin_panel.sale.all_sale', compact('Sales', 'Staffs'));
         } else {
             return redirect()->back();
         }
@@ -419,5 +421,69 @@ class SaleController extends Controller
         }
 
         return redirect()->back()->with('success', 'Sale deleted, stock restored, and ledger adjusted.');
+    }
+
+    public function assignSalesman(Request $request, $id)
+    {
+        $sale = Sale::findOrFail($id);
+
+        $request->validate([
+            'assigned_salesman_id' => 'required|exists:sales_mens,id',
+        ]);
+
+        $sale->assigned_salesman_id = $request->assigned_salesman_id;
+        $sale->save();
+
+        return redirect()->back()->with('success', 'Salesman assigned to sale successfully.');
+    }
+
+    public function cancelSale($id)
+    {
+        $sale = Sale::findOrFail($id);
+
+        if ($sale->cancel_status == 1) {
+            return redirect()->back()->with('error', 'Sale is already cancelled.');
+        }
+
+        // Step 1: Restore stock
+        $codes      = json_decode($sale->code);
+        $categories = json_decode($sale->category);
+        $subcategories = json_decode($sale->subcategory);
+        $items      = json_decode($sale->item);
+        $sizes      = json_decode($sale->size);
+        $cartonQtys = json_decode($sale->carton_qty);
+        $pcs        = json_decode($sale->pcs);
+
+        for ($i = 0; $i < count($codes); $i++) {
+            $product = Product::where('item_code', $codes[$i])
+                ->where('item_name', $items[$i])
+                ->where('category', $categories[$i])
+                ->where('sub_category', $subcategories[$i])
+                ->where('size', $sizes[$i])
+                ->first();
+
+            if ($product) {
+                $cartonQty   = (int) $cartonQtys[$i];
+                $pcsReturned = (int) $pcs[$i];
+                $pcsPerCarton = (int) $product->pcs_in_carton;
+
+                $product->carton_quantity += $cartonQty;
+                $product->initial_stock   += ($cartonQty * $pcsPerCarton) + $pcsReturned;
+                $product->save();
+            }
+        }
+
+        // Step 2: Reverse distributor ledger
+        $ledger = DistributorLedger::where('distributor_id', $sale->distributor_id)->latest()->first();
+        if ($ledger) {
+            $ledger->closing_balance -= $sale->net_amount;
+            $ledger->save();
+        }
+
+        // Step 3: Mark as cancelled
+        $sale->cancel_status = 1;
+        $sale->save();
+
+        return redirect()->back()->with('success', 'Sale cancelled, stock restored, and ledger adjusted.');
     }
 }
