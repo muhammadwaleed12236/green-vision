@@ -65,10 +65,10 @@ class VendorController extends Controller
         $request->validate([
             'Party_code' => 'required',
             'Party_name' => 'required',
-            'Party_address' => 'required',
+            'Party_address' => 'nullable|string',
             'Party_phone' => 'required',
-            'city' => 'required',
-            'area' => 'required',
+            'city' => 'nullable|string',
+            'area' => 'nullable|string',
             'recape_type' => 'nullable|string',
             'recape_opening' => 'nullable|numeric',
         ]);

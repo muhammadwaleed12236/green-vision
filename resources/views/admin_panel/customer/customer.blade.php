@@ -132,22 +132,22 @@
 
                         <div class="col-md-6">
                             <label class="form-label">Customer Name</label>
-                            <input type="text" class="form-control" name="customer_name" value="{{ old('customer_name') }}" id="edit_address" required>
+                            <input type="text" class="form-control" name="customer_name" id="edit_customer_name" required>
                         </div>
 
                         <div class="col-md-6">
                             <label class="form-label">Address</label>
-                            <input type="text" class="form-control" name="address" value="{{ old('address') }}" id="edit_address" required>
+                            <input type="text" class="form-control" name="address" id="edit_address">
                         </div>
 
-                        <div class="col-md-6">
+                        <div class="col-md-6 mt-2">
                             <label class="form-label">Phone Number</label>
-                            <input type="text" name="phone_number" class="form-control mt-2" value="{{ old('phone_number') }}" placeholder="Enter Phone Number">
+                            <input type="text" name="phone_number" class="form-control" id="edit_phone_number" placeholder="Enter Phone Number">
                         </div>
 
-                        <div class="col-md-6">
-                           <label class="form-label">Opening Balance</label>
-                            <input type="number" name="opening_balance" class="form-control mt-2" value="{{ old('opening_balance') }}" placeholder="Enter Opening Balance">
+                        <div class="col-md-6 mt-2">
+                           <label class="form-label">Opening Balance (current)</label>
+                            <input type="number" name="opening_balance" class="form-control" id="edit_opening_balance" placeholder="Enter Opening Balance">
                         </div>
                     </div>
 

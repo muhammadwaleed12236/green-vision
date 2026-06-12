@@ -19,8 +19,7 @@
                                     @foreach($Customers as $Customer)
                                         <option value="{{ $Customer->id }}" data-contact="{{ $Customer->phone_number }}"
                                             data-city="{{ $Customer->city }}" data-area="{{ $Customer->area }}">
-                                            {{ $Customer->shop_name }} ({{ $Customer->customer_name }})
-                                            ({{ $Customer->area }})
+                                            {{ $Customer->customer_name }}{{ $Customer->shop_name ? ' ('.$Customer->shop_name.')' : '' }}{{ $Customer->area ? ' ('.$Customer->area.')' : '' }}
                                         </option>
                                     @endforeach
                                 </select>

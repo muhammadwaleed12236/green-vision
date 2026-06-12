@@ -162,7 +162,7 @@ class SalesmanController extends Controller
         if (Auth::id()) {
             Designation::create([
                 'admin_or_user_id' => Auth::id(),
-                'designation' => $request->designation,
+                'designation_name' => $request->designation,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
@@ -182,7 +182,7 @@ class SalesmanController extends Controller
 
         $designation = Designation::findOrFail($request->designation_id);
         $designation->update([
-            'designation' => $request->designation,
+            'designation_name' => $request->designation,
         ]);
 
         return back()->with('success', 'Designation updated successfully.');

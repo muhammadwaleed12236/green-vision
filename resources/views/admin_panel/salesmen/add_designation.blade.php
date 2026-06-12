@@ -39,11 +39,11 @@
                                     @foreach ($designations as $key => $designation)
                                         <tr>
                                             <td>{{ $key + 1 }}</td>
-                                            <td>{{ $designation->designation }}</td>
+                                            <td>{{ $designation->designation_name }}</td>
                                             <td>
                                                 <button class="btn btn-sm btn-primary editDesignationBtn"
                                                     data-id="{{ $designation->id }}"
-                                                    data-name="{{ $designation->designation }}" data-bs-toggle="modal"
+                                                    data-name="{{ $designation->designation_name }}" data-bs-toggle="modal"
                                                     data-bs-target="#editDesignationModal">Edit</button>
 
                                                 <button class="btn btn-sm btn-danger"

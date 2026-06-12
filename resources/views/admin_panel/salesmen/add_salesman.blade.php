@@ -127,6 +127,11 @@
                                 <option value="">Select Type</option>
                                 <option value="contract">Contract</option>
                                 <option value="labour">Labour</option>
+                                @foreach($designation as $d)
+                                    @if(!in_array(strtolower($d->designation_name), ['contract', 'labour']))
+                                        <option value="{{ $d->designation_name }}">{{ ucfirst($d->designation_name) }}</option>
+                                    @endif
+                                @endforeach
                             </select>
                         </div>
 
@@ -213,6 +218,11 @@
                             <select class="form-control" name="designation" id="edit_designation" required>
                                 <option value="contract">Contract</option>
                                 <option value="labour">Labour</option>
+                                @foreach($designation as $d)
+                                    @if(!in_array(strtolower($d->designation_name), ['contract', 'labour']))
+                                        <option value="{{ $d->designation_name }}">{{ ucfirst($d->designation_name) }}</option>
+                                    @endif
+                                @endforeach
                             </select>
                         </div>
 
@@ -249,7 +259,8 @@
         const addressWrapper = document.getElementById("addressWrapper");
 
         function toggleLoginFields() {
-            if (designationSelect.value === "Saleman") {
+            const val = designationSelect.value.toLowerCase();
+            if (val === "saleman" || val === "salesman") {
                 loginFields.classList.remove("d-none");
                 emailField.setAttribute("required", "required");
                 passwordField.setAttribute("required", "required");

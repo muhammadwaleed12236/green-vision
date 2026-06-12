@@ -119,7 +119,8 @@
 <script>
     document.getElementById("searchLedger").addEventListener("click", function () {
         let salesman = document.getElementById("salesman").value;
-        let type = document.getElementById("type").value;
+        let typeElement = document.getElementById("type");
+        let type = typeElement ? typeElement.value : 'all';
         let startDate = document.getElementById("start_date").value;
         let endDate = document.getElementById("end_date").value;
         let csrfToken = document.querySelector('input[name="_token"]').value;

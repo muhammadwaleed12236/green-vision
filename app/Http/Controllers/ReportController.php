@@ -1795,36 +1795,37 @@ public function getStaffWeeklyAttendance(Request $request)
         $startDate = $request->start_date;
         $endDate = $request->end_date;
 
+        if (empty($startDate) || empty($endDate)) {
+            $startDate = \Carbon\Carbon::today()->startOfDay();
+            $endDate = \Carbon\Carbon::today()->endOfDay();
+        } else {
+            $startDate = \Carbon\Carbon::parse($startDate)->startOfDay();
+            $endDate = \Carbon\Carbon::parse($endDate)->endOfDay();
+        }
+
         $sales = [];
 
         // --- Distributor Sales ---
-        $query = DB::table('local_sales')->whereBetween('created_at', [$startDate, $endDate]);
+        $query = DB::table('sales')->whereBetween('created_at', [$startDate, $endDate]);
         $results = $query->get();
 
-        $distributorIds = $results->pluck('distributor_id')->unique()->filter()->values();
-        $distributorMap = DB::table('distributors')
-            ->whereIn('id', $distributorIds)
-            ->pluck('Customer', 'id');
-
         foreach ($results as $row) {
-            $items = json_decode($row->cart_items, true) ?? [];
+            $items = json_decode($row->item, true) ?? [];
             $cartons = json_decode($row->carton_qty, true) ?? [];
-            $pcs = json_decode($row->pcs, true) ?? [];
+            $pcs = json_decode($row->pcs_qty, true) ?? [];
             $amounts = json_decode($row->amount, true) ?? [];
-            $liters = property_exists($row, 'liter') ? (json_decode($row->liter, true) ?? []) : [];
+            $liters = json_decode($row->liter, true) ?? [];
 
             foreach ($items as $i => $itm) {
-                // ❌ Null ya "Select Item" skip karo
                 if (empty($itm) || strtolower($itm) == 'select item') {
                     continue;
                 }
 
-                // Agar filter laga hai to "All" ke ilawa wahi products allow hongay
-                if (! in_array('All', $products) && ! in_array($itm, $products)) {
+                if (!in_array('All', $products) && !in_array($itm, $products)) {
                     continue;
                 }
 
-                if (! isset($sales[$itm])) {
+                if (!isset($sales[$itm])) {
                     $sales[$itm] = [
                         'item' => $itm,
                         'carton_qty' => 0,
@@ -1832,37 +1833,34 @@ public function getStaffWeeklyAttendance(Request $request)
                         'liters' => 0,
                         'amount' => 0,
                     ];
-                }$items = json_decode($row->item, true);
+                }
 
-                $sales[$itm]['carton_qty'] += $cartons[$i] ?? 0;
-                $sales[$itm]['pcs'] += $pcs[$i] ?? 0;
-                $sales[$itm]['liters'] += $liters[$i] ?? 0;
-                $sales[$itm]['amount'] += $amounts[$i] ?? 0;
+                $sales[$itm]['carton_qty'] += (float)($cartons[$i] ?? 0);
+                $sales[$itm]['pcs'] += (float)($pcs[$i] ?? 0);
+                $sales[$itm]['liters'] += (float)($liters[$i] ?? 0);
+                $sales[$itm]['amount'] += (float)($amounts[$i] ?? 0);
             }
         }
 
-        // --- Customer Sales ---
-        $query = DB::table('local_sales')->whereBetween('Date', [$startDate, $endDate]);
+        // --- Customer Sales (Local Sales) ---
+        $query = DB::table('local_sales')->whereBetween('created_at', [$startDate, $endDate]);
         $results = $query->get();
 
         foreach ($results as $row) {
-            $items = json_decode($row->cart_items, true) ?? [];
-            $cartons = json_decode($row->carton_qty, true) ?? [];
-            $pcs = json_decode($row->pcs, true) ?? [];
+            $items = json_decode($row->item, true) ?? [];
+            $qtys = json_decode($row->qty, true) ?? [];
             $amounts = json_decode($row->amount, true) ?? [];
-            $liters = property_exists($row, 'liter') ? (json_decode($row->liter, true) ?? []) : [];
 
             foreach ($items as $i => $itm) {
-                // ❌ Null ya "Select Item" skip karo
                 if (empty($itm) || strtolower($itm) == 'select item') {
                     continue;
                 }
 
-                if (! in_array('All', $products) && ! in_array($itm, $products)) {
+                if (!in_array('All', $products) && !in_array($itm, $products)) {
                     continue;
                 }
 
-                if (! isset($sales[$itm])) {
+                if (!isset($sales[$itm])) {
                     $sales[$itm] = [
                         'item' => $itm,
                         'carton_qty' => 0,
@@ -1872,10 +1870,9 @@ public function getStaffWeeklyAttendance(Request $request)
                     ];
                 }
 
-                $sales[$itm]['carton_qty'] += $cartons[$i] ?? 0;
-                $sales[$itm]['pcs'] += $pcs[$i] ?? 0;
-                $sales[$itm]['liters'] += $liters[$i] ?? 0;
-                $sales[$itm]['amount'] += $amounts[$i] ?? 0;
+                // local_sales records qty which we can treat as pcs or carton_qty. Let's add to carton_qty/pcs based on unit or default to carton_qty
+                $sales[$itm]['carton_qty'] += (float)($qtys[$i] ?? 0);
+                $sales[$itm]['amount'] += (float)($amounts[$i] ?? 0);
             }
         }
 

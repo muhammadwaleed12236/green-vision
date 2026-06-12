@@ -141,6 +141,7 @@
                         <a href="javascript:void(0);"><i class="fas fa-user-tie"></i><span> Staff</span> <span
                                 class="menu-arrow"></span></a>
                         <ul>
+                            <li><a href="{{ route('designation') }}">Add Designation</a></li>
                             <li><a href="{{ route('salesmen') }}">Add Staff</a></li>
                             <li><a href="{{ route('staff-wise-report') }}"><i class="fas fa-money-check-alt"></i> Weekly Staff Payment</a></li>
                             <li><a href="{{ route('staff-recovery') }}">Staff Given Payments</a></li>
@@ -318,7 +319,7 @@
                         <a href="javascript:void(0);"><i class="fas fa-user-tie"></i><span> Staff Management</span> <span
                                 class="menu-arrow"></span></a>
                         <ul>
-                            <!-- <li><a href="{{ route('designation') }}">Add Designation </a></li> -->
+                            <li><a href="{{ route('designation') }}">Add Designation</a></li>
                             <li><a href="{{ route('salesmen') }}">Add Staff</a></li>
 
                         </ul>

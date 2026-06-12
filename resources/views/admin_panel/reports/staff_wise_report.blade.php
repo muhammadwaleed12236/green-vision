@@ -26,9 +26,9 @@
                 @if(isset($summary) && $summary->total_weeks > 0)
                 <div class="row mb-4">
                     <div class="col-md-12">
-                        <div class="card bg-gradient text-white" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                        <div class="card border bg-light text-dark">
                             <div class="card-body">
-                                <h4 class="text-white mb-3"><i class="fas fa-chart-line"></i> Overall Payment Summary</h4>
+                                <h4 class="text-dark mb-3"><i class="fas fa-chart-line"></i> Overall Payment Summary</h4>
                                 <div class="row text-center">
                                     <div class="col-md-2">
                                         <h5>{{ $summary->total_staff ?? 0 }}</h5>
@@ -78,9 +78,8 @@
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
 
-                <!-- STAFF INFO -->
                 <div class="card mb-3">
-                    <div class="card-header fw-bold bg-gradient" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                    <div class="card-header fw-bold bg-light text-dark">
                         <i class="fas fa-users"></i> Staff Selection
                     </div>
                     <div class="card-body row g-3">
@@ -119,9 +118,8 @@
                     </div>
                 </div>
 
-                <!-- WEEK SELECTION -->
                 <div class="card mb-3">
-                    <div class="card-header fw-bold bg-primary text-white">Week Details & Payment</div>
+                    <div class="card-header fw-bold bg-light text-dark">Week Details & Payment</div>
                     <div class="card-body">
                         <div class="row g-3">
                             <div class="col-md-3">
@@ -198,9 +196,9 @@
 
                 <!-- WEEKLY HISTORY -->
                 <div class="card">
-                    <div class="card-header fw-bold bg-secondary text-white d-flex justify-content-between align-items-center">
+                    <div class="card-header fw-bold bg-light text-dark d-flex justify-content-between align-items-center">
                         <span><i class="fas fa-history"></i> Payment History</span>
-                        <button class="btn btn-light btn-sm" id="viewAllStaffSummary">
+                        <button class="btn btn-outline-dark btn-sm" id="viewAllStaffSummary">
                             <i class="fas fa-list"></i> View All Staff Balances
                         </button>
                     </div>
@@ -249,9 +247,9 @@
 <div class="modal fade" id="allStaffModal" tabindex="-1">
     <div class="modal-dialog modal-xl">
         <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
+            <div class="modal-header bg-light text-dark">
                 <h5 class="modal-title"><i class="fas fa-users"></i> All Staff Payment Summary</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
                 <div class="table-responsive">

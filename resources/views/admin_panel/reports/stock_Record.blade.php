@@ -75,7 +75,7 @@
                             <thead class="bg-light">
                                 <tr>
                                     <th style="text-align: left; width: 30%;">Item Name</th>
-                                    <th>Measurements</th>
+                                    <th>Unit</th>
                                     <th>Purchase Qty</th>
                                     <th>Sold Qty</th>
                                     <th>Available Balance</th>
@@ -157,7 +157,7 @@
                                     <span class="fw-bold">${item.item_name}</span><br>
                                     <small class="text-muted">${item.item_code}</small>
                                 </td>
-                                <td><small>${item.height} x ${item.width} (${item.area})</small></td>
+                                <td>${item.unit ?? ''}</td>
                                 <td class="stock-plus">${item.total_stock_in ?? 0}</td>
                                 <td class="stock-minus">${item.total_stock_out ?? 0}</td>
                                 <td><span class="balance-box">${item.balance_stock ?? 0}</span></td>

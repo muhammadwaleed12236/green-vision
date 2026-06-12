@@ -158,8 +158,8 @@
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Address</label>
-                            <input type="text" name="Party_address" value="Party_address" id="edit_Party_address"
-                                class="form-control" required>
+                            <input type="text" name="Party_address" id="edit_Party_address"
+                                class="form-control">
                         </div>
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Phone</label>
