@@ -50,15 +50,26 @@
                                     <td>{{ $p->unit ?? '—' }}</td>
                                     <td>Rs. {{ number_format($p->wholesale_price, 2) }}</td>
                                     <td>Rs. {{ number_format($p->retail_price, 2) }}</td>
-                                    <td>
-                                        @if($p->initial_stock <= 0)
-                                            <span class="badges bg-lightred">Out of Stock (0)</span>
-                                        @elseif($p->initial_stock <= 5)
-                                            <span class="badges bg-lightyellow">Low Stock ({{ $p->initial_stock }})</span>
-                                        @else
-                                            <span class="badges bg-lightgreen">In Stock ({{ $p->initial_stock }})</span>
-                                        @endif
-                                    </td>
+                                    
+                                        <td>
+    @php
+        $stock = $p->stock ?? 0;
+
+        if ($stock <= 0) {
+            $badgeClass = 'badge bg-danger';
+        } elseif ($stock <= 10) {
+            $badgeClass = 'badge bg-warning';
+        } elseif ($stock <= 50) {
+            $badgeClass = 'badge bg-info';
+        } else {
+            $badgeClass = 'badge bg-success';
+        }
+    @endphp
+
+    <span class="{{ $badgeClass }} px-3 py-2">
+        {{ $stock }}
+    </span>
+</td>
                                     <td>
                                         <button class="btn btn-sm btn-primary editProductBtn"
                                                 data-id="{{ $p->id }}"
@@ -66,7 +77,7 @@
                                                 data-unit="{{ $p->unit }}"
                                                 data-wholesale="{{ $p->wholesale_price }}"
                                                 data-retail="{{ $p->retail_price }}"
-                                                data-stock="{{ $p->initial_stock }}"
+                                                data-stock="{{ $p->stock ?? 0 }}"
                                                 data-bs-toggle="modal"
                                                 data-bs-target="#editProductModal">
                                             Edit
@@ -130,16 +141,18 @@
                             <input type="number" step="0.01" class="form-control" name="retail_price" required>
                         </div>
                     </div>
-
-                    <!-- {{-- STOCK --}} -->
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Stock</label>
-                            <input type="number" class="form-control" name="initial_stock" value="0" required min="0">
-                        </div>
-                    </div>
-
-                </div>
+<div class="row">
+    <div class="col-md-12 mb-3">
+        <label class="form-label">Stock</label>
+        <input
+            type="number"
+            class="form-control"
+            name="stock"
+            id="edit_stock"
+            min="0"
+            required>
+    </div>
+</div>
 
                 <div class="modal-footer">
                     <button type="submit" class="btn btn-primary">Save Product</button>
@@ -195,9 +208,9 @@
 
                     {{-- STOCK --}}
                     <div class="row">
-                        <div class="col-md-6 mb-3">
+                        <div class="col-md-12 mb-3">
                             <label class="form-label">Stock</label>
-                            <input type="number" class="form-control" name="initial_stock" id="edit_initial_stock" required min="0">
+                            <input type="number" class="form-control" name="stock" id="edit_stock" min="0" required placeholder="Enter stock quantity">
                         </div>
                     </div>
                 </div>
@@ -254,7 +267,7 @@
         $("#edit_unit").val(unit);
         $("#edit_wholesale_price").val(wholesale);
         $("#edit_retail_price").val(retail);
-        $("#edit_initial_stock").val(stock);
+        $("#edit_stock").val(stock);
     });
 
 
