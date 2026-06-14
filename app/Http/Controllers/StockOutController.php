@@ -17,7 +17,7 @@ class StockOutController extends Controller
             $userId = Auth::id();
 
             // Use current initial_stock as available stock (already adjusted by purchases/stockouts)
-            $products = Product::select('id', 'item_name', 'height', 'width', 'initial_stock')->get();
+            $products = Product::select('id', 'item_name', 'unit', 'height', 'width', 'initial_stock')->get();
             foreach ($products as $product) {
                 $product->available_stock = $product->initial_stock ?? 0;
             }

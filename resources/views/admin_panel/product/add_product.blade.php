@@ -53,7 +53,7 @@
                                     
                                         <td>
     @php
-        $stock = $p->stock ?? 0;
+        $stock = $p->initial_stock ?? 0;
 
         if ($stock <= 0) {
             $badgeClass = 'badge bg-danger';
@@ -77,7 +77,7 @@
                                                 data-unit="{{ $p->unit }}"
                                                 data-wholesale="{{ $p->wholesale_price }}"
                                                 data-retail="{{ $p->retail_price }}"
-                                                data-stock="{{ $p->stock ?? 0 }}"
+                                                data-stock="{{ $p->initial_stock ?? 0 }}"
                                                 data-bs-toggle="modal"
                                                 data-bs-target="#editProductModal">
                                             Edit
@@ -103,7 +103,7 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
 
-            <form method="POST" action="{{ route('store-product') }}">
+            <form method="POST" action="{{ route('store-product') }}" id="addProductForm">
                 @csrf
 
                 <div class="modal-header">
@@ -148,7 +148,7 @@
             type="number"
             class="form-control"
             name="stock"
-            id="edit_stock"
+            id="add_stock"
             min="0"
             required>
     </div>
@@ -334,6 +334,100 @@ $('#edit_height, #edit_width, #edit_wholesale_price, #edit_retail_price').on('in
             },
             complete: function() {
                 btn.prop('disabled', false).text('Save Unit');
+            }
+        });
+    });
+
+    // AJAX Form Submit for Add Product
+    $('#addProductForm').on('submit', function(e) {
+        e.preventDefault();
+        let form = $(this);
+        let btn = form.find('button[type="submit"]');
+        let originalText = btn.text();
+        btn.prop('disabled', true).text('Saving...');
+        
+        $.ajax({
+            url: form.attr('action'),
+            type: "POST",
+            data: form.serialize(),
+            success: function(response) {
+                if (response.status === 'success') {
+                    $('#addProductModal').modal('hide');
+                    form[0].reset();
+                    
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success',
+                        text: response.message || 'Product added successfully',
+                        timer: 1500,
+                        showConfirmButton: false
+                    }).then(() => {
+                        location.reload();
+                    });
+                }
+            },
+            error: function(xhr) {
+                let errorMsg = 'Failed to add product';
+                if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.errors) {
+                    errorMsg = Object.values(xhr.responseJSON.errors).flat().join('\n');
+                } else if (xhr.responseJSON && xhr.responseJSON.message) {
+                    errorMsg = xhr.responseJSON.message;
+                }
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: errorMsg
+                });
+            },
+            complete: function() {
+                btn.prop('disabled', false).text(originalText);
+            }
+        });
+    });
+
+    // AJAX Form Submit for Edit Product
+    $('#editProductForm').on('submit', function(e) {
+        e.preventDefault();
+        let form = $(this);
+        let btn = form.find('button[type="submit"]');
+        let originalText = btn.text();
+        btn.prop('disabled', true).text('Updating...');
+        
+        $.ajax({
+            url: form.attr('action'),
+            type: "POST",
+            data: form.serialize(),
+            success: function(response) {
+                if (response.status === 'success') {
+                    $('#editProductModal').modal('hide');
+                    form[0].reset();
+                    
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success',
+                        text: response.message || 'Product updated successfully',
+                        timer: 1500,
+                        showConfirmButton: false
+                    }).then(() => {
+                        location.reload();
+                    });
+                }
+            },
+            error: function(xhr) {
+                let errorMsg = 'Failed to update product';
+                if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.errors) {
+                    errorMsg = Object.values(xhr.responseJSON.errors).flat().join('\n');
+                } else if (xhr.responseJSON && xhr.responseJSON.message) {
+                    errorMsg = xhr.responseJSON.message;
+                }
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: errorMsg
+                });
+            },
+            complete: function() {
+                btn.prop('disabled', false).text(originalText);
             }
         });
     });

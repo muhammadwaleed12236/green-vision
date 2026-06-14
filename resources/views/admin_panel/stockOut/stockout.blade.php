@@ -140,8 +140,7 @@
                             <thead class="table-light">
                                 <tr>
                                     <th>Product</th>
-                                    <th>Height</th>
-                                    <th>Width</th>
+                                    <th>Unit</th>
                                     <th>Opening Stock</th>
                                     <th>Used Stock</th>
                                     <th>Closing Stock</th>
@@ -156,17 +155,15 @@
                                             <option value="">Select Product</option>
                                             @foreach($products as $product)
                                                 <option value="{{ $product->id }}"
-                                                    data-height="{{ $product->height ?? '' }}"
-                                                    data-width="{{ $product->width ?? '' }}"
+                                                    data-unit="{{ $product->unit ?? '' }}"
                                                     data-stock="{{ $product->available_stock ?? 0 }}">
                                                     {{ $product->item_name }} @if(isset($product->available_stock)) (Stock:
-                                                    {{ $product->available_stock }}) @endif
+                                                    {{ $product->available_stock }} {{ $product->unit ?? '' }}) @endif
                                                 </option>
                                             @endforeach
                                         </select>
                                     </td>
-                                    <td><input type="text" class="form-control bg-light height-input" readonly></td>
-                                    <td><input type="text" class="form-control bg-light width-input" readonly></td>
+                                    <td><input type="text" class="form-control bg-light unit-input" readonly></td>
                                     <td><input type="number" class="form-control opening-stock"
                                             name="products[0][current_stock]" min="0" readonly></td>
                                     <td><input type="number" class="form-control used-stock"
@@ -212,12 +209,10 @@
             let selected = $(this).find('option:selected');
             let row = $(this).closest('tr');
 
-            let height = selected.attr('data-height');
-            let width = selected.attr('data-width');
+            let unit = selected.attr('data-unit');
             let stock = selected.attr('data-stock');
 
-            row.find('.height-input').val(height || '-');
-            row.find('.width-input').val(width || '-');
+            row.find('.unit-input').val(unit || '-');
             row.find('.opening-stock').val(stock || 0);
 
             // Reset used and closing
@@ -263,16 +258,14 @@
                         <option value="">Select Product</option>
                         @foreach($products as $product)
                             <option value="{{ $product->id }}"
-                                data-height="{{ $product->height ?? '' }}"
-                                data-width="{{ $product->width ?? '' }}"
+                                data-unit="{{ $product->unit ?? '' }}"
                                 data-stock="{{ $product->available_stock ?? 0 }}">
-                                {{ $product->item_name }} @if(isset($product->available_stock)) (Stock: {{ $product->available_stock }}) @endif
+                                {{ $product->item_name }} @if(isset($product->available_stock)) (Stock: {{ $product->available_stock }} {{ $product->unit ?? '' }}) @endif
                             </option>
                         @endforeach
                     </select>
                 </td>
-                <td><input type="text" class="form-control bg-light height-input" readonly></td>
-                <td><input type="text" class="form-control bg-light width-input" readonly></td>
+                <td><input type="text" class="form-control bg-light unit-input" readonly></td>
                 <td><input type="number" class="form-control opening-stock" name="products[${rowIndex}][current_stock]" min="0" readonly></td>
                 <td><input type="number" class="form-control used-stock" name="products[${rowIndex}][used_stock]" min="0" placeholder="Enter used stock" required></td>
                 <td><input type="text" class="form-control bg-light closing-stock fw-bold text-success" readonly value="0"></td>

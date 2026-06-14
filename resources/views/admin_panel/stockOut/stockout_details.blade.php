@@ -97,8 +97,7 @@
                                     <tr>
                                         <th>#</th>
                                         <th>Product Name</th>
-                                        <th>Height</th>
-                                        <th>Width</th>
+                                        <th>Unit</th>
                                         <th>Opening Stock</th>
                                         <th>Closing Stock</th>
                                         <th>Stock Used</th>
@@ -113,8 +112,7 @@
                                             <td>
                                                 <strong>{{ $stockOut->product->item_name ?? 'N/A' }}</strong>
                                             </td>
-                                            <td>{{ $stockOut->product->height ?? '-' }}</td>
-                                            <td>{{ $stockOut->product->width ?? '-' }}</td>
+                                            <td>{{ $stockOut->product->unit ?? '—' }}</td>
                                             <td>
                                                 <span class="badge bg-success">
                                                     {{ number_format($stockOut->current_stock, 0) }}
@@ -138,11 +136,12 @@
                                                 <button class="btn btn-sm btn-primary editStockOutBtn text-white"
                                                     data-id="{{ $stockOut->id }}" data-product="{{ $stockOut->product_id }}"
                                                     data-current="{{ $stockOut->current_stock }}"
-                                                    data-close="{{ $stockOut->close_stock }}" data-bs-toggle="modal"
+                                                    data-close="{{ $stockOut->close_stock }}"
+                                                    data-unit="{{ $stockOut->product->unit ?? '' }}"
+                                                    data-bs-toggle="modal"
                                                     data-bs-target="#editStockOutModal">
                                                     Edit
                                                 </button>
-
                                                 <button class="btn btn-sm btn-danger deleteStockOutBtn text-white"
                                                     data-id="{{ $stockOut->id }}">
                                                     Delete
@@ -154,7 +153,7 @@
 
                                 <tfoot class="table-light">
                                     <tr>
-                                        <td colspan="6" class="text-end"><strong>Grand Total Stock Used:</strong></td>
+                                        <td colspan="5" class="text-end"><strong>Grand Total Stock Used:</strong></td>
                                         <td colspan="3">
                                             <span class="badge bg-danger fs-5">
                                                 {{ number_format($stockOuts->sum('total_stock'), 0) }}
@@ -236,11 +235,12 @@
             let productId = $(this).data("product");
             let current = $(this).data("current");
             let close = $(this).data("close");
+            let unit = $(this).data("unit");
             let productName = $(this).closest('tr').find('td:eq(1) strong').text();
 
             $('#edit_stockout_id').val(id);
             $('#edit_product_id').val(productId);
-            $('#edit_product_name').val(productName);
+            $('#edit_product_name').val(productName + " (Unit: " + (unit || '-') + ")");
             $('#edit_current_stock').val(current);
             $('#edit_close_stock').val(close);
             $('#edit_total_display').text(current - close);

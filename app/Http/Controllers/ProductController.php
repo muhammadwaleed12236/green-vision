@@ -36,34 +36,26 @@ class ProductController extends Controller
     public function store_product(Request $request)
     {
         // Validate the request
-        // UPDATED: Added 'stock' validation
         $request->validate([
-    'item_name' => 'required|string|max:255',
-    'wholesale_price' => 'required|numeric|min:0',
-    'retail_price' => 'required|numeric|min:0',
-    'initial_stock' => 'required|integer|min:0',
-]);
-        // $request->validate([
-        //     'item_name' => 'required|string|max:255',
-        //     'wholesale_price' => 'required|numeric|min:0',
-        //     'retail_price' => 'required|numeric|min:0',
-        //     'stock' => 'required|integer|min:0',  // NEW: Stock validation
-        // ]);
+            'item_name' => 'required|string|max:255',
+            'wholesale_price' => 'required|numeric|min:0',
+            'retail_price' => 'required|numeric|min:0',
+            'stock' => 'required|integer|min:0',
+        ]);
 
-        // // Generate item code
+        // Generate item code
         $itemCode = Product::generateItemcodeNo();
         
         // Check if a soft-deleted product with this code exists
         $existingProduct = Product::withTrashed()->where('item_code', $itemCode)->first();
         
-        // UPDATED: Added 'stock' to data array
         $data = [
             'admin_or_user_id' => Auth::id(),
             'item_name' => $request->item_name,
             'unit' => $request->unit,
             'wholesale_price' => $request->wholesale_price,
             'retail_price' => $request->retail_price,
-            'stock' => $request->stock,  // NEW: Stock field
+            'initial_stock' => $request->stock,
         ];
 
         // If soft-deleted product exists, restore and update it
@@ -76,39 +68,45 @@ class ProductController extends Controller
             Product::create($data);
         }
 
+        if ($request->ajax()) {
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Product added successfully'
+            ]);
+        }
+
         return back()->with('success', 'Product added successfully');
     }
 
     public function update_product(Request $request)
     {
         $request->validate([
-    'item_name' => 'required|string|max:255',
-    'wholesale_price' => 'required|numeric|min:0',
-    'retail_price' => 'required|numeric|min:0',
-    'initial_stock' => 'required|integer|min:0',
-]);
-        // UPDATED: Added 'stock' validation
-        // $request->validate([
-        //     'product_id' => 'required|exists:products,id',
-        //     'item_name' => 'required|string|max:255',
-        //     'wholesale_price' => 'required|numeric|min:0',
-        //     'retail_price' => 'required|numeric|min:0',
-        //     'stock' => 'required|integer|min:0',  // NEW: Stock validation
-        // ]);
+            'product_id' => 'required|exists:products,id',
+            'item_name' => 'required|string|max:255',
+            'wholesale_price' => 'required|numeric|min:0',
+            'retail_price' => 'required|numeric|min:0',
+            'stock' => 'required|integer|min:0',
+        ]);
 
         // Get product ID from request
         $id = $request->product_id;
 
-        // UPDATED: Added 'stock' to data array
         $data = [
             'item_name' => $request->item_name,
             'unit' => $request->unit,
             'wholesale_price' => $request->wholesale_price,
             'retail_price' => $request->retail_price,
-            'stock' => $request->stock,  // NEW: Stock field
+            'initial_stock' => $request->stock,
         ];
 
         Product::where('id', $id)->update($data);
+
+        if ($request->ajax()) {
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Product updated successfully'
+            ]);
+        }
 
         return redirect()->back()->with('success', 'Product updated successfully');
     }
