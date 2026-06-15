@@ -22,7 +22,7 @@
             justify-content: center;
             padding: 0 20px;
             background: #ddd;
-            background: url('background_1.jpg');
+            /* background: url('background_1.jpg'); */
 
             background-repeat: no-repeat;
             background-size: cover;

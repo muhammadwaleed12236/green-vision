@@ -109,10 +109,10 @@
                 @csrf
                 <div class="modal-body">
                     <div class="row mb-3">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Job Number <span class="text-danger">*</span></label>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Invoice # <span class="text-danger">*</span></label>
                             <select class="form-control" name="local_sales_id" id="add_local_sales_id" required>
-                                <option value="">Select Job Number</option>
+                                <option value="">Select Invoice</option>
                                 @foreach($localSales as $sale)
                                     @php
                                         if ($sale->party_type === 'customer') {
@@ -123,13 +123,20 @@
                                             $partyName = $sale->customer_shopname ?? 'Walk-in';
                                         }
                                     @endphp
-                                    <option value="{{ $sale->id }}" data-customer="{{ $partyName }}">
-                                        {{ $sale->invoice_number }} - {{ $partyName }}
+                                    <option value="{{ $sale->id }}" 
+                                        data-customer="{{ $partyName }}"
+                                        data-job-number="{{ $sale->job_number ?? '' }}"
+                                        data-invoice="{{ $sale->invoice_number ?? '' }}">
+                                        {{ $sale->invoice_number ?? 'N/A' }} - {{ $partyName }}
                                     </option>
                                 @endforeach
                             </select>
                         </div>
-                        <div class="col-md-6 mb-3">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Job Number</label>
+                            <input type="text" class="form-control bg-light" id="add_job_number" readonly>
+                        </div>
+                        <div class="col-md-4 mb-3">
                             <label class="form-label">Customer Name</label>
                             <input type="text" class="form-control bg-light" id="add_customer_name" readonly>
                         </div>
@@ -202,6 +209,7 @@
         $('#add_local_sales_id').on('change', function () {
             let selected = $(this).find('option:selected');
             $('#add_customer_name').val(selected.data('customer') || '-');
+            $('#add_job_number').val(selected.data('job-number') || '-');
         });
 
         // When product is selected, auto-fill opening stock
