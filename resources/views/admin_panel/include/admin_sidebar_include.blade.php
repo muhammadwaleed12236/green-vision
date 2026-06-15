@@ -97,18 +97,9 @@
                         <ul>
                             <li><a href="{{ route('local-sale') }}">Add Sale</a></li>
                             <li><a href="{{ route('all-local-sale') }}">All Sales</a></li>
+                            <li><a href="{{ route('all-sale-return') }}">Return Sales</a></li>
                         </ul>
                     </li>
-
-                    <!-- Sale Return -->
-                    <!-- <li class="submenu">
-                        <a href="javascript:void(0);"><i class="fas fa-undo"></i><span> Sale Return</span> <span
-                                class="menu-arrow"></span></a>
-                        <ul>
-                            <li><a href="{{ route('add-sale-return') }}">Add Sale Return</a></li>
-                            <li><a href="{{ route('all-sale-return') }}">All Sales Return</a></li>
-                        </ul>
-                    </li> -->
 
                     <!-- Stock Out -->
                     <li>
@@ -305,14 +296,7 @@
                         <ul>
                             <li><a href="{{ route('local-sale') }}">Add Sale</a></li>
                             <li><a href="{{ route('all-local-sale') }}">Sales</a></li>
-                        </ul>
-                    </li>
-                    <li class="submenu">
-                        <a href="javascript:void(0);"><i class="fas fa-shopping-bag"></i><span> Sale Return</span> <span
-                                class="menu-arrow"></span></a>
-                        <ul>
-                            <li><a href="{{ route('add-sale-return') }}">Add Sale Return</a></li>
-                            <li><a href="{{ route('all-sale-return') }}">Sales Return</a></li>
+                            <li><a href="{{ route('all-sale-return') }}">Return Sales</a></li>
                         </ul>
                     </li>
                     <li class="submenu">
@@ -391,6 +375,7 @@
                         <ul>
                             <li><a href="{{ route('local-sale') }}">Add Sale</a></li>
                             <li><a href="{{ route('all-local-sale') }}">Sales</a></li>
+                            <li><a href="{{ route('all-sale-return') }}">Return Sales</a></li>
                         </ul>
                     </li>
                     <li class="submenu">

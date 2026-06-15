@@ -5,11 +5,14 @@
 
     <div class="page-wrapper">
         <div class="content">
-            <div class="page-header d-flex justify-content-between align-items-center">
+            <div class="page-header d-flex justify-content-between align-items-center mb-4">
                 <div class="page-title">
                     <h4>Sales Return Management</h4>
                     <h6>Manage Sales Return Efficiently</h6>
                 </div>
+                <a href="{{ route('add-sale-return') }}" class="btn btn-primary">
+                    <i class="fa fa-plus me-1"></i>Add Sale Return
+                </a>
             </div>
 
             <div class="card p-4">

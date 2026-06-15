@@ -27,27 +27,36 @@ class SaleReturnController extends Controller
     public function getSaleInvoices(Request $request)
     {
         $user = Auth::user();
+        $saleType = $request->get('sale_type', 'customer');
         $date = $request->get('date'); // optional yyyy-mm-dd
         $search = trim($request->get('search', ''));
 
-        // Always use local_sales for local customer invoices
-        $query = DB::table('local_sales')->where('admin_or_user_id', $user->id);
+        if ($saleType === 'distributor') {
+            $query = DB::table('sales')->where('admin_or_user_id', $user->id);
+        } else {
+            $query = DB::table('local_sales')->where('admin_or_user_id', $user->id);
+        }
 
         if ($date) {
-            $query->whereDate('Date', $date);
+            $query->whereDate('sale_date', $date);
         }
 
         if ($search !== '') {
             $query->where('invoice_number', 'like', '%'.$search.'%');
         }
 
-        $rows = $query->orderBy('id', 'desc')
-            ->get(['id', 'invoice_number', 'item', 'customer_id']);
+        if ($saleType === 'distributor') {
+            $rows = $query->orderBy('id', 'desc')
+                ->get(['id', 'invoice_number', 'item', 'distributor_id']);
+        } else {
+            $rows = $query->orderBy('id', 'desc')
+                ->get(['id', 'invoice_number', 'item', 'customer_id']);
+        }
 
-        $result = collect($rows)->map(function ($row) {
+        $result = collect($rows)->map(function ($row) use ($saleType) {
             return [
                 'invoice_number' => $row->invoice_number,
-                'party_id' => $row->customer_id ?? null,
+                'party_id' => $saleType === 'distributor' ? ($row->distributor_id ?? null) : ($row->customer_id ?? null),
                 'first_item' => null,
                 'label' => $row->invoice_number, // simple label
             ];
@@ -87,13 +96,7 @@ class SaleReturnController extends Controller
         }
 
         $items = json_decode($sale->item, true) ?? [];
-        $cartonQty = json_decode($sale->carton_qty, true) ?? [];
-        $pcsQty = json_decode($sale->pcs, true) ?? [];
-        $liter = json_decode($sale->liter, true) ?? [];
         $rate = json_decode($sale->rate, true) ?? [];
-        $discount = json_decode($sale->discount, true) ?? [];
-        $returnQty = json_decode($sale->return_qty, true) ?? [];
-        $pcscarton = json_decode($sale->pcs_carton, true) ?? [];
 
         $partyName = $type === 'distributor'
             ? ($sale->distributor->Customer ?? 'N/A')
@@ -101,44 +104,71 @@ class SaleReturnController extends Controller
 
         $rows = [];
         $grandTotal = 0;
-        $totalReturnAmount = 0;
         $count = count($items);
 
-        for ($index = 0; $index < $count; $index++) {
-            $cartonQuantity = (float) ($cartonQty[$index] ?? 0);
-            $pcsQuantity = (float) ($pcsQty[$index] ?? 0);
-            $rateAmount = (float) ($rate[$index] ?? 0);
-            $pcsPerCarton = (float) ($pcscarton[$index] ?? 0);
-            $returnQtyValue = (float) ($returnQty[$index] ?? 0);
-            $discountAmount = (float) ($discount[$index] ?? 0);
-            $literQty = (float) ($liter[$index] ?? 0);
+        if ($type === 'customer') {
+            $qtys = json_decode($sale->qty, true) ?? [];
+            $units = json_decode($sale->unit, true) ?? [];
+            $amounts = json_decode($sale->amount, true) ?? [];
 
-            $cartonTotal = $cartonQuantity * $rateAmount;
-            $pcsTotal = 0;
-            if ($pcsPerCarton > 0 && $pcsQuantity > 0) {
-                $ratePerPcs = $rateAmount / $pcsPerCarton;
-                $pcsTotal = $pcsQuantity * $ratePerPcs;
+            for ($index = 0; $index < $count; $index++) {
+                $qtyVal = (float) ($qtys[$index] ?? 0);
+                $rateVal = (float) ($rate[$index] ?? 0);
+                $unitVal = $units[$index] ?? '';
+                $itemTotal = (float) ($amounts[$index] ?? ($qtyVal * $rateVal));
+
+                $grandTotal += $itemTotal;
+
+                $rows[] = [
+                    'invoice_number' => $sale->invoice_number,
+                    'date' => $createdAt ? $createdAt->format('Y-m-d') : 'N/A',
+                    'party_name' => $partyName,
+                    'item' => $items[$index] ?? 'N/A',
+                    'qty' => $qtyVal,
+                    'unit' => $unitVal,
+                    'rate' => $rateVal,
+                    'item_total' => round($itemTotal, 2),
+                ];
             }
-            $itemTotal = $cartonTotal + $pcsTotal;
+        } else {
+            $cartonQty = json_decode($sale->carton_qty, true) ?? [];
+            $pcsQty = json_decode($sale->pcs, true) ?? [];
+            $liter = json_decode($sale->liter, true) ?? [];
+            $discount = json_decode($sale->discount, true) ?? [];
+            $pcscarton = json_decode($sale->pcs_carton, true) ?? [];
 
-            $grandTotal += $itemTotal;
-            $totalReturnAmount += $returnQtyValue * $rateAmount;
+            for ($index = 0; $index < $count; $index++) {
+                $cartonQuantity = (float) ($cartonQty[$index] ?? 0);
+                $pcsQuantity = (float) ($pcsQty[$index] ?? 0);
+                $rateAmount = (float) ($rate[$index] ?? 0);
+                $pcsPerCarton = (float) ($pcscarton[$index] ?? 0);
+                $discountAmount = (float) ($discount[$index] ?? 0);
+                $literQty = (float) ($liter[$index] ?? 0);
 
-            $rows[] = [
-                'invoice_number' => $sale->invoice_number,
-                'date' => $createdAt ? $createdAt->format('Y-m-d') : 'N/A',
-                'distributor' => $partyName,
-                'item' => $items[$index] ?? 'N/A',
-                'carton_quantity' => $cartonQuantity,
-                'pcs_quantity' => $pcsQuantity,
-                'liter' => $literQty,
-                'rate' => $rateAmount,
-                'discount_amount' => $discountAmount,
-                'packing' => $pcsPerCarton,
-                'return_qty' => $returnQtyValue,
-                'return_amount' => round($returnQtyValue * $rateAmount, 2),
-                'item_total' => round($itemTotal, 2),
-            ];
+                $cartonTotal = $cartonQuantity * $rateAmount;
+                $pcsTotal = 0;
+                if ($pcsPerCarton > 0 && $pcsQuantity > 0) {
+                    $ratePerPcs = $rateAmount / $pcsPerCarton;
+                    $pcsTotal = $pcsQuantity * $ratePerPcs;
+                }
+                $itemTotal = $cartonTotal + $pcsTotal;
+
+                $grandTotal += $itemTotal;
+
+                $rows[] = [
+                    'invoice_number' => $sale->invoice_number,
+                    'date' => $createdAt ? $createdAt->format('Y-m-d') : 'N/A',
+                    'party_name' => $partyName,
+                    'item' => $items[$index] ?? 'N/A',
+                    'carton_quantity' => $cartonQuantity,
+                    'pcs_quantity' => $pcsQuantity,
+                    'liter' => $literQty,
+                    'rate' => $rateAmount,
+                    'discount_amount' => $discountAmount,
+                    'packing' => $pcsPerCarton,
+                    'item_total' => round($itemTotal, 2),
+                ];
+            }
         }
 
         return response()->json([
@@ -149,7 +179,6 @@ class SaleReturnController extends Controller
                 'discount_value' => $sale->discount_value ?? 0,
                 'scheme_value' => $sale->scheme_value ?? 0,
                 'net_amount' => $sale->net_amount ?? 0,
-                'total_return_amount' => round($totalReturnAmount, 2),
             ],
             'party_id' => $type === 'distributor' ? $sale->distributor_id : $sale->customer_id,
         ]);
@@ -237,15 +266,11 @@ class SaleReturnController extends Controller
                     $distId = $userId;
                     $q = DB::table('distributor_products')->where('distributor_id', $distId);
                     if ($itemId) {
-                        $q->where('item_id', $itemId);
-                    } elseif ($itemName) {
-                        $q->where('item', $itemName);
+                        $q->where('product_id', $itemId);
                     }
-                    if ($cartons > 0) {
-                        $q->increment('carton_quantity', $cartons);
-                    }
-                    if ($pcs > 0) {
-                        $q->increment('loose_pieces', $pcs);
+                    $returnQty = $pcs;
+                    if ($returnQty > 0) {
+                        $q->increment('quantity', $returnQty);
                     }
                 } else {
                     $q = DB::table('products')->where('admin_or_user_id', $userId);
@@ -254,11 +279,9 @@ class SaleReturnController extends Controller
                     } elseif ($itemName) {
                         $q->where('item_name', $itemName);
                     }
-                    if ($cartons > 0) {
-                        $q->increment('carton_quantity', $cartons);
-                    }
-                    if ($pcs > 0) {
-                        $q->increment('loose_pieces', $pcs);
+                    $returnQty = $pcs;
+                    if ($returnQty > 0) {
+                        $q->increment('initial_stock', $returnQty);
                     }
                 }
             }

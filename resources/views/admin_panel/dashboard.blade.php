@@ -160,6 +160,10 @@
     .text-amount {
         font-family: 'Inter', sans-serif;
     }
+
+    .dash-widget[onclick], .stat-mini-card[onclick] {
+        cursor: pointer;
+    }
 </style>
 
 <div class="main-wrapper">
@@ -185,7 +189,7 @@
             <!-- Stats Cards Row 1 -->
             <div class="row">
                 <div class="col-lg-3 col-sm-6 col-12">
-                    <div class="dash-widget bg-rose">
+                    <div class="dash-widget bg-rose" onclick="window.location='{{ route('vendors-ledger') }}'" title="View Vendor Ledger">
                         <div class="dash-widget-icon">
                             <i data-feather="shopping-bag"></i>
                         </div>
@@ -197,7 +201,7 @@
                 </div>
 
                 <div class="col-lg-3 col-sm-6 col-12">
-                    <div class="dash-widget bg-amber">
+                    <div class="dash-widget bg-amber" onclick="window.location='{{ route('customer-ledger') }}'" title="View Customer Ledger">
                         <div class="dash-widget-icon">
                             <i data-feather="arrow-down-circle"></i>
                         </div>
@@ -209,7 +213,7 @@
                 </div>
 
                 <div class="col-lg-3 col-sm-6 col-12">
-                    <div class="dash-widget bg-emerald">
+                    <div class="dash-widget bg-emerald" onclick="window.location='{{ route('all-sale') }}'" title="View All Sales">
                         <div class="dash-widget-icon">
                             <i data-feather="trending-up"></i>
                         </div>
@@ -221,7 +225,7 @@
                 </div>
 
                 <div class="col-lg-3 col-sm-6 col-12">
-                    <div class="dash-widget bg-indigo">
+                    <div class="dash-widget bg-indigo" onclick="window.location='{{ route('all-Purchases') }}'" title="View All Purchases">
                         <div class="dash-widget-icon">
                             <i data-feather="database"></i>
                         </div>
@@ -236,7 +240,7 @@
             <!-- Stats Mini Cards Row -->
             <div class="row">
                 <div class="col-lg-3 col-sm-6 col-12">
-                    <div class="stat-mini-card">
+                    <div class="stat-mini-card" onclick="window.location='{{ route('job-orders.index') }}'" title="View Job Orders">
                         <div class="stat-mini-icon" style="background: rgba(239, 68, 68, 0.1); color: #ef4444;">
                             <i data-feather="tool"></i>
                         </div>
@@ -249,7 +253,7 @@
                 </div>
 
                 <div class="col-lg-3 col-sm-6 col-12">
-                    <div class="stat-mini-card">
+                    <div class="stat-mini-card" onclick="window.location='{{ route('expenses.index') }}'" title="View Expenses">
                         <div class="stat-mini-icon" style="background: rgba(14, 165, 233, 0.1); color: #0ea5e9;">
                             <i data-feather="dollar-sign"></i>
                         </div>
@@ -261,7 +265,7 @@
                 </div>
 
                 <div class="col-lg-3 col-sm-6 col-12">
-                    <div class="stat-mini-card shadow-sm border-0">
+                    <div class="stat-mini-card shadow-sm border-0" onclick="window.location='{{ route('all-sale') }}'" title="View Sales Report">
                         <div class="stat-mini-icon" style="background: rgba(168, 85, 247, 0.1); color: #a855f7;">
                             <i data-feather="activity"></i>
                         </div>
@@ -278,7 +282,7 @@
                 </div>
 
                 <div class="col-lg-3 col-sm-6 col-12">
-                    <div class="stat-mini-card">
+                    <div class="stat-mini-card" onclick="window.location='{{ route('customer') }}'" title="View Customers">
                         <div class="stat-mini-icon" style="background: rgba(16, 185, 129, 0.1); color: #10b981;">
                             <i data-feather="users"></i>
                         </div>
@@ -293,7 +297,7 @@
             <!-- Stats Mini Cards Row 2 (Counts) -->
             <div class="row">
                 <div class="col-lg-3 col-sm-6 col-12">
-                    <div class="stat-mini-card">
+                    <div class="stat-mini-card" onclick="window.location='{{ route('vendors') }}'" title="View Suppliers">
                         <div class="stat-mini-icon" style="background: rgba(244, 63, 94, 0.1); color: #f43f5e;">
                             <i data-feather="truck"></i>
                         </div>
@@ -305,7 +309,7 @@
                 </div>
 
                 <div class="col-lg-3 col-sm-6 col-12">
-                    <div class="stat-mini-card">
+                    <div class="stat-mini-card" onclick="window.location='{{ route('salesmen') }}'" title="View Staff">
                         <div class="stat-mini-icon" style="background: rgba(99, 102, 241, 0.1); color: #6366f1;">
                             <i data-feather="users"></i>
                         </div>
@@ -317,7 +321,7 @@
                 </div>
 
                 <div class="col-lg-3 col-sm-6 col-12">
-                    <div class="stat-mini-card">
+                    <div class="stat-mini-card" onclick="window.location='{{ route('product') }}'" title="View Products">
                         <div class="stat-mini-icon" style="background: rgba(245, 158, 11, 0.1); color: #f59e0b;">
                             <i data-feather="package"></i>
                         </div>
@@ -329,7 +333,7 @@
                 </div>
 
                 <div class="col-lg-3 col-sm-6 col-12">
-                    <div class="stat-mini-card">
+                    <div class="stat-mini-card" onclick="window.location='{{ route('all-sale') }}'" title="View Sales Invoices">
                         <div class="stat-mini-icon" style="background: rgba(6, 182, 212, 0.1); color: #06b6d4;">
                             <i data-feather="file-text"></i>
                         </div>

@@ -1,229 +1,322 @@
 @include('admin_panel.include.header_include')
+
 <div class="main-wrapper">
-    @include('admin_panel.include.navbar_include')
-    @include('admin_panel.include.admin_sidebar_include')
+@include('admin_panel.include.navbar_include')
+@include('admin_panel.include.admin_sidebar_include')
 
-    <div class="page-wrapper">
-        <div class="content">
-            <div class="page-header d-flex justify-content-between align-items-center">
-                @if(Auth::check() && Auth::user()->usertype === 'admin')
-                <div class="page-title">
-                    <h4>Distributor Sales Management</h4>
-                    <h6>Manage Distributor Sales Efficiently</h6>
-                </div>
-                @elseif(Auth::check() && Auth::user()->usertype === 'distributor')
-                <div class="page-title">
-                    <h4>Distributor Purchased Management</h4>
-                </div>
+<div class="page-wrapper">
+<div class="content">
+
+<div class="page-header d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h4 class="mb-0">Job Orders</h4>
+        <small class="text-muted">All Job Orders (Read Only)</small>
+    </div>
+    <div class="ms-3">
+        <form method="GET" action="{{ route('all-local-sale') }}" class="d-flex">
+            <input type="text" name="q" value="{{ $query ?? request('q') }}" class="form-control form-control-sm me-2" placeholder="Search invoice, customer, vendor or items">
+            <button class="btn btn-sm btn-primary">Search</button>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+<div class="card-body p-0">
+
+<div class="table-responsive">
+<table class="table table-bordered table-hover align-middle mb-0" style="font-size: 13px;">
+<thead class="table-dark text-center">
+<tr>
+    <th style="white-space:nowrap;">Job No</th>
+    <th style="white-space:nowrap;">Party Type</th>
+    <th style="white-space:nowrap;">Sale Date &amp; Time</th>
+    <th style="white-space:nowrap;">Customer / Party</th>
+    <th style="white-space:nowrap;">Phone</th>
+    <th style="white-space:nowrap;">Address</th>
+    <th style="white-space:nowrap;">Items</th>
+    <th style="white-space:nowrap;">Net Amount</th>
+    <th style="white-space:nowrap;">Status</th>
+    <th style="white-space:nowrap;" width="190">Actions</th>
+</tr>
+</thead>
+
+<tbody>
+@forelse ($Sales as $sale)
+@php
+    $items = json_decode($sale->item, true);
+
+    /* ── Party Type badge ── */
+    $partyType  = $sale->party_type ?? 'walkin';
+    $badgeClass = match($partyType) {
+        'customer' => 'bg-success',
+        'vendor'   => 'bg-primary',
+        default    => 'bg-secondary',
+    };
+    $partyLabel = match($partyType) {
+        'customer' => 'Customer',
+        'vendor'   => 'Vendor',
+        default    => 'Walk-in',
+    };
+
+    /* ── Customer / Party name ── */
+    if ($partyType === 'vendor' && $sale->vendor) {
+        $partyName = $sale->vendor->Party_name
+            ?? $sale->vendor->business_name
+            ?? $sale->vendor->name
+            ?? 'Vendor';
+    } elseif ($partyType === 'customer' && $sale->customer) {
+        $partyName = $sale->customer->customer_name
+            ?? $sale->customer->shop_name
+            ?? $sale->customer->business_name
+            ?? $sale->customer_shopname
+            ?? 'Customer';
+    } else {
+        $partyName = $sale->customer_shopname ?? 'Walk-in';
+    }
+
+    /* ── Phone ── */
+    if ($partyType === 'customer' && $sale->customer) {
+        $phone = $sale->customer->phone
+            ?? $sale->customer->mobile
+            ?? $sale->customer_phone
+            ?? '-';
+    } elseif ($partyType === 'vendor' && $sale->vendor) {
+        $phone = $sale->vendor->phone
+            ?? $sale->vendor->mobile
+            ?? $sale->customer_phone
+            ?? '-';
+    } else {
+        $phone = $sale->customer_phone ?? '-';
+    }
+
+    /* ── Address ── */
+    if ($partyType === 'customer' && $sale->customer) {
+        $address = $sale->customer->address
+            ?? $sale->customer->shop_address
+            ?? $sale->customer_address
+            ?? '-';
+    } elseif ($partyType === 'vendor' && $sale->vendor) {
+        $address = $sale->vendor->address
+            ?? $sale->customer_address
+            ?? '-';
+    } else {
+        $address = $sale->customer_address ?? '-';
+    }
+
+    /* ── Sale Date & Time ── */
+    $saleDateTime = $sale->sale_date
+        ? \Carbon\Carbon::parse($sale->sale_date)->format('d-m-Y  H:i')
+        : \Carbon\Carbon::parse($sale->created_at)->format('d-m-Y  H:i');
+@endphp
+
+<tr>
+    {{-- Job No --}}
+    <td class="fw-bold text-center" style="white-space:nowrap;">
+        {{ $sale->invoice_number }}
+    </td>
+
+    {{-- Party Type --}}
+    <td class="text-center" style="white-space:nowrap;">
+        <span class="badge {{ $badgeClass }}">{{ $partyLabel }}</span>
+    </td>
+
+    {{-- Sale Date & Time --}}
+    <td class="text-center" style="white-space:nowrap;">
+        {{ $saleDateTime }}
+    </td>
+
+    {{-- Customer / Party --}}
+    <td style="white-space:nowrap;">
+        {{ $partyName }}
+    </td>
+
+    {{-- Phone --}}
+    <td class="text-center" style="white-space:nowrap;">
+        {{ $phone }}
+    </td>
+
+    {{-- Address --}}
+    <td style="max-width:160px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="{{ $address }}">
+        {{ $address }}
+    </td>
+
+    {{-- Items --}}
+    <td>
+        @php
+            $itemsArray = is_array($items) ? $items : [];
+            $previewCount = 3;
+        @endphp
+        @if(count($itemsArray) === 0)
+            <small class="text-muted">-</small>
+        @else
+            @php
+                $preview  = implode(', ', array_slice($itemsArray, 0, $previewCount));
+                $hasMore  = count($itemsArray) > $previewCount;
+            @endphp
+            <small>
+                <span id="items-preview-{{ $sale->id }}">{{ $preview }}@if($hasMore) …@endif</span>
+                @if($hasMore)
+                    <span id="items-full-{{ $sale->id }}" style="display:none;">{{ implode(', ', $itemsArray) }}</span>
+                    <a href="javascript:void(0)" class="ms-1 toggle-items-link" data-sale-id="{{ $sale->id }}">More</a>
                 @endif
-            </div>
+            </small>
+        @endif
+    </td>
 
-            <div class="card p-4">
-                <div class="card-body">
-                    @if (session()->has('success'))
-                    <div class="alert alert-success">
-                        <strong>Success!</strong> {{ session('success') }}.
-                    </div>
-                    @endif
+    {{-- Net Amount --}}
+    <td class="fw-bold text-end" style="white-space:nowrap;">
+        {{ number_format($sale->net_amount, 2) }}
+    </td>
 
-                    @if (session()->has('error'))
-                    <div class="alert alert-danger">
-                        <strong>Error!</strong> {{ session('error') }}.
-                    </div>
-                    @endif
+    {{-- Status --}}
+    <td class="text-center" style="white-space:nowrap;">
+        @php
+            $statusClass = match($sale->job_status) {
+                'pending'   => 'bg-secondary',
+                'ready'     => 'bg-success',
+                'completed' => 'bg-primary',
+                'paid'      => 'bg-info',
+                default     => 'bg-warning text-dark',
+            };
+        @endphp
+        <span class="badge {{ $statusClass }}">{{ ucfirst($sale->job_status) }}</span>
+    </td>
 
-                    <div class="table-responsive">
-                        <table class="table datanew">
-                            <thead>
-                                <tr>
-                                    <th>Invoice No</th>
-                                    <th>Date</th>
-                                    <th>Customer | Owner</th>
-                                    <th>City | Area</th>
-                                    <th>Address | Phone</th>
-                                    <th>Booker</th>
-                                    <th>Saleman</th>
-                                    <th>Assigned To</th>
-                                    <th>Category</th>
-                                    <th>Items</th>
-                                    <th>Total Amount</th>
-                                    <th>Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach ($Sales as $sale)
-                                <tr class="{{ $sale->cancel_status == 1 ? 'table-secondary' : '' }}">
-                                    <td>{{ $sale->invoice_number }}
-                                        @if($sale->return_status == 1)
-                                        <span class="badge bg-danger text-white ms-2">Returned</span>
-                                        @endif
-                                        @if($sale->cancel_status == 1)
-                                        <span class="badge bg-dark text-white ms-2">Cancelled</span>
-                                        @endif
-                                    </td>
-                                    <td>{{ $sale->Date }}</td>
-                                    <td>{{ $sale->distributor->Customer ?? 'N/A' }} <br> {{ $sale->distributor->Owner ?? 'N/A' }}</td>
-                                    <td>{{ $sale->distributor_city }} <br> {{ $sale->distributor_area }}</td>
-                                    <td>{{ $sale->distributor_address }} <br> {{ $sale->distributor_phone }}</td>
-                                    <td>{{ $sale->Booker }}</td>
-                                    <td>{{ $sale->Saleman }}</td>
-                                    <td>
-                                        @if($sale->assignedSalesman)
-                                            <span class="badge bg-info text-white">{{ $sale->assignedSalesman->name }}</span>
-                                        @else
-                                            <span class="text-muted">—</span>
-                                        @endif
-                                    </td>
-                                    <td>
-                                        @php
-                                        $categories = json_decode($sale->category, true);
-                                        @endphp
-                                        {{ is_array($categories) ? implode(', ', $categories) : $categories }}
-                                    </td>
-                                    <td>
-                                        @php
-                                        $items = json_decode($sale->item, true);
-                                        @endphp
-                                        {{ is_array($items) ? implode(', ', $items) : $items }}
-                                    </td>
-                                    <td>{{ number_format($sale->net_amount, 2) }}</td>
-                                    <td>
-                                        <a href="{{ route('sale.invoice', $sale->id) }}" class="btn btn-dark btn-sm text-white">
-                                            Invoice
-                                        </a>
+    {{-- Actions --}}
+    <td class="text-center" style="white-space:nowrap;">
+        <a href="{{ route('show-local-sale', $sale->id) }}"
+           class="btn btn-sm btn-info text-white">
+            <i class="fa fa-eye"></i> View
+        </a>
 
-                                        @if(Auth::check() && Auth::user()->usertype === 'admin')
-
-                                        @if($sale->cancel_status == 0)
-                                        {{-- Assign Button --}}
-                                        <button class="btn btn-success btn-sm btn-assign"
-                                            data-id="{{ $sale->id }}"
-                                            data-assigned="{{ $sale->assigned_salesman_id ?? '' }}"
-                                            data-bs-toggle="modal"
-                                            data-bs-target="#assignModal">
-                                            Assign
-                                        </button>
-
-                                        {{-- Cancel Button --}}
-                                        <button class="btn btn-warning btn-sm text-dark btn-cancel-sale" data-id="{{ $sale->id }}">
-                                            Cancel
-                                        </button>
-
-                                        <a href="{{ route('sale.edit', $sale->id) }}" class="btn btn-primary btn-sm text-white">
-                                            Edit
-                                        </a>
-                                        @endif
-
-                                        <button class="btn btn-danger btn-sm delete-sale" data-id="{{ $sale->id }}">
-                                            Delete
-                                        </button>
-                                        @endif
-                                    </td>
-                                </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-
-                </div>
-            </div>
+        <div class="btn-group">
+            <button type="button" class="btn btn-sm btn-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                <i class="fa fa-ellipsis-v"></i>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li>
+                    <a class="dropdown-item" href="{{ route('local.sale.invoice', $sale->id) }}">
+                        <i class="fa fa-file-invoice me-2"></i>Invoice
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item" href="{{ route('local.sale.edit', $sale->id) }}">
+                        <i class="fa fa-edit me-2"></i>Edit
+                    </a>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+                @if($sale->job_status == 'ready')
+                <li>
+                    <a class="dropdown-item text-success mark-complete-btn" href="javascript:void(0);"
+                       data-sale-id="{{ $sale->id }}">
+                        <i class="fa fa-check-circle me-2"></i>Mark Complete
+                    </a>
+                </li>
+                @endif
+                <li>
+                    <button class="dropdown-item text-primary"
+                            data-bs-toggle="modal"
+                            data-bs-target="#assignJobModal"
+                            data-id="{{ $sale->id }}"
+                            data-job="{{ $sale->invoice_number }}"
+                            data-amount="{{ $sale->net_amount }}">
+                        <i class="fa fa-user-plus me-2"></i>Assign Job
+                    </button>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                    <a class="dropdown-item text-danger"
+                       href="{{ route('local.sale.delete', $sale->id) }}"
+                       onclick="return confirm('Delete this job order?')">
+                        <i class="fa fa-trash me-2"></i>Delete
+                    </a>
+                </li>
+            </ul>
         </div>
-    </div>
+    </td>
+</tr>
+@empty
+<tr>
+    <td colspan="10" class="text-center text-muted py-4">
+        No Job Orders Found
+    </td>
+</tr>
+@endforelse
+</tbody>
+</table>
 </div>
 
-{{-- Assign Salesman Modal --}}
-<div class="modal fade" id="assignModal" tabindex="-1" aria-labelledby="assignModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <form id="assignForm" method="POST">
-                @csrf
-                <div class="modal-header">
-                    <h5 class="modal-title" id="assignModalLabel">Assign Salesman to Sale</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="assigned_salesman_id" class="form-label fw-semibold">Select Salesman</label>
-                        <select name="assigned_salesman_id" id="assigned_salesman_id" class="form-select" required>
-                            <option value="">-- Select Salesman --</option>
-                            @foreach($Staffs as $staff)
-                            <option value="{{ $staff->id }}">{{ $staff->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="submit" class="btn btn-success">Assign</button>
-                </div>
-            </form>
-        </div>
-    </div>
+<div class="d-flex justify-content-end mt-3 px-3 pb-3">
+    {{ $Sales->links('pagination::bootstrap-4') }}
 </div>
+
+</div>
+</div>
+
+</div>
+</div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    /* ── Mark as Complete ── */
+    document.querySelectorAll('.mark-complete-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+            const saleId = this.dataset.saleId;
+            Swal.fire({
+                title: 'Mark as Completed?',
+                text: 'This will mark the order as completed/delivered',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#28a745',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Yes, Mark Complete',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch(`/sales/mark-completed/${saleId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                        }
+                    })
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire({ icon: 'success', title: 'Success!', text: 'Order marked as completed', timer: 1500, showConfirmButton: false })
+                                .then(() => location.reload());
+                        } else {
+                            Swal.fire({ icon: 'error', title: 'Error', text: data.message || 'Failed to mark as completed' });
+                        }
+                    })
+                    .catch(() => Swal.fire({ icon: 'error', title: 'Error', text: 'An error occurred' }));
+                }
+            });
+        });
+    });
+
+    /* ── Toggle Items expand/collapse ── */
+    document.querySelectorAll('.toggle-items-link').forEach(link => {
+        link.addEventListener('click', function () {
+            const id      = this.dataset.saleId;
+            const preview = document.getElementById('items-preview-' + id);
+            const full    = document.getElementById('items-full-' + id);
+            if (!preview || !full) return;
+            if (full.style.display === 'none') {
+                preview.style.display = 'none';
+                full.style.display    = 'inline';
+                this.textContent      = 'Less';
+            } else {
+                preview.style.display = 'inline';
+                full.style.display    = 'none';
+                this.textContent      = 'More';
+            }
+        });
+    });
+
+});
+</script>
 
 @include('admin_panel.include.footer_include')
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script>
-    // ---- Delete Sale ----
-    const deleteRoute = "{{ route('sale.delete', ['id' => '__id__']) }}";
-
-    $('.delete-sale').on('click', function() {
-        let saleId = $(this).data('id');
-        let finalRoute = deleteRoute.replace('__id__', saleId);
-
-        Swal.fire({
-            title: 'Are you sure?',
-            text: "This will delete the invoice and update ledger!",
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#3085d6',
-            confirmButtonText: 'Yes, delete it!'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                window.location.href = finalRoute;
-            }
-        });
-    });
-
-    // ---- Cancel Sale ----
-    const cancelRoute = "{{ route('sale.cancel', ['id' => '__id__']) }}";
-
-    $('.btn-cancel-sale').on('click', function() {
-        let saleId = $(this).data('id');
-        let finalRoute = cancelRoute.replace('__id__', saleId);
-
-        Swal.fire({
-            title: 'Cancel this Sale?',
-            text: "Stock will be restored and ledger will be reversed. The sale record will remain.",
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#f0ad4e',
-            cancelButtonColor: '#3085d6',
-            confirmButtonText: 'Yes, cancel it!',
-            cancelButtonText: 'No, keep it'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                window.location.href = finalRoute;
-            }
-        });
-    });
-
-    // ---- Assign Salesman ----
-    const assignRouteBase = "{{ route('sale.assign', ['id' => '__id__']) }}";
-
-    $('.btn-assign').on('click', function() {
-        let saleId    = $(this).data('id');
-        let assigned  = $(this).data('assigned');
-        let formRoute = assignRouteBase.replace('__id__', saleId);
-
-        $('#assignForm').attr('action', formRoute);
-
-        // Pre-select assigned salesman if already set
-        if (assigned) {
-            $('#assigned_salesman_id').val(assigned);
-        } else {
-            $('#assigned_salesman_id').val('');
-        }
-    });
-</script>

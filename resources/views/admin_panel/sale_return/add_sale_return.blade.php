@@ -68,20 +68,14 @@
                         <div id="sale-details-section" class="mt-4">
                             <div class="table-responsive">
                                 <table class="table table-bordered">
-                                    <thead>
+                                    <thead id="return-table-thead">
                                         <tr class="text-center">
-                                            <th id="partyTypeTh">Distributor/Customer</th>
-                                            <th>Invoice</th>
-                                            <th>Item</th>
-                                            <th>Pcs/Carton</th>
-                                            <th>Carton Qty</th>
-                                            <th>Pcs Qty</th>
-                                            <th>Liter</th>
-                                            <th>Rate</th>
-                                            <th>Discount</th>
-                                            <th>Total</th>
-                                            <th>Return Carton Qty</th>
-                                            <th>Return Pcs Qty</th>
+                                            <th>Product Name</th>
+                                            <th>Original Qty</th>
+                                            <th>Unit</th>
+                                            <th>Price/unit</th>
+                                            <th>Total Amount</th>
+                                            <th>Return Qty</th>
                                             <th>Return Amount</th>
                                         </tr>
                                     </thead>
@@ -92,23 +86,23 @@
 
                                     <tfoot class="text-end fw-bold">
                                         <tr>
-                                            <td colspan="11">Gross Amount:</td>
+                                            <td colspan="5">Gross Amount:</td>
                                             <td id="grossAmount">0.00</td>
                                         </tr>
                                         <tr>
-                                            <td colspan="11">Discount Amount:</td>
+                                            <td colspan="5">Discount Amount:</td>
                                             <td id="discountAmount">0.00</td>
                                         </tr>
                                         <tr>
-                                            <td colspan="11">Scheme Amount:</td>
+                                            <td colspan="5">Scheme Amount:</td>
                                             <td id="schemeAmount">0.00</td>
                                         </tr>
                                         <tr>
-                                            <td colspan="11">Net Amount:</td>
+                                            <td colspan="5">Net Amount:</td>
                                             <td id="netAmount">0.00</td>
                                         </tr>
                                         <tr>
-                                            <td colspan="11">Total Return Amount:</td>
+                                            <td colspan="5">Total Return Amount:</td>
                                             <td id="totalReturnAmount">0.00</td>
                                         </tr>
                                     </tfoot>
@@ -185,7 +179,7 @@
                     } else {
                         options = '<option value="">No invoices found</option>';
                     }
-                    $('#invoice_number').html(options);
+                    $('#invoice_number').html(options).trigger('change');
                 },
                 error: function () {
                     $('#invoice_number').html('<option value="">Failed to load</option>');
@@ -203,7 +197,7 @@
         // When invoice selected, auto-fill party id if present
         $('#invoice_number').on('change', function () {
             let sel = $(this).find('option:selected');
-            $('#party_id').val(sel.data('party-id') || '');
+            $('#party_id').val(sel.attr('data-party-id') || '');
         });
 
         // Search and show sale details
@@ -231,39 +225,95 @@
                         return;
                     }
 
+                    let theadHTML = '';
                     let tableHTML = '';
                     let grossAmount = 0;
 
-                    $.each(response.sales, function (index, sale) {
-                        let rate = parseFloat(sale.rate) || 0;
-                        let itemAmount = parseFloat(sale.item_total) || 0;
-                        grossAmount += itemAmount;
+                    if (saleType === 'customer') {
+                        theadHTML = `
+                            <tr class="text-center">
+                                <th>Product Name</th>
+                                <th>Original Qty</th>
+                                <th>Unit</th>
+                                <th>Price/unit</th>
+                                <th>Total Amount</th>
+                                <th style="width: 15%;">Return Qty</th>
+                                <th style="width: 15%;">Return Amount</th>
+                            </tr>
+                        `;
 
-                        let itemID = sale.item_id ? sale.item_id : '';
+                        $.each(response.sales, function (index, sale) {
+                            let rate = parseFloat(sale.rate) || 0;
+                            let itemAmount = parseFloat(sale.item_total) || 0;
+                            grossAmount += itemAmount;
 
-                        tableHTML += `<tr data-item-id="${itemID}">
-                        <td>${(sale.distributor || sale.customer_name) ?? ''}</td>
-                        <td>${sale.invoice_number}</td>
-                        <td>${sale.item}</td>
-                        <td class="text-center">${sale.packing}</td>
-                        <td class="text-center">${sale.carton_quantity}</td>
-                        <td class="text-center">${sale.pcs_quantity}</td>
-                        <td class="text-center">${sale.liter ?? ''}</td>
-                        <td class="text-center">${parseFloat(rate).toFixed(2)}</td>
-                        <td class="text-center">${parseFloat(sale.discount_amount || 0).toFixed(2)}</td>
-                        <td class="text-end">${parseFloat(itemAmount).toFixed(2)}</td>
-                        <td><input type="number" min="0" class="form-control return-carton-qty" data-index="${index}" data-rate="${rate}" value="0"></td>
-                        <td><input type="number" min="0" class="form-control return-pcs-qty" data-index="${index}" data-rate="${rate}" value="0"></td>
-                        <td><input type="text" class="form-control-plaintext return-amount" readonly value="0"></td>
-                    </tr>`;
-                    });
+                            let itemID = sale.item_id ? sale.item_id : '';
 
+                            tableHTML += `<tr data-item-id="${itemID}">
+                                <td>${sale.item}</td>
+                                <td class="text-center">${sale.qty}</td>
+                                <td class="text-center">${sale.unit}</td>
+                                <td class="text-center">${parseFloat(rate).toFixed(2)}</td>
+                                <td class="text-end">${parseFloat(itemAmount).toFixed(2)}</td>
+                                <td><input type="number" min="0" max="${sale.qty}" class="form-control return-pcs-qty" data-index="${index}" data-rate="${rate}" value="0"></td>
+                                <td><input type="text" class="form-control-plaintext return-amount" readonly value="0"></td>
+                            </tr>`;
+                        });
+                    } else {
+                        theadHTML = `
+                            <tr class="text-center">
+                                <th>Product Name</th>
+                                <th>Pcs/Carton</th>
+                                <th>Carton Qty</th>
+                                <th>Pcs Qty</th>
+                                <th>Liter</th>
+                                <th>Rate</th>
+                                <th>Discount</th>
+                                <th>Total</th>
+                                <th style="width: 12%;">Return Carton Qty</th>
+                                <th style="width: 12%;">Return Pcs Qty</th>
+                                <th style="width: 15%;">Return Amount</th>
+                            </tr>
+                        `;
+
+                        $.each(response.sales, function (index, sale) {
+                            let rate = parseFloat(sale.rate) || 0;
+                            let itemAmount = parseFloat(sale.item_total) || 0;
+                            grossAmount += itemAmount;
+
+                            let itemID = sale.item_id ? sale.item_id : '';
+
+                            tableHTML += `<tr data-item-id="${itemID}">
+                                <td>${sale.item}</td>
+                                <td class="text-center">${sale.packing}</td>
+                                <td class="text-center">${sale.carton_quantity}</td>
+                                <td class="text-center">${sale.pcs_quantity}</td>
+                                <td class="text-center">${sale.liter ?? ''}</td>
+                                <td class="text-center">${parseFloat(rate).toFixed(2)}</td>
+                                <td class="text-center">${parseFloat(sale.discount_amount || 0).toFixed(2)}</td>
+                                <td class="text-end">${parseFloat(itemAmount).toFixed(2)}</td>
+                                <td><input type="number" min="0" max="${sale.carton_quantity}" class="form-control return-carton-qty" data-index="${index}" data-rate="${rate}" value="0"></td>
+                                <td><input type="number" min="0" max="${sale.pcs_quantity}" class="form-control return-pcs-qty" data-index="${index}" data-rate="${rate}" value="0"></td>
+                                <td><input type="text" class="form-control-plaintext return-amount" readonly value="0"></td>
+                            </tr>`;
+                        });
+                    }
+
+                    $('#return-table-thead').html(theadHTML);
                     $('#return-table-body').html(tableHTML);
+
+                    let colSpanVal = saleType === 'customer' ? 5 : 8;
+                    $('#grossAmount').closest('tr').find('td:first').attr('colspan', colSpanVal);
+                    $('#discountAmount').closest('tr').find('td:first').attr('colspan', colSpanVal);
+                    $('#schemeAmount').closest('tr').find('td:first').attr('colspan', colSpanVal);
+                    $('#netAmount').closest('tr').find('td:first').attr('colspan', colSpanVal);
+                    $('#totalReturnAmount').closest('tr').find('td:first').attr('colspan', colSpanVal);
+
                     $('#grossAmount').text(grossAmount.toFixed(2));
                     $('#discountAmount').text(parseFloat(response.summary.discount_value || 0).toFixed(2));
                     $('#schemeAmount').text(parseFloat(response.summary.scheme_value || 0).toFixed(2));
                     $('#netAmount').text(parseFloat(response.summary.net_amount || 0).toFixed(2));
-                    $('#totalReturnAmount').text(parseFloat(response.summary.total_return_amount || 0).toFixed(2));
+                    $('#totalReturnAmount').text('0.00');
                     $('#party_id').val(response.party_id || '');
                 },
                 error: function () {
@@ -274,13 +324,21 @@
 
         // Recalculate return amount when user inputs quantities
         $(document).on('input', '.return-carton-qty, .return-pcs-qty', function () {
+            let saleType = $('#sale_type').val() || 'customer';
             let $row = $(this).closest('tr');
-            let rate = parseFloat($row.find('.return-carton-qty').data('rate')) || 0;
-            let pcsPerCarton = parseFloat($row.find('td:nth-child(4)').text()) || 1;
-            let returnCartonQty = parseFloat($row.find('.return-carton-qty').val()) || 0;
-            let returnPcsQty = parseFloat($row.find('.return-pcs-qty').val()) || 0;
+            let returnAmount = 0;
 
-            let returnAmount = (rate * returnCartonQty) + ((rate / pcsPerCarton) * returnPcsQty);
+            if (saleType === 'customer') {
+                let returnPcsQty = parseFloat($row.find('.return-pcs-qty').val()) || 0;
+                let rate = parseFloat($row.find('.return-pcs-qty').data('rate')) || 0;
+                returnAmount = rate * returnPcsQty;
+            } else {
+                let returnCartonQty = parseFloat($row.find('.return-carton-qty').val()) || 0;
+                let returnPcsQty = parseFloat($row.find('.return-pcs-qty').val()) || 0;
+                let rate = parseFloat($row.find('.return-carton-qty').data('rate')) || 0;
+                let pcsPerCarton = parseFloat($row.find('td:nth-child(2)').text()) || 1;
+                returnAmount = (rate * returnCartonQty) + ((rate / pcsPerCarton) * returnPcsQty);
+            }
             $row.find('.return-amount').val(returnAmount.toFixed(2));
 
             // update total
@@ -302,16 +360,31 @@
             let returnItems = [];
             $('#return-table-body tr').each(function () {
                 let $tr = $(this);
-                let item = {
-                    item_id: $tr.data('item-id') || null,
-                    item_name: $tr.find('td:eq(2)').text(),
-                    pcs_per_carton: parseInt($tr.find('td:eq(3)').text()) || 0,
-                    carton_qty: parseInt($tr.find('.return-carton-qty').val()) || 0,
-                    pcs_qty: parseInt($tr.find('.return-pcs-qty').val()) || 0,
-                    rate: parseFloat($tr.find('td:eq(7)').text()) || 0,
-                    discount: parseFloat($tr.find('td:eq(8)').text()) || 0,
-                    total: parseFloat($tr.find('.return-amount').val()) || 0
-                };
+                let item = {};
+
+                if (saleType === 'customer') {
+                    item = {
+                        item_id: $tr.data('item-id') || null,
+                        item_name: $tr.find('td:eq(0)').text(),
+                        pcs_per_carton: null,
+                        carton_qty: 0,
+                        pcs_qty: parseInt($tr.find('.return-pcs-qty').val()) || 0,
+                        rate: parseFloat($tr.find('td:eq(3)').text()) || 0,
+                        discount: 0,
+                        total: parseFloat($tr.find('.return-amount').val()) || 0
+                    };
+                } else {
+                    item = {
+                        item_id: $tr.data('item-id') || null,
+                        item_name: $tr.find('td:eq(0)').text(),
+                        pcs_per_carton: parseInt($tr.find('td:eq(1)').text()) || 0,
+                        carton_qty: parseInt($tr.find('.return-carton-qty').val()) || 0,
+                        pcs_qty: parseInt($tr.find('.return-pcs-qty').val()) || 0,
+                        rate: parseFloat($tr.find('td:eq(5)').text()) || 0,
+                        discount: parseFloat($tr.find('td:eq(6)').text()) || 0,
+                        total: parseFloat($tr.find('.return-amount').val()) || 0
+                    };
+                }
 
                 if (item.carton_qty > 0 || item.pcs_qty > 0) {
                     returnItems.push(item);

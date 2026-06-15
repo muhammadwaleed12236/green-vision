@@ -228,7 +228,7 @@
             row.find('.closing-stock').val(stock || 0);
         });
 
-        // ✅ Calculate: Opening - Used = Closing
+        // ✅ Calculate: Opening - Used = Closing (allow stockout even when opening stock is 0)
         $(document).on('input', '.used-stock', function () {
             let row = $(this).closest('tr');
             let opening = parseFloat(row.find('.opening-stock').val()) || 0;
@@ -236,15 +236,11 @@
 
             let closing = opening - used;
 
-            // Prevent negative closing stock
+            // Clamp closing to 0 — no alert, no reset, entry is allowed
             if (closing < 0) {
-                row.find('.closing-stock').val(0).addClass('text-danger');
-                alert('Used stock cannot exceed opening stock!');
-                $(this).val(opening);
                 closing = 0;
-            } else {
-                row.find('.closing-stock').val(closing).removeClass('text-danger');
             }
+            row.find('.closing-stock').val(closing).removeClass('text-danger');
 
             calculateGrandTotal();
 

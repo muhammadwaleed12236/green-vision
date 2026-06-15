@@ -130,14 +130,10 @@
                     </li>
                 @endif
                 <li>
-                    <button class="dropdown-item text-primary"
-                            data-bs-toggle="modal"
-                            data-bs-target="#assignJobModal"
-                            data-id="{{ $sale->id }}"
-                            data-job="{{ $sale->invoice_number }}"
-                            data-amount="{{ $sale->net_amount }}">
+                    <a class="dropdown-item text-primary"
+                       href="{{ route('job-assignments', ['q' => $sale->invoice_number]) }}">
                         <i class="fa fa-user-plus me-2"></i>Assign Job
-                    </button>
+                    </a>
                 </li>
                 <li><hr class="dropdown-divider"></li>
                 <li>
