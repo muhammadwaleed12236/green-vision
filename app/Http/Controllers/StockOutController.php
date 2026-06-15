@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Auth;
 
 class StockOutController extends Controller
 {
-    public function stockout()
+    public function stockout(Request $request)
     {
         if (Auth::id()) {
             $userId = Auth::id();
@@ -28,9 +28,16 @@ class StockOutController extends Controller
                 ->orderBy('created_at', 'desc')
                 ->get();
 
-            $stockOuts = StockOut::with(['product', 'localSale.customer', 'localSale.vendor'])
-                ->orderBy('created_at', 'desc')
-                ->get();
+            $query = StockOut::with(['product', 'localSale.customer', 'localSale.vendor']);
+
+            if ($request->filled('from_date')) {
+                $query->whereDate('created_at', '>=', $request->from_date);
+            }
+            if ($request->filled('to_date')) {
+                $query->whereDate('created_at', '<=', $request->to_date);
+            }
+
+            $stockOuts = $query->orderBy('created_at', 'desc')->get();
 
             return view('admin_panel.stockOut.stockout', [
                 'stockOuts' => $stockOuts,

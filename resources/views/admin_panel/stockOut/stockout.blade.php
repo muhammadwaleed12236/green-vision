@@ -26,6 +26,28 @@
                         </div>
                     @endif
 
+                    {{-- Date Filter Form --}}
+                    <form method="GET" action="{{ route('stockout.index') }}" class="mb-4">
+                        <div class="row align-items-end">
+                            <div class="col-md-4 mb-2">
+                                <label class="form-label fw-bold">From Date</label>
+                                <input type="date" name="from_date" class="form-control" value="{{ request('from_date') }}">
+                            </div>
+                            <div class="col-md-4 mb-2">
+                                <label class="form-label fw-bold">To Date</label>
+                                <input type="date" name="to_date" class="form-control" value="{{ request('to_date') }}">
+                            </div>
+                            <div class="col-md-4 mb-2 d-flex gap-2">
+                                <button type="submit" class="btn btn-primary w-50">
+                                    <i class="fas fa-filter"></i> Filter
+                                </button>
+                                <a href="{{ route('stockout.index') }}" class="btn btn-secondary w-50">
+                                    <i class="fas fa-undo"></i> Reset
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+
                     <div class="table-responsive">
                         <table class="table datanew">
                             <thead>
