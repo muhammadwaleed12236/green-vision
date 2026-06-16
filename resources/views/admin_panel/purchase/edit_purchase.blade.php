@@ -187,13 +187,13 @@
 $(document).ready(function () {
 
     // Existing purchase data
-    const existingItems = @json(json_decode($purchase->item ?? '[]', true) ?: []);
-    const existingRates = @json(json_decode($purchase->rate ?? '[]', true) ?: []);
-    const existingPcs = @json(json_decode($purchase->pcs ?? '[]', true) ?: []);
-    const existingDiscounts = @json(json_decode($purchase->discount ?? '[]', true) ?: []);
-    const existingAmounts = @json(json_decode($purchase->amount ?? '[]', true) ?: []);
-    const existingUnits = @json(json_decode($purchase->product_mode ?? '[]', true) ?: []);
-    const existingGrossTotals = @json(json_decode($purchase->gross_total ?? '[]', true) ?: []);
+    const existingItems = @json($purchase->item ?? []);
+    const existingRates = @json($purchase->rate ?? []);
+    const existingPcs = @json($purchase->pcs ?? []);
+    const existingDiscounts = @json($purchase->discount ?? []);
+    const existingAmounts = @json($purchase->amount ?? []);
+    const existingUnits = @json($purchase->product_mode ?? []);
+    const existingGrossTotals = @json($purchase->gross_total ?? []);
 
     // Prevent Enter key from submitting form
     $('#editPurchaseForm').on('keydown', 'input, select', function (e) {

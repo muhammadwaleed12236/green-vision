@@ -742,12 +742,12 @@ class ReportController extends Controller
         ];
 
         foreach ($purchases as $key => $purchase) {
-            $items = json_decode($purchase->item ?? '[]');
-            $pcs_carton = json_decode($purchase->pcs_carton ?? '[]');
+            $items = $purchase->item ?? [];
+            $pcs_carton = $purchase->pcs_carton ?? [];
             $carton_qty = json_decode($purchase->carton_qty ?? '[]');
-            $pcs = json_decode($purchase->pcs ?? '[]');
+            $pcs = $purchase->pcs ?? [];
             $liter = json_decode($purchase->liter ?? '[]');
-            $amounts = json_decode($purchase->amount ?? '[]'); // 👈 Use amount field here
+            $amounts = $purchase->amount ?? []; // 👈 Use amount field here
 
             foreach ($items as $i => $item) {
                 $netAmount = floatval($amounts[$i] ?? 0);
@@ -815,12 +815,12 @@ class ReportController extends Controller
         ];
 
         foreach ($purchases as $key => $purchase) {
-            $items = json_decode($purchase->item ?? '[]');
-            $pcs_carton = json_decode($purchase->pcs_carton ?? '[]');
+            $items = $purchase->item ?? [];
+            $pcs_carton = $purchase->pcs_carton ?? [];
             $carton_qty = json_decode($purchase->carton_qty ?? '[]');
-            $pcs = json_decode($purchase->pcs ?? '[]');
+            $pcs = $purchase->pcs ?? [];
             $liter = json_decode($purchase->liter ?? '[]');
-            $amounts = json_decode($purchase->amount ?? '[]'); // ✅ new line
+            $amounts = $purchase->amount ?? []; // ✅ new line
 
             foreach ($items as $i => $item) {
                 $netAmount = floatval($amounts[$i] ?? 0);

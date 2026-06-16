@@ -17,14 +17,6 @@ class PurchaseReturnController extends Controller
         $purchase = Purchase::with('vendor')->findOrFail($id);
 
         // Decode JSON fields
-        $purchase->item = json_decode($purchase->item, true);
-        $purchase->rate = json_decode($purchase->rate, true);
-        $purchase->product_mode = json_decode($purchase->product_mode, true);
-        $purchase->pcs = json_decode($purchase->pcs, true);
-        $purchase->discount = json_decode($purchase->discount, true);
-        $purchase->amount = json_decode($purchase->amount, true);
-        $purchase->pcs_carton = json_decode($purchase->pcs_carton, true);
-
         return view('admin_panel.purchase_return.purcahse_return', compact('purchase'));
     }
 

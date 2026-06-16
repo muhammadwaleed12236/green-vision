@@ -165,10 +165,10 @@
                             <tbody>
                                 @foreach($Purchases as $purchase)
                                     @php
-                                        $items = json_decode($purchase->item ?? '[]', true) ?: [];
-                                        $rates = json_decode($purchase->rate ?? '[]', true) ?: [];
-                                        $pcsArr = json_decode($purchase->pcs ?? '[]', true) ?: [];
-                                        $amounts = json_decode($purchase->amount ?? '[]', true) ?: [];
+                                        $items = $purchase->item ?? [];
+                                        $rates = $purchase->rate ?? [];
+                                        $pcsArr = $purchase->pcs ?? [];
+                                        $amounts = $purchase->amount ?? [];
                                         $itemCount = is_array($items) ? count($items) : 0;
                                     @endphp
                                     <tr>

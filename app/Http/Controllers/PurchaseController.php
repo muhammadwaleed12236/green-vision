@@ -260,8 +260,8 @@ class PurchaseController extends Controller
         try {
             $purchase = Purchase::with('vendor')->findOrFail($id);
 
-            $amounts = json_decode($purchase->amount, true) ?? [];
-            $discounts = json_decode($purchase->discount, true) ?? [];
+            $amounts = $purchase->amount ?? [];
+            $discounts = $purchase->discount ?? [];
 
             $grossTotal = array_sum($amounts);
             $discountTotal = array_sum($discounts);
@@ -343,8 +343,8 @@ class PurchaseController extends Controller
             $vendor = Vendor::findOrFail($vendorId);
 
             // ================= GET OLD ITEMS FOR STOCK ADJUSTMENT =================
-            $oldItems = json_decode($purchase->item, true) ?? [];
-            $oldPcs = json_decode($purchase->pcs, true) ?? [];
+            $oldItems = $purchase->item ?? [];
+            $oldPcs = $purchase->pcs ?? [];
 
             // ================= ITEMS (FILTER EMPTY ROWS) =================
             $item_names = $request->item_name ?? [];
@@ -473,8 +473,8 @@ class PurchaseController extends Controller
             }
 
             // ================= REVERSE STOCK =================
-            $oldItems = json_decode($purchase->item, true) ?? [];
-            $oldPcs = json_decode($purchase->pcs, true) ?? [];
+            $oldItems = $purchase->item ?? [];
+            $oldPcs = $purchase->pcs ?? [];
 
             foreach ($oldItems as $i => $itemName) {
                 $qty = (int) ($oldPcs[$i] ?? 0);

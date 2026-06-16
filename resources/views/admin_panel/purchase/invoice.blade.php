@@ -49,13 +49,13 @@
 </thead>
 
 <tbody>
-@foreach(json_decode($purchase->item) as $i => $item)
+@foreach(($purchase->item ?? []) as $i => $item)
 <tr>
     <td class="text-center">{{ $item }}</td>
-    <td class="text-center">{{ empty(json_decode($purchase->product_mode)[$i]) ? '-' : json_decode($purchase->product_mode)[$i] }}</td>
-    <td class="text-center">{{ (json_decode($purchase->pcs)[$i] ?? 0) == 0 ? '-' : json_decode($purchase->pcs)[$i] }}</td>
-    <td class="text-center">{{ number_format(json_decode($purchase->rate)[$i] ?? 0,2) }}</td>
-    <td class="text-center">{{ number_format(json_decode($purchase->amount)[$i] ?? 0,2) }}</td>
+    <td class="text-center">{{ empty(($purchase->product_mode ?? [])[$i]) ? '-' : ($purchase->product_mode ?? [])[$i] }}</td>
+    <td class="text-center">{{ (($purchase->pcs ?? [])[$i] ?? 0) == 0 ? '-' : ($purchase->pcs ?? [])[$i] }}</td>
+    <td class="text-center">{{ number_format(($purchase->rate ?? [])[$i] ?? 0, 2) }}</td>
+    <td class="text-center">{{ number_format(($purchase->amount ?? [])[$i] ?? 0, 2) }}</td>
 </tr>
 @endforeach
 </tbody>

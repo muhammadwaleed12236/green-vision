@@ -86,23 +86,19 @@ class QATestController extends Controller
         $amounts = [];
 
         if ($purchase->item) {
-            $itemData = json_decode($purchase->item, true);
-            $items = is_array($itemData) ? $itemData : explode(',', $purchase->item);
+            $items = $purchase->item;
         }
 
         if ($purchase->rate) {
-            $rateData = json_decode($purchase->rate, true);
-            $rates = is_array($rateData) ? $rateData : explode(',', $purchase->rate);
+            $rates = $purchase->rate;
         }
 
         if ($purchase->pcs) {
-            $pcsData = json_decode($purchase->pcs, true);
-            $pcs = is_array($pcsData) ? $pcsData : explode(',', $purchase->pcs);
+            $pcs = $purchase->pcs;
         }
 
         if ($purchase->amount) {
-            $amountData = json_decode($purchase->amount, true);
-            $amounts = is_array($amountData) ? $amountData : explode(',', $purchase->amount);
+            $amounts = $purchase->amount;
         }
 
         // Calculate items total from amount field
@@ -145,13 +141,11 @@ class QATestController extends Controller
         $pcs = [];
 
         if ($purchase->item) {
-            $itemData = json_decode($purchase->item, true);
-            $items = is_array($itemData) ? $itemData : explode(',', $purchase->item);
+            $items = $purchase->item;
         }
 
         if ($purchase->pcs) {
-            $pcsData = json_decode($purchase->pcs, true);
-            $pcs = is_array($pcsData) ? $pcsData : explode(',', $purchase->pcs);
+            $pcs = $purchase->pcs;
         }
 
         $stockIssues = [];

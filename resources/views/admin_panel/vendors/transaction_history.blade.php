@@ -154,7 +154,7 @@
                             <tbody id="txBody">
                                 @forelse($purchases as $purchase)
                                 @php
-                                    $items       = json_decode($purchase->item ?? '[]', true) ?? [];
+                                    $items       = $purchase->item ?? [];
                                     $itemPreview = is_array($items) ? implode(', ', array_slice($items, 0, 3)) . (count($items) > 3 ? '...' : '') : '-';
                                     $statusVal   = $purchase->return_status == 1 ? 'Returned' : ($purchase->status ?? 'Completed');
                                 @endphp
