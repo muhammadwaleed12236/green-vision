@@ -49,13 +49,20 @@
 </thead>
 
 <tbody>
-@foreach(($purchase->item ?? []) as $i => $item)
+@php
+    $invItems = is_array($purchase->item) ? $purchase->item : (json_decode($purchase->item, true) ?? []);
+    $invModes = is_array($purchase->product_mode) ? $purchase->product_mode : (json_decode($purchase->product_mode, true) ?? []);
+    $invPcs = is_array($purchase->pcs) ? $purchase->pcs : (json_decode($purchase->pcs, true) ?? []);
+    $invRates = is_array($purchase->rate) ? $purchase->rate : (json_decode($purchase->rate, true) ?? []);
+    $invAmounts = is_array($purchase->amount) ? $purchase->amount : (json_decode($purchase->amount, true) ?? []);
+@endphp
+@foreach($invItems as $i => $item)
 <tr>
     <td class="text-center">{{ $item }}</td>
-    <td class="text-center">{{ empty(($purchase->product_mode ?? [])[$i]) ? '-' : ($purchase->product_mode ?? [])[$i] }}</td>
-    <td class="text-center">{{ (($purchase->pcs ?? [])[$i] ?? 0) == 0 ? '-' : ($purchase->pcs ?? [])[$i] }}</td>
-    <td class="text-center">{{ number_format(($purchase->rate ?? [])[$i] ?? 0, 2) }}</td>
-    <td class="text-center">{{ number_format(($purchase->amount ?? [])[$i] ?? 0, 2) }}</td>
+    <td class="text-center">{{ empty($invModes[$i]) ? '-' : $invModes[$i] }}</td>
+    <td class="text-center">{{ ($invPcs[$i] ?? 0) == 0 ? '-' : $invPcs[$i] }}</td>
+    <td class="text-center">{{ number_format($invRates[$i] ?? 0, 2) }}</td>
+    <td class="text-center">{{ number_format($invAmounts[$i] ?? 0, 2) }}</td>
 </tr>
 @endforeach
 </tbody>

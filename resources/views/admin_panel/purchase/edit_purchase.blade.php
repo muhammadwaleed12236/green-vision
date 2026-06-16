@@ -69,7 +69,7 @@
                                         <th>Unit</th>
                                         <th>Price/unit</th>
                                         <th>amount</th>
-                                        <th style="width: 80px">Action</th>
+                                        <th style="width: 100px">Action</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -90,9 +90,6 @@
                         </div>
 
                         <div class="d-flex justify-content-between mt-3">
-                            <button type="button" class="btn btn-success" id="addRowBtn">
-                                <i class="fa fa-plus me-1"></i>Add More Items
-                            </button>
                             <button type="submit" class="btn btn-primary btn-lg">
                                 <i class="fa fa-save me-1"></i>Update Purchase
                             </button>
@@ -173,9 +170,25 @@
         background-color: #f8f9fa;
     }
 
+    /* Row Action Buttons */
+    #purchaseTable .add-row,
     #purchaseTable .remove-row {
-        padding: 4px 10px;
-        font-size: 12px;
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        font-size: 14px;
+        line-height: 1;
+        border-radius: 4px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+    #purchaseTable .add-row {
+        margin-right: 4px;
+    }
+    #purchaseTable .remove-row:disabled {
+        opacity: 0.35;
+        cursor: not-allowed;
     }
 
     #purchaseTable tbody tr:hover {
@@ -187,13 +200,22 @@
 $(document).ready(function () {
 
     // Existing purchase data
-    const existingItems = @json($purchase->item ?? []);
-    const existingRates = @json($purchase->rate ?? []);
-    const existingPcs = @json($purchase->pcs ?? []);
-    const existingDiscounts = @json($purchase->discount ?? []);
-    const existingAmounts = @json($purchase->amount ?? []);
-    const existingUnits = @json($purchase->product_mode ?? []);
-    const existingGrossTotals = @json($purchase->gross_total ?? []);
+    @php
+        $_items = is_array($purchase->item) ? $purchase->item : (json_decode($purchase->item, true) ?? []);
+        $_rates = is_array($purchase->rate) ? $purchase->rate : (json_decode($purchase->rate, true) ?? []);
+        $_pcs = is_array($purchase->pcs) ? $purchase->pcs : (json_decode($purchase->pcs, true) ?? []);
+        $_discounts = is_array($purchase->discount) ? $purchase->discount : (json_decode($purchase->discount, true) ?? []);
+        $_amounts = is_array($purchase->amount) ? $purchase->amount : (json_decode($purchase->amount, true) ?? []);
+        $_units = is_array($purchase->product_mode) ? $purchase->product_mode : (json_decode($purchase->product_mode, true) ?? []);
+        $_grossTotals = $purchase->gross_total ? (is_array($purchase->gross_total) ? $purchase->gross_total : (json_decode($purchase->gross_total, true) ?? [])) : [];
+    @endphp
+    const existingItems = @json($_items);
+    const existingRates = @json($_rates);
+    const existingPcs = @json($_pcs);
+    const existingDiscounts = @json($_discounts);
+    const existingAmounts = @json($_amounts);
+    const existingUnits = @json($_units);
+    const existingGrossTotals = @json($_grossTotals);
 
     // Prevent Enter key from submitting form
     $('#editPurchaseForm').on('keydown', 'input, select', function (e) {
@@ -214,7 +236,7 @@ $(document).ready(function () {
         });
     }
 
-    function createRowHtml(itemName = '', productMode = '', measurement = '', rate = '', pcs = '', grossTotal = '', discount = '', amount = '') {
+    function createRowHtml(itemName = '', unit = '', measurement = '', rate = '', pcs = '', grossTotal = '', discount = '', amount = '') {
         return `
         <tr class="purchase-row">
             <td class="row-index text-center fw-semibold" style="vertical-align: middle;"></td>
@@ -244,8 +266,11 @@ $(document).ready(function () {
                 <input type="hidden" name="pcs_carton[]" class="pcs-carton" value="0">
             </td>
             <td>
-                <button type="button" class="btn btn-danger btn-sm remove-row">
-                    <i class="fa fa-trash"></i>
+                <button type="button" class="btn btn-success btn-sm add-row" title="Add row">
+                    <i class="fas fa-plus"></i>
+                </button>
+                <button type="button" class="btn btn-danger btn-sm remove-row" title="Delete row">
+                    <i class="fas fa-times"></i>
                 </button>
             </td>
         </tr>`;
@@ -272,17 +297,16 @@ $(document).ready(function () {
             $('#purchaseTable tbody').append(createRowHtml());
         }
     }
-
-    // Add one empty row at end
-    $('#purchaseTable tbody').append(createRowHtml());
     updateRowNumbers();
 
-    // Add row button
-    $('#addRowBtn').on('click', function() {
-        $('#purchaseTable tbody').append(createRowHtml());
+    // Add row (insert after current)
+    $(document).on('click', '.add-row', function () {
+        let currentRow = $(this).closest('tr.purchase-row');
+        let newRow = $(createRowHtml());
+        currentRow.after(newRow);
         updateRowNumbers();
-        let newRow = $('#purchaseTable tbody tr').last();
-        newRow[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+        calculateGrandTotal();
+        newRow.find('.item-input').focus();
     });
 
     // Remove row
@@ -292,16 +316,22 @@ $(document).ready(function () {
             $(this).closest('tr').remove();
             updateRowNumbers();
             calculateGrandTotal();
-        } else {
-            if (typeof Swal !== 'undefined') {
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'Cannot Delete',
-                    text: 'At least one row must remain.',
-                    timer: 2000,
-                    showConfirmButton: false
-                });
+        }
+    });
+
+    // Enter key: auto-add new row when pressing Enter in last row
+    $('#editPurchaseForm').on('keydown', 'input, select', function (e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            let currentRow = $(this).closest('tr.purchase-row');
+            if (currentRow.length && currentRow.is('#purchaseTable tbody tr:last')) {
+                let newRow = $(createRowHtml());
+                currentRow.after(newRow);
+                updateRowNumbers();
+                calculateGrandTotal();
+                newRow.find('.item-input').focus();
             }
+            return false;
         }
     });
 
@@ -365,14 +395,12 @@ $(document).ready(function () {
         row.find('.autocomplete-list').addClass('d-none');
 
         calculateRow(row);
-        autoAddIfNeeded();
     });
 
     // Calculations
     $(document).on('input', '.rate, .pcx, .discount', function () {
         let row = $(this).closest('tr');
         calculateRow(row);
-        autoAddIfNeeded();
     });
 
     $(document).on('input', '.amount', function () {
@@ -396,29 +424,6 @@ $(document).ready(function () {
             total += parseInt($(this).val()) || 0;
         });
         $('#grandTotal').val(total);
-    }
-
-    function isRowEmpty(row) {
-        let itemName = row.find('.item-input').val().trim();
-        let rate = parseInt(row.find('.rate').val()) || 0;
-        let pcs = parseInt(row.find('.pcx').val()) || 0;
-        return !itemName && rate === 0 && pcs === 0;
-    }
-
-    function autoAddIfNeeded() {
-        let rows = $('#purchaseTable tbody tr');
-        let emptyRowExists = false;
-
-        rows.each(function () {
-            if (isRowEmpty($(this))) {
-                emptyRowExists = true;
-                return false;
-            }
-        });
-
-        if (!emptyRowExists) {
-            $('#purchaseTable tbody').append(createRowHtml());
-        }
     }
 
     // Vendor select change
