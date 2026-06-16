@@ -56,7 +56,7 @@
                                         <th>Unit</th>
                                         <th>Price/unit</th>
                                         <th>Amount</th>
-                                        <th style="width: 80px">Action</th>
+                                        <th style="width: 100px">Action</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -158,7 +158,7 @@
     #purchaseTable td:nth-child(6) { width: 120px; } /* amount */
 
     #purchaseTable th:nth-child(7),
-    #purchaseTable td:nth-child(7) { width: 80px; } /* Action */
+    #purchaseTable td:nth-child(7) { width: 100px; } /* Action */
 
     /* Input Styling in Table */
     #purchaseTable .form-control {
@@ -177,11 +177,25 @@
         background-color: #f8f9fa;
     }
 
-    /* Delete Button */
+    /* Row Action Buttons */
+    #purchaseTable .add-row,
     #purchaseTable .remove-row {
-        padding: 4px 10px;
-        font-size: 12px;
-        white-space: nowrap;
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        font-size: 14px;
+        line-height: 1;
+        border-radius: 4px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+    #purchaseTable .add-row {
+        margin-right: 4px;
+    }
+    #purchaseTable .remove-row:disabled {
+        opacity: 0.35;
+        cursor: not-allowed;
     }
 
     /* Grand Total Row */
@@ -209,11 +223,17 @@
         $('#purchaseForm').on('keydown', 'input, select', function (e) {
             if (e.key === 'Enter') {
                 e.preventDefault();
-                // Move to next input field
-                let inputs = $('#purchaseForm').find('input:visible, select:visible');
-                let currentIndex = inputs.index(this);
-                if (currentIndex < inputs.length - 1) {
-                    inputs.eq(currentIndex + 1).focus();
+                let currentRow = $(this).closest('tr.purchase-row');
+                let isLastRow = currentRow.length && currentRow.is('#purchaseTable tbody tr:last');
+                if (isLastRow) {
+                    appendNewRow();
+                    $('#purchaseTable tbody tr:last').find('.item-input').focus();
+                } else {
+                    let inputs = $('#purchaseForm').find('input:visible, select:visible');
+                    let currentIndex = inputs.index(this);
+                    if (currentIndex < inputs.length - 1) {
+                        inputs.eq(currentIndex + 1).focus();
+                    }
                 }
                 return false;
             }
@@ -412,7 +432,12 @@
         </td>
 
         <td>
-            <button type="button" class="btn btn-danger btn-sm remove-row">Delete</button>
+            <button type="button" class="btn btn-success btn-sm add-row" title="Add row">
+                <i class="fas fa-plus"></i>
+            </button>
+            <button type="button" class="btn btn-danger btn-sm remove-row" title="Delete row">
+                <i class="fas fa-times"></i>
+            </button>
         </td>
     </tr>`;
         }
@@ -431,6 +456,16 @@
             newRow[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
 
+        // Add row (insert after current)
+        $(document).on('click', '.add-row', function () {
+            let currentRow = $(this).closest('tr.purchase-row');
+            let newRow = $(createRowHtml());
+            currentRow.after(newRow);
+            updateRowNumbers();
+            calculateGrandTotal();
+            newRow.find('.item-input').focus();
+        });
+
         // Remove row
         $(document).on('click', '.remove-row', function () {
             let rowCount = $('#purchaseTable tbody tr').length;
@@ -438,16 +473,6 @@
                 $(this).closest('tr').remove();
                 updateRowNumbers();
                 calculateGrandTotal();
-            } else {
-                if (typeof Swal !== 'undefined') {
-                    Swal.fire({
-                        icon: 'warning',
-                        title: 'Cannot Delete',
-                        text: 'At least one row must remain.',
-                        timer: 2000,
-                        showConfirmButton: false
-                    });
-                }
             }
         });
 

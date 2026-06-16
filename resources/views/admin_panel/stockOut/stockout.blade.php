@@ -1,4 +1,5 @@
 @include('admin_panel.include.header_include')
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 
 <div class="main-wrapper">
     @include('admin_panel.include.navbar_include')
@@ -128,30 +129,28 @@
 
                 <div class="modal-body">
 
-                    {{-- DATE FILTER INSIDE MODAL --}}
+                    {{-- DATE RANGE FILTER --}}
                     <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label class="form-label">Invoice Date <span class="text-danger">*</span></label>
-                            <input type="date" class="form-control" id="invoice_date_filter" required>
+                        <div class="col-md-3">
+                            <label class="form-label">From Date <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" id="from_date" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">To Date <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" id="to_date" required>
                         </div>
                     </div>
 
-                    {{-- INVOICE SELECT --}}
+                    {{-- JOB SELECT --}}
                     <div class="row mb-3">
-                        <div class="col-md-4">
-                            <label class="form-label">Invoice # <span class="text-danger">*</span></label>
-
-                            <select class="form-control" name="local_sales_id" id="add_local_sales_id" required>
-                                <option value="">Select Invoice</option>
+                        <div class="col-md-6">
+                            <label class="form-label">Job Number <span class="text-danger">*</span></label>
+                            <select class="form-control" name="local_sales_id" id="add_job_number" required>
+                                <option value="">Select Job</option>
                             </select>
                         </div>
 
-                        <div class="col-md-4">
-                            <label class="form-label">Job Number</label>
-                            <input type="text" class="form-control bg-light" id="add_job_number" readonly>
-                        </div>
-
-                        <div class="col-md-4">
+                        <div class="col-md-6">
                             <label class="form-label">Customer Name</label>
                             <input type="text" class="form-control bg-light" id="add_customer_name" readonly>
                         </div>
@@ -210,8 +209,6 @@
     </div>
 </div>
 
-@include('admin_panel.include.footer_include')
-
 {{-- ========================= --}}
 {{-- JS SECTION --}}
 {{-- ========================= --}}
@@ -246,63 +243,104 @@ $(document).ready(function () {
         });
     }
 
-    // Load invoices based on selected date
-    function loadInvoices(date) {
-        $.get('/get-invoices-by-date', { date: date }, function (response) {
+    // Track the in-flight AJAX request so we can abort stale ones
+    let pendingJobsReq = null;
 
-            let dropdown = $('#add_local_sales_id');
-            dropdown.html('<option value="">Select Invoice</option>');
+    // Helper to safely destroy Select2
+    function destroySelect2(el) {
+        if (el && el.length && el.data('select2')) {
+            try { el.select2('destroy'); } catch(e) {}
+        }
+    }
 
-            if (response.length === 0) {
-                dropdown.append('<option value="" disabled>No invoices found for this date</option>');
-                return;
+    // Load jobs based on selected date range
+    function loadJobs(fromDate, toDate) {
+        if (pendingJobsReq) {
+            pendingJobsReq.abort();
+        }
+
+        let dropdown = $('#add_job_number');
+        destroySelect2(dropdown);
+        dropdown.html('<option value="">Select Job</option>');
+        $('#add_customer_name').val('');
+
+        pendingJobsReq = $.ajax({
+            url: '/get-invoices-by-date',
+            data: { from_date: fromDate, to_date: toDate },
+            dataType: 'json',
+            success: function (response) {
+                pendingJobsReq = null;
+
+                if (!response || response.length === 0) {
+                    dropdown.append('<option value="" disabled>No jobs found for this date range</option>');
+                    return;
+                }
+
+                response.forEach(function (sale) {
+                    let customerName = sale.customer_name || 'N/A';
+                    dropdown.append(`
+                        <option value="${sale.id}"
+                            data-customer="${customerName}"
+                            data-job="${sale.invoice_number}"
+                            data-invoice="${sale.invoice_number}">
+                            ${sale.invoice_number} - ${customerName}
+                        </option>
+                    `);
+                });
+
+                dropdown.select2({
+                    dropdownParent: $('#addStockOutModal'),
+                    width: '100%',
+                    placeholder: 'Search Job...'
+                });
+            },
+            error: function (xhr, status) {
+                if (status === 'abort') return;
+                pendingJobsReq = null;
+                console.error('Failed to load jobs');
+                dropdown.html('<option value="" disabled>Error loading jobs</option>');
             }
-
-            response.forEach(function (sale) {
-                let customerName = sale.customer_name || 'N/A';
-                dropdown.append(`
-                    <option value="${sale.id}"
-                        data-customer="${customerName}"
-                        data-job-number="${sale.job_number || 'N/A'}">
-                        ${sale.invoice_number} - ${customerName}
-                    </option>
-                `);
-            });
-        }).fail(function() {
-            console.error('Failed to load invoices');
-            let dropdown = $('#add_local_sales_id');
-            dropdown.html('<option value="" disabled>Error loading invoices</option>');
         });
     }
 
-    // Initialize when modal is shown - load products + invoices
+    // Initialize when modal is shown - load products + jobs
     $('#addStockOutModal').on('shown.bs.modal', function () {
         loadProducts();
         let today = new Date().toISOString().split('T')[0];
-        $('#invoice_date_filter').val(today);
-        loadInvoices(today);
+        let thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+        $('#from_date').val(thirtyDaysAgo);
+        $('#to_date').val(today);
+        loadJobs(thirtyDaysAgo, today);
     });
 
-    // Listen for date filter changes
-    $('#invoice_date_filter').on('change', function () {
-        let selectedDate = $(this).val();
-        if (selectedDate) {
-            loadInvoices(selectedDate);
-            // Reset invoice selection
-            $('#add_local_sales_id').val('').change();
-            $('#add_customer_name').val('');
-            $('#add_job_number').val('');
+    // Destroy Select2 when modal is hidden
+    $('#addStockOutModal').on('hidden.bs.modal', function () {
+        if (pendingJobsReq) {
+            pendingJobsReq.abort();
+            pendingJobsReq = null;
         }
+        destroySelect2($('#add_job_number'));
+        $('#add_customer_name').val('');
     });
 
-    // Listen for invoice selection
-    $('#add_local_sales_id').on('change', function () {
+    // Listen for date range changes
+    function reloadJobs() {
+        let fromDate = $('#from_date').val();
+        let toDate = $('#to_date').val();
+        if (fromDate && toDate) {
+            loadJobs(fromDate, toDate);
+        }
+    }
+
+    $(document).on('change', '#from_date, #to_date', reloadJobs);
+
+    // Listen for job selection (delegated, works with Select2)
+    $(document).on('change', '#add_job_number', function () {
+        let val = $(this).val();
+        if (!val) { $('#add_customer_name').val(''); return; }
         let selected = $(this).find('option:selected');
         let customerName = selected.data('customer') || '-';
-        let jobNumber = selected.data('job-number') || '-';
-        
         $('#add_customer_name').val(customerName);
-        $('#add_job_number').val(jobNumber);
     });
 
     // Handle product selection
@@ -343,3 +381,5 @@ $(document).ready(function () {
 });
 </script>
 @endpush
+
+@include('admin_panel.include.footer_include')

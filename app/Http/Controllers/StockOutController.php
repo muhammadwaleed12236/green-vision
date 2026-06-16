@@ -193,21 +193,25 @@ class StockOutController extends Controller
     }
 
     /**
-     * Get invoices by date
+     * Get invoices by date range
      */
     public function getInvoicesByDate(Request $request)
     {
-        $date = $request->date ?? now()->format('Y-m-d');
+        $fromDate = $request->from_date ?? now()->format('Y-m-d');
+        $toDate = $request->to_date ?? now()->format('Y-m-d');
 
         $sales = LocalSale::with(['customer', 'vendor'])
-            ->whereDate('created_at', $date)
-            ->select('id', 'invoice_number', 'job_number', 'customer_id', 'vendor_id', 'party_type', 'customer_shopname')
+            ->whereDate('sale_date', '>=', $fromDate)
+            ->whereDate('sale_date', '<=', $toDate)
+            ->select('id', 'invoice_number', 'sale_date', 'customer_id', 'vendor_id', 'party_type', 'customer_shopname')
+            ->orderBy('sale_date')
             ->get()
             ->map(function ($sale) {
                 return [
                     'id' => $sale->id,
                     'invoice_number' => $sale->invoice_number,
-                    'job_number' => $sale->job_number,
+                    'job_number' => $sale->invoice_number,
+                    'sale_date' => $sale->sale_date,
                     'party_type' => $sale->party_type,
                     'customer_name' => $this->getCustomerName($sale),
                 ];
