@@ -240,8 +240,10 @@
         $('.item-total').each(function () {
             total += parseFloat(this.value) || 0;
         });
+        let discount = parseFloat($('[name="discount_value"]').val()) || 0;
+        let net = total - discount;
         $('#grandTotal').val(total.toFixed(2));
-        $('#netAmount').val(total.toFixed(2));
+        $('#netAmount').val(net.toFixed(2));
     }
 
     $(document).on('input change', '.rate,.qty', function () {

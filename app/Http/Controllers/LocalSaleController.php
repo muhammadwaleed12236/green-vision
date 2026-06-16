@@ -464,8 +464,18 @@ class LocalSaleController extends Controller
         }
 
         $sale = LocalSale::findOrFail($id);
+        $oldRemaining = $sale->remaining_amount;
 
-        DB::transaction(function () use ($request, $sale) {
+        DB::transaction(function () use ($request, $sale, $oldRemaining) {
+
+            $netAmount = floatval($request->net_amount ?? 0);
+            $advance = floatval($request->advance_amount ?? 0);
+            $remaining = $netAmount - $advance;
+
+            if ($request->party_type === 'walkin') {
+                $advance = $netAmount;
+                $remaining = 0;
+            }
 
             $sale->update([
                 'party_type' => $request->party_type,
@@ -480,20 +490,27 @@ class LocalSaleController extends Controller
                 'amount' => json_encode($request->amount ?? []),
                 'grand_total' => $request->grand_total ?? 0,
                 'discount_value' => $request->discount_value ?? 0,
-                'advance_amount' => $request->advance_amount ?? 0,
-                'net_amount' => $request->net_amount ?? 0,
+                'advance_amount' => $advance,
+                'net_amount' => $netAmount,
+                'remaining_amount' => $remaining,
             ]);
 
             if ($request->party_type === 'customer') {
-                CustomerLedger::updateOrCreate(
-                    [
-                        'customer_id' => $request->customer_id,
-                        'admin_or_user_id' => Auth::id(),
-                    ],
-                    [
-                        'closing_balance' => $request->net_amount,
-                    ]
-                );
+                $diff = $remaining - $oldRemaining;
+                if ($diff != 0) {
+                    $ledger = CustomerLedger::where('customer_id', $request->customer_id)
+                        ->where('admin_or_user_id', Auth::id())
+                        ->first();
+                    if ($ledger) {
+                        $ledger->increment('closing_balance', $diff);
+                    } else {
+                        CustomerLedger::create([
+                            'customer_id' => $request->customer_id,
+                            'admin_or_user_id' => Auth::id(),
+                            'closing_balance' => $remaining,
+                        ]);
+                    }
+                }
             }
         });
 
