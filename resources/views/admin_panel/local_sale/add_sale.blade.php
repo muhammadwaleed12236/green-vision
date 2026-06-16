@@ -132,10 +132,16 @@
     <div class="page-wrapper">
         <div class="content">
 
-            <h4 class="mb-3">🧾 Job Order</h4>
-
             <form method="POST" action="{{ route('store-local-sale') }}">
                 @csrf
+
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4 class="mb-0">🧾 Job Order</h4>
+                    <div style="max-width: 260px;">
+                        <label class="small text-muted">Sale Date & Time</label>
+                        <input type="datetime-local" name="sale_date" class="form-control form-control-sm" value="{{ old('sale_date', date('Y-m-d\TH:i')) }}">
+                    </div>
+                </div>
 
                 <div class="container-fluid">
                     <div class="card mb-3">
@@ -145,14 +151,10 @@
                                 <div class="col-md-3">
                                     <label>Party Type</label>
                                     <select id="partyType" name="party_type" class="form-control">
-                                        <option value="customer">Customer</option>
-                                        <option value="vendor">Vendor</option>
-                                        <option value="walkin">Walk-In</option>
+                                        <option value="customer" {{ old('party_type') == 'customer' ? 'selected' : '' }}>Customer</option>
+                                        <option value="vendor" {{ old('party_type') == 'vendor' ? 'selected' : '' }}>Vendor</option>
+                                        <option value="walkin" {{ old('party_type') == 'walkin' ? 'selected' : '' }}>Walk-In</option>
                                     </select>
-                                </div>
-                                <div class="col-md-3">
-                                    <label>Sale Date & Time</label>
-                                    <input type="datetime-local" name="sale_date" class="form-control" value="{{ date('Y-m-d\TH:i') }}">
                                 </div>
 
                                 <div class="col-md-3 party-box" id="customerBox">
@@ -161,7 +163,8 @@
                                         <option value="">Select</option>
                                         @foreach ($Customers as $c)
                                             <option value="{{ $c->id }}" data-phone="{{ $c->phone_number }}"
-                                                data-address="{{ $c->address }}">
+                                                data-address="{{ $c->address }}"
+                                                {{ old('customer_id') == $c->id ? 'selected' : '' }}>
                                                 {{ $c->customer_name ?? $c->shop_name }}
                                             </option>
                                         @endforeach
@@ -174,7 +177,8 @@
                                         <option value="">Select</option>
                                         @foreach ($Vendors as $v)
                                             <option value="{{ $v->id }}" data-phone="{{ $v->Party_phone }}"
-                                                data-address="{{ $v->Party_address }}">
+                                                data-address="{{ $v->Party_address }}"
+                                                {{ old('vendor_id') == $v->id ? 'selected' : '' }}>
                                                 {{ $v->Party_name }}
                                             </option>
                                         @endforeach
@@ -193,17 +197,17 @@
 
                                 <div class="col-md-3 d-none" id="walkinName">
                                     <label>Name</label>
-                                    <input name="walkin_name" class="form-control">
+                                    <input name="walkin_name" class="form-control" value="{{ old('walkin_name') }}">
                                 </div>
 
                                 <div class="col-md-3 d-none" id="walkinPhone">
                                     <label>Phone</label>
-                                    <input name="walkin_phone" class="form-control">
+                                    <input name="walkin_phone" class="form-control" value="{{ old('walkin_phone') }}">
                                 </div>
 
                                 <div class="col-md-3 d-none" id="walkinAddress">
                                     <label>Address</label>
-                                    <input name="walkin_address" class="form-control">
+                                    <input name="walkin_address" class="form-control" value="{{ old('walkin_address') }}">
                                 </div>
 
                             </div>
@@ -230,31 +234,35 @@
                                 </thead>
 
                                 <tbody id="saleTableBody">
-                                @for($i=0; $i<5; $i++)
+                                @php
+                                    $oldItemNames = old('item_name', []);
+                                    $rowCount = max(5, count($oldItemNames));
+                                @endphp
+                                @for($i=0; $i < $rowCount; $i++)
                                     <tr class="sale-row">
                                         <td class="text-center"><span class="row-index">{{ $i + 1 }}</span></td>
                                         <td style="position:relative;">
-                                            <input type="hidden" name="item_id[]" class="item-id">
+                                            <input type="hidden" name="item_id[]" class="item-id" value="{{ old('item_id.' . $i) }}">
                                             <div class="input-group input-group-sm">
                                                 <button type="button" class="btn btn-outline-secondary mode-toggle px-2" title="Toggle Search/Manual" tabindex="-1">
                                                     <i class="fas fa-search mode-icon"></i>
                                                 </button>
-                                                <input type="text" name="item_name[]" class="form-control item-input" autocomplete="off" placeholder="Search Product" data-mode="search">
+                                                <input type="text" name="item_name[]" class="form-control item-input" autocomplete="off" placeholder="Search Product" data-mode="search" value="{{ old('item_name.' . $i) }}">
                                             </div>
                                             <div class="autocomplete-list d-none"></div>
                                         </td>
                                         <td>
                                             <div class="qty-box">
                                                 <button type="button" class="btn qty-minus">−</button>
-                                                <input name="qty[]" class="form-control qty" value="0" placeholder="0">
+                                                <input name="qty[]" class="form-control qty" value="{{ old('qty.' . $i, 0) }}" placeholder="0">
                                                 <button type="button" class="btn qty-plus">+</button>
                                             </div>
                                         </td>
                                         <td>
-                                            <input type="text" name="unit[]" class="form-control unit p-1 text-center" placeholder="Unit">
+                                            <input type="text" name="unit[]" class="form-control unit p-1 text-center" placeholder="Unit" value="{{ old('unit.' . $i) }}">
                                         </td>
-                                        <td><input name="rate[]" class="form-control rate text-end" placeholder="0.00"></td>
-                                        <td><input name="amount[]" class="form-control item-total text-end" value="0.00"></td>
+                                        <td><input name="rate[]" class="form-control rate text-end" placeholder="0.00" value="{{ old('rate.' . $i) }}"></td>
+                                        <td><input name="amount[]" class="form-control item-total text-end" value="{{ old('amount.' . $i, '0.00') }}"></td>
                                         <td>
                                             <div class="d-flex gap-1 justify-content-center">
                                                 <button type="button" class="btn btn-success btn-action add-row">+</button>
@@ -275,11 +283,11 @@
                         <div class="row g-3 mb-3">
                             <div class="col-md-4">
                                 <label class="fw-bold">Delivery Date <span class="text-danger">*</span></label>
-                                <input type="date" name="delivery_date" class="form-control" required>
+                                <input type="date" name="delivery_date" class="form-control" value="{{ old('delivery_date') }}" required>
                             </div>
                             <div class="col-md-4">
                                 <label class="fw-bold">Notify Before (Days)</label>
-                                <input type="number" name="notify_days_before" class="form-control" value="2" min="1" max="30">
+                                <input type="number" name="notify_days_before" class="form-control" value="{{ old('notify_days_before', '2') }}" min="1" max="30">
                                 <small class="text-muted">System will notify you X days before delivery</small>
                             </div>
                         </div>
@@ -296,12 +304,12 @@
 
                             <div class="col-md-3">
                                 <label>Discount</label>
-                                <input name="gross_discount" class="form-control" value="0">
+                                <input name="gross_discount" class="form-control" value="{{ old('gross_discount', '0') }}">
                             </div>
 
                             <div class="col-md-3">
                                 <label>Advance</label>
-                                <input id="advance" name="advance_amount" class="form-control">
+                                <input id="advance" name="advance_amount" class="form-control" value="{{ old('advance_amount') }}">
                             </div>
 
                             <div class="col-md-3">
@@ -512,6 +520,13 @@
 
     $(document).ready(function() {
         updateRowNumbers();
+        calcGrand();
+
+        // Populate phone/address from old selection
+        let selCust = $('#customer').find('option:selected');
+        if (selCust.val()) { $('#phone').val(selCust.data('phone') || ''); $('#address').val(selCust.data('address') || ''); }
+        let selVend = $('#vendor').find('option:selected');
+        if (selVend.val()) { $('#phone').val(selVend.data('phone') || ''); $('#address').val(selVend.data('address') || ''); }
 
         // Row Input Mode Toggle
         $(document).on('click', '.mode-toggle', function() {
