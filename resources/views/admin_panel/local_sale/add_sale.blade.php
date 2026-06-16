@@ -561,8 +561,8 @@
                 data: { q: q },
                 success: function (res) {
                     if (!Array.isArray(res) || res.length === 0) { $acList.addClass('d-none'); return; }
-                    let offset = input.offset();
-                    $acList.css({ left: offset.left + 'px', top: (offset.top + input.outerHeight()) + 'px', width: input.outerWidth() + 'px' });
+                    let rect = input[0].getBoundingClientRect();
+                    $acList.css({ left: rect.left + 'px', top: rect.bottom + 'px', width: input.outerWidth() + 'px' });
                     $acList.empty().removeClass('d-none');
                     res.forEach(it => { $('<div class="autocomplete-item"></div>').text(it.item_name).data('item', it).appendTo($acList); });
                 },
@@ -607,10 +607,10 @@
             let row = $acList.data('row');
             if (row && row.length) {
                 let input = row.find('.item-input');
-                let offset = input.offset();
+                let rect = input[0].getBoundingClientRect();
                 $acList.css({
-                    left: offset.left + 'px',
-                    top: (offset.top + input.outerHeight()) + 'px'
+                    left: rect.left + 'px',
+                    top: rect.bottom + 'px'
                 });
             }
         });

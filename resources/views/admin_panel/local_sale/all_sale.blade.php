@@ -23,8 +23,17 @@
 <div class="card">
 <div class="card-body p-0">
 
-<div class="table-responsive">
-<table class="table table-bordered align-middle mb-0">
+<table class="table table-bordered align-middle mb-0" style="table-layout:fixed">
+<colgroup>
+    <col style="width:75px">
+    <col style="width:95px">
+    <col style="width:110px">
+    <col style="width:95px">
+    <col>
+    <col style="width:105px">
+    <col style="width:80px">
+    <col style="width:90px">
+</colgroup>
 <thead class="table-light text-center">
 <tr>
     <th>Job No</th>
@@ -34,7 +43,7 @@
     <th>Items</th>
     <th>Net Amount</th>
     <th>Status</th>
-    <th width="220">Actions</th>
+    <th>Actions</th>
 </tr>
 </thead>
 
@@ -61,28 +70,17 @@
 
     <td class="text-center">{{ $sale->customer_phone ?? '-' }}</td>
 
-    <td>
+    <td style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="{{ is_array($items) ? implode(', ', $items) : '' }}">
         @php
             $itemsArray = is_array($items) ? $items : [];
-            $previewCount = 3;
         @endphp
-
-        @if(count($itemsArray) === 0)
-            <small>-</small>
-        @else
-            @php
-                $preview = implode(', ', array_slice($itemsArray, 0, $previewCount));
-                $rest = array_slice($itemsArray, $previewCount);
-                $restText = implode(', ', $rest);
-            @endphp
-            <small>
-                <span id="items-preview-{{ $sale->id }}">{{ $preview }}@if(count($itemsArray) > $previewCount) ... @endif</span>
-                @if(count($itemsArray) > $previewCount)
-                    <span id="items-full-{{ $sale->id }}" style="display:none;">{{ implode(', ', $itemsArray) }}</span>
-                    <a href="javascript:void(0)" class="ms-2 toggle-items-link" data-sale-id="{{ $sale->id }}">More</a>
-                @endif
-            </small>
-        @endif
+        <small>
+            @if(count($itemsArray) === 0)
+                -
+            @else
+                {{ implode(', ', array_slice($itemsArray, 0, 2)) }}@if(count($itemsArray) > 2) ... @endif
+            @endif
+        </small>
     </td>
 
     <td class="fw-bold text-end">{{ number_format($sale->net_amount, 2) }}</td>
@@ -99,17 +97,17 @@
         @endif
     </td>
 
-    <td class="text-center">
+    <td class="text-center" style="white-space:nowrap">
         <a href="{{ route('show-local-sale', $sale->id) }}"
-           class="btn btn-sm btn-info">
-            <i class="fa fa-eye"></i> View
+           class="btn btn-sm btn-info" title="View">
+            <i class="fa fa-eye"></i>
         </a>
 
         <div class="btn-group">
-            <button type="button" class="btn btn-sm btn-secondary dropdown-toggle" data-bs-toggle="dropdown">
-                <i class="fa fa-ellipsis-v"></i> More
+            <button type="button" class="btn btn-sm btn-secondary dropdown-toggle px-2" data-bs-toggle="dropdown" title="More">
+                <i class="fa fa-ellipsis-v"></i>
             </button>
-            <ul class="dropdown-menu">
+            <ul class="dropdown-menu dropdown-menu-end">
                 <li>
                     <a class="dropdown-item" href="{{ route('local.sale.invoice', $sale->id) }}">
                         <i class="fa fa-file-invoice me-2"></i>Invoice
@@ -156,7 +154,6 @@
 @endforelse
 </tbody>
 </table>
-</div>
 
 <div class="d-flex justify-content-end mt-3">
     <style>
@@ -236,30 +233,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     });
                 }
             });
-        });
-    });
-});
-</script>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('.toggle-items-link').forEach(link => {
-        link.addEventListener('click', function() {
-            const id = this.dataset.saleId;
-            const preview = document.getElementById('items-preview-' + id);
-            const full = document.getElementById('items-full-' + id);
-
-            if (!preview || !full) return;
-
-            if (full.style.display === 'none') {
-                preview.style.display = 'none';
-                full.style.display = 'inline';
-                this.textContent = 'Less';
-            } else {
-                preview.style.display = 'inline';
-                full.style.display = 'none';
-                this.textContent = 'More';
-            }
         });
     });
 });
