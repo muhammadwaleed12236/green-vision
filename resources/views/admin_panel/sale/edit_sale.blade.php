@@ -102,7 +102,7 @@
 
                         <div class="col-md-3">
                             <label>Party Type</label>
-                            <input class="form-control readonly-box" value="{{ ucfirst($original->party_type) }}" readonly>
+                            <input class="form-control" value="{{ ucfirst($original->party_type) }}">
                         </div>
 
                         <div class="col-md-3">
