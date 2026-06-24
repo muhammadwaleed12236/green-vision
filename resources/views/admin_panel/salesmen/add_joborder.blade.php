@@ -394,6 +394,18 @@
                                                         </td>
                                                         <td>
                                                             <a href="{{ route('job-orders.show', $job->id) }}"
+                                                            data-id="{{ $job->id }}"
+                                                            data-job-no="{{ $job->job_order_number }}"
+                                                            data-date="{{ $job->order_date }}"
+                                                            data-total="{{ $job->total_amount }}"
+                                                            data-paid="{{ $job->paid_amount }}"
+                                                            data-status="{{ $job->status }}"
+                                                            data-party-type="{{ $job->sale->party_type ?? '' }}"
+                                                            data-vendor-id="{{ $job->sale->vendor_id ?? '' }}"
+                                                            data-customer-id="{{ $job->sale->customer_id ?? '' }}"
+                                                            data-shop-name="{{ $job->sale->customer_shopname ?? '' }}"
+                                                            data-phone="{{ $job->sale->customer_phone ?? '' }}"
+                                                            data-address="{{ $job->sale->customer_address ?? '' }}"
                                                                class="btn btn-sm btn-outline-primary py-1 px-2" style="font-size:0.78rem;"
                                                                title="View Details">
                                                                 <i class="fa fa-eye me-1"></i>View
@@ -733,6 +745,12 @@
                                                            data-total="{{ $job->total_amount }}"
                                                            data-paid="{{ $job->paid_amount }}"
                                                            data-status="{{ $job->status }}"
+                                                           data-party-type="{{ $job->sale->party_type ?? 'walkin' }}"
+                                                           data-vendor-id="{{ $job->sale->vendor_id ?? '' }}"
+                                                           data-customer-id="{{ $job->sale->customer_id ?? '' }}"
+                                                           data-shop-name="{{ $job->sale->customer_shopname ?? '' }}"
+                                                           data-phone="{{ $job->sale->customer_phone ?? '' }}"
+                                                           data-address="{{ $job->sale->customer_address ?? '' }}"
                                                            data-bs-toggle="modal"
                                                            data-bs-target="#editJobModal">
                                                             <i class="fa fa-edit me-2"></i>Edit Amount
@@ -856,7 +874,55 @@
                         <label class="form-label fw-bold">Paid Amount (Advance)</label>
                         <input type="number" name="paid_amount" id="editJobPaid" class="form-control" required>
                     </div>
+                    <!-- New Party Details -->
+                    <div class="mb-3">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Party Type</label>
+                            <select class="form-select" name="party_type" id="editPartyType" required>
+                                <option value="">Select Party Type</option>
+                                <option value="vendor">Vendor</option>
+                                <option value="customer">Customer</option>
+                                <option value="walkin">Walk-in</option>
+                            </select>
+                        </div>
+                        <div class="mb-3 d-none" id="partyNameDiv">
+                            <label class="form-label fw-bold">Party Name</label>
+                            <input type="text" class="form-control" name="party_name" id="editPartyName" placeholder="Party Name">
+                        </div>
+                    </div>
+                    <div class="mb-3 d-none" id="vendorSelectDiv">
+                        <label class="form-label fw-bold">Vendor</label>
+                        <select class="form-select" name="vendor_id" id="editVendorId">
+                            <option value="">Select Vendor</option>
+                            @foreach($vendors as $vendor)
+                                <option value="{{ $vendor->id }}">{{ $vendor->Party_name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="mb-3 d-none" id="customerSelectDiv">
+                        <label class="form-label fw-bold">Customer</label>
+                        <select class="form-select" name="customer_id" id="editCustomerId">
+                            <option value="">Select Customer</option>
+                            @foreach($customers as $customer)
+                                <option value="{{ $customer->id }}">{{ $customer->customer_name ?? $customer->shop_name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="mb-3 d-none" id="walkinDiv">
+                        <label class="form-label fw-bold">Shop Name (Walk-in)</label>
+                        <input type="text" class="form-control" name="shop_name" id="editShopName" placeholder="Enter shop name">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Phone</label>
+                        <input type="text" class="form-control" name="phone" id="editPhone" placeholder="Phone number">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Address</label>
+                        <input type="text" class="form-control" name="address" id="editAddress" placeholder="Address">
+                    </div>
                     <div class="alert alert-info">
+                         Note: Editing total or paid amounts will automatically update the contractor ledger balance.
+                    </div>
                          Note: Editing total or paid amounts will automatically update the contractor ledger balance.
                     </div>
                 </div>
@@ -1468,19 +1534,67 @@
         // Status dropdown removed from this page
 
         // Populate Edit Modal
-        $(document).on("click", ".editJobBtn", function() {
-            let id = $(this).data('id');
-            let jobNo = $(this).data('job-no');
-            let date = $(this).data('date');
-            let total = $(this).data('total');
-            let paid = $(this).data('paid');
+        <script>
+    // Populate Edit Modal with job details
+    $(document).on("click", ".editJobBtn", function() {
+        let id = $(this).data('id');
+        let jobNo = $(this).data('job-no');
+        let date = $(this).data('date');
+        let total = $(this).data('total');
+        let paid = $(this).data('paid');
+        let partyType = $(this).data('party-type');
+        let vendorId = $(this).data('vendor-id');
+        let customerId = $(this).data('customer-id');
+        let shopName = $(this).data('shop-name');
+        let phone = $(this).data('phone');
+        let address = $(this).data('address');
 
-            $("#editJobId").val(id);
-            $("#editJobNoDisplay").text(jobNo);
-            $("#editJobDate").val(date.split(' ')[0]);
-            $("#editJobTotal").val(total);
-            $("#editJobPaid").val(paid);
-        });
+        $("#editJobId").val(id);
+        $("#editJobNoDisplay").text(jobNo);
+        $("#editJobDate").val(date.split(' ')[0]);
+        $("#editJobTotal").val(total);
+        $("#editJobPaid").val(paid);
+        $("#editPartyType").val(partyType);
+        $("#editVendorId").val(vendorId);
+        $("#editCustomerId").val(customerId);
+        $("#editShopName").val(shopName);
+        $("#editPhone").val(phone);
+        $("#editAddress").val(address);
+        // Set Party Name based on type
+        var partyName = '';
+        if (partyType === 'vendor') {
+            partyName = $("#editVendorId option[value='" + vendorId + "']").text();
+        } else if (partyType === 'customer') {
+            partyName = $("#editCustomerId option[value='" + customerId + "']").text();
+        } else if (partyType === 'walkin') {
+            partyName = shopName;
+        }
+        $("#editPartyName").val(partyName);
+        togglePartyFields(partyType);
+    });
+
+    // Show/hide party specific fields based on selected type
+    function togglePartyFields(type) {
+        $("#vendorSelectDiv").addClass('d-none');
+        $("#customerSelectDiv").addClass('d-none');
+        $("#walkinDiv").addClass('d-none');
+        $("#partyNameDiv").addClass('d-none');
+        if (type === 'vendor') {
+            $("#vendorSelectDiv").removeClass('d-none');
+            $("#partyNameDiv").removeClass('d-none');
+        } else if (type === 'customer') {
+            $("#customerSelectDiv").removeClass('d-none');
+            $("#partyNameDiv").removeClass('d-none');
+        } else if (type === 'walkin') {
+            $("#walkinDiv").removeClass('d-none');
+            $("#partyNameDiv").removeClass('d-none');
+        }
+    }
+
+    // Change handler for Party Type dropdown in modal
+    $("#editPartyType").on('change', function() {
+        togglePartyFields($(this).val());
+    });
 
          // Delete
         $(document).on("click", ".deleteJobBtn", function (e) {

@@ -477,6 +477,26 @@ class LocalSaleController extends Controller
                 $remaining = 0;
             }
 
+            // Save editable party fields back to their source
+            if ($request->party_type === 'customer' && $sale->customer) {
+                $sale->customer->update([
+                    'customer_name' => $request->party_name,
+                    'phone_number'  => $request->customer_phone,
+                    'address'       => $request->customer_address,
+                ]);
+            } elseif ($request->party_type === 'vendor' && $sale->vendor) {
+                $sale->vendor->update([
+                    'Party_name'    => $request->party_name,
+                    'Party_phone'   => $request->customer_phone,
+                    'Party_address' => $request->customer_address,
+                ]);
+            } else {
+                // Walk-in: store directly on the sale row
+                $sale->customer_shopname = $request->party_name;
+                $sale->customer_phone    = $request->customer_phone;
+                $sale->customer_address  = $request->customer_address;
+            }
+
             $sale->update([
                 'party_type' => $request->party_type,
                 'customer_id' => $request->customer_id,
