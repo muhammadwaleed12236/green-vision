@@ -378,6 +378,45 @@ $(document).ready(function () {
         $('#grandTotal').text(grandTotal.toFixed(2));
     }
 
+    // CSRF token setup for AJAX requests
+    $.ajaxSetup({
+        headers: {
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+        }
+    });
+
+    // Delete all stock out records for a job
+    $(document).on("click", ".deleteJobStockOutBtn", function (e) {
+        e.preventDefault();
+        let jobId = $(this).data("id");
+        let deleteUrl = "{{ route('delete-job-stockout') }}";
+
+        Swal.fire({
+            title: "Are you sure?",
+            text: "This will delete all stock out records for this job and restore product stock!",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#3085d6",
+            cancelButtonColor: "#d33",
+            confirmButtonText: "Yes, delete all!"
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: deleteUrl,
+                    type: "DELETE",
+                    data: { job_id: jobId },
+                    success: function (response) {
+                        Swal.fire("Deleted!", response.success, "success")
+                            .then(() => location.reload());
+                    },
+                    error: function (xhr) {
+                        Swal.fire("Error!", "Something went wrong!", "error");
+                    }
+                });
+            }
+        });
+    });
+
 });
 </script>
 @endpush

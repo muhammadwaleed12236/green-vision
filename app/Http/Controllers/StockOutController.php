@@ -123,7 +123,37 @@ class StockOutController extends Controller
 
         $total_stock = $request->current_stock - $request->close_stock;
 
-        StockOut::where('id', $request->stockout_id)->update([
+        $stockOut = StockOut::findOrFail($request->stockout_id);
+        $oldProductId = $stockOut->product_id;
+        $newProductId = $request->product_id;
+        $oldUsedStock = floatval($stockOut->total_stock);
+        $newUsedStock = floatval($total_stock);
+
+        if ($oldProductId == $newProductId) {
+            $difference = $newUsedStock - $oldUsedStock;
+            if ($difference != 0) {
+                $productModel = Product::find($newProductId);
+                if ($productModel) {
+                    $productModel->initial_stock = max(0, floatval($productModel->initial_stock) - $difference);
+                    $productModel->save();
+                }
+            }
+        } else {
+            // Restore stock of old product
+            $oldProduct = Product::find($oldProductId);
+            if ($oldProduct) {
+                $oldProduct->initial_stock = max(0, floatval($oldProduct->initial_stock) + $oldUsedStock);
+                $oldProduct->save();
+            }
+            // Deduct stock of new product
+            $newProduct = Product::find($newProductId);
+            if ($newProduct) {
+                $newProduct->initial_stock = max(0, floatval($newProduct->initial_stock) - $newUsedStock);
+                $newProduct->save();
+            }
+        }
+
+        $stockOut->update([
             'product_id' => $request->product_id,
             'local_sales_id' => $request->local_sales_id,
             'current_stock' => $request->current_stock,
@@ -140,11 +170,19 @@ class StockOutController extends Controller
      */
     public function delete_stockout(Request $request)
     {
-        $saleId = $request->sale_id;
+        $stockOutId = $request->id;
 
-        $deleted = StockOut::where('local_sales_id', $saleId)->delete();
+        $stockOut = StockOut::find($stockOutId);
+        if ($stockOut) {
+            // Restore product stock
+            $productModel = Product::find($stockOut->product_id);
+            if ($productModel) {
+                $productModel->initial_stock = floatval($productModel->initial_stock) + floatval($stockOut->total_stock);
+                $productModel->save();
+            }
 
-        if ($deleted) {
+            $stockOut->delete();
+
             return response()->json([
                 'success' => 'StockOut deleted successfully',
             ]);
@@ -184,6 +222,14 @@ class StockOutController extends Controller
         $stockOuts = StockOut::where('local_sales_id', $request->job_id)->get();
 
         if ($stockOuts->count() > 0) {
+            foreach ($stockOuts as $stockOut) {
+                $productModel = Product::find($stockOut->product_id);
+                if ($productModel) {
+                    $productModel->initial_stock = floatval($productModel->initial_stock) + floatval($stockOut->total_stock);
+                    $productModel->save();
+                }
+            }
+
             StockOut::where('local_sales_id', $request->job_id)->delete();
 
             return response()->json(['success' => 'All StockOut records deleted successfully']);
