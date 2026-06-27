@@ -273,7 +273,11 @@
         <!-- Glassmorphism Content Card -->
         <div class="glass-card">
             <!-- Logo -->
-            <img src="welcome-logo.png" alt="Logo" class="logo">
+            @if(isset($appSettings['company_logo']) && $appSettings['company_logo'])
+                <img src="{{ asset('storage/' . $appSettings['company_logo']) }}" alt="Logo" class="logo">
+            @else
+                <img src="welcome-logo.png" alt="Logo" class="logo">
+            @endif
 
             <!-- Title -->
             <h1 class="title">
