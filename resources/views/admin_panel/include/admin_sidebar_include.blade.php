@@ -27,23 +27,7 @@
                         <a href="{{ route('home') }}"><i class="fas fa-home"></i><span> Dashboard</span> </a>
                     </li>
 
-                    <!-- User Management -->
-                    @if(auth()->user()->hasPermission('user-management-users.view') || auth()->user()->hasPermission('user-management-roles.view') || auth()->user()->hasPermission('user-management-permissions.view'))
-                    <li class="submenu">
-                        <a href="javascript:void(0);"><i class="fas fa-users-cog"></i><span> User Management</span> <span class="menu-arrow"></span></a>
-                        <ul>
-                            @if(auth()->user()->hasPermission('user-management-users.view'))
-                            <li><a href="{{ route('rbac.users.index') }}"><i class="fas fa-user"></i> Users</a></li>
-                            @endif
-                            @if(auth()->user()->hasPermission('user-management-roles.view'))
-                            <li><a href="{{ route('rbac.roles.index') }}"><i class="fas fa-user-tag"></i> Roles</a></li>
-                            @endif
-                            @if(auth()->user()->hasPermission('user-management-permissions.view'))
-                            <li><a href="{{ route('rbac.permissions.index') }}"><i class="fas fa-shield-alt"></i> Permissions</a></li>
-                            @endif
-                        </ul>
-                    </li>
-                    @endif
+
 
                     <!-- Business Report -->
                     @haspermission('business-report.view')
@@ -258,6 +242,24 @@
                             @haspermission('purchase-report.view')<li><a href="{{ route('date-wise-purcahse-report') }}">Purchase Report</a></li>@endhaspermission
                             @haspermission('sales-report.view')<li><a href="{{ route('Date-wise-Sales-Report') }}">Sales Report</a></li>@endhaspermission
                             @haspermission('staff-report.view')<li><a href="{{ route('staff-wise-report') }}">Staff Report</a></li>@endhaspermission
+                        </ul>
+                    </li>
+                    @endif
+
+                    <!-- User Management -->
+                    @if(auth()->user()->hasPermission('user-management-users.view') || auth()->user()->hasPermission('user-management-roles.view') || auth()->user()->hasPermission('user-management-permissions.view'))
+                    <li class="submenu">
+                        <a href="javascript:void(0);"><i class="fas fa-users-cog"></i><span> User Management</span> <span class="menu-arrow"></span></a>
+                        <ul>
+                            @if(auth()->user()->hasPermission('user-management-users.view'))
+                            <li><a href="{{ route('rbac.users.index') }}"><i class="fas fa-user"></i> Users</a></li>
+                            @endif
+                            @if(auth()->user()->hasPermission('user-management-roles.view'))
+                            <li><a href="{{ route('rbac.roles.index') }}"><i class="fas fa-user-tag"></i> Roles</a></li>
+                            @endif
+                            @if(auth()->user()->hasPermission('user-management-permissions.view'))
+                            <li><a href="{{ route('rbac.permissions.index') }}"><i class="fas fa-shield-alt"></i> Permissions</a></li>
+                            @endif
                         </ul>
                     </li>
                     @endif
