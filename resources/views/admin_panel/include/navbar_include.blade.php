@@ -1,7 +1,7 @@
 <div class="header">
 	<div class="header-left active">
 		<a href="#" class="logo">
-			<h6>Prowave Technologies</h6>
+			<h6>{{ $appSettings['company_name'] }}</h6>
 		</a>
 		<a href="#" class="logo-small">
 			<img src="{{ url('logo.png') }}" alt="">

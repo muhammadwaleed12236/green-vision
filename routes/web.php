@@ -23,6 +23,7 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SaleController;
 use App\Http\Controllers\SaleReturnController;
 use App\Http\Controllers\SalesmanController;
+use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\SizeController;
 use App\Http\Controllers\StaffAttendenceController;
 use App\Http\Controllers\StockOutController;
@@ -398,6 +399,12 @@ Route::get('/business-report', [App\Http\Controllers\BusinessReportController::c
 Route::get('/qa-dashboard', [QATestController::class, 'dashboard'])->name('qa.dashboard');
 Route::get('/qa/test-purchase/{id}', [QATestController::class, 'testPurchaseFlow'])->name('qa.test.purchase');
 Route::get('/qa/health-check', [QATestController::class, 'quickHealthCheck'])->name('qa.health.check');
+
+// ========================= SETTINGS ROUTES =========================
+Route::middleware('auth')->group(function () {
+    Route::get('/settings/company', [SettingsController::class, 'edit'])->name('settings.company.edit');
+    Route::post('/settings/company', [SettingsController::class, 'update'])->name('settings.company.update');
+});
 
 // ========================= PROFILE ROUTES =========================
 Route::middleware('auth')->group(function () {

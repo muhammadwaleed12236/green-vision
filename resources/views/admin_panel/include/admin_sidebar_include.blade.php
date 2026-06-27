@@ -188,6 +188,13 @@
                         </ul>
                     </li>
 
+                    <!-- Company Settings -->
+                    @if(Auth::check() && Auth::user()->usertype == 'admin')
+                    <li>
+                        <a href="{{ route('settings.company.edit') }}"><i class="fas fa-cog"></i><span> Company Settings</span></a>
+                    </li>
+                    @endif
+
                     <!-- Reporting -->
                     <!-- <li class="submenu">
                         <a href="javascript:void(0);"><i class="fas fa-chart-pie"></i><span>Reports</span> <span

@@ -94,7 +94,13 @@
 </head>
 <body>
     <div class="header">
-        <h2>Staff Attendance Report</h2>
+        @if($appSettings['company_logo'])
+            <img src="{{ base64storage($appSettings['company_logo']) }}" alt="{{ $appSettings['company_name'] }}" style="max-height: 60px; margin-bottom: 10px;">
+        @endif
+        <h2>{{ $appSettings['company_name'] }}</h2>
+        <p>{{ $appSettings['company_address'] }} | Phone: {{ $appSettings['company_phone'] }}</p>
+        <hr style="border: 1px solid #333;">
+        <h3>Staff Attendance Report</h3>
         <p><strong>{{ $staff->name }}</strong> - {{ $staff->designation }}</p>
         @if($from && $to)
             <p>Period: {{ \Carbon\Carbon::parse($from)->format('d M Y') }} to {{ \Carbon\Carbon::parse($to)->format('d M Y') }}</p>

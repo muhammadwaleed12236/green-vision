@@ -8,14 +8,16 @@
 
             <div class="row mb-4 align-items-center pt-2 pb-2 border-bottom border-3 border-dark">
                 <div class="col-md-4 d-flex align-items-center">
-                    <img src="{{ asset('assets/img/logo.png') }}" alt="Green Vision Logo" style="max-width: 180px;">
+                    @if($appSettings['company_logo'])
+                        <img src="{{ asset('storage/' . $appSettings['company_logo']) }}" alt="{{ $appSettings['company_name'] }}" style="max-width: 180px;">
+                    @endif
                 </div>
                 <div class="col-md-4 text-center">
-                    <p class="mb-0">6-B Block-E, Latifabad No. 08, Hyderabad</p>
-                    <p class="mb-0">Phone: 0300 2529972 / 0334-2611233</p>
+                    <p class="mb-0">{{ $appSettings['company_address'] }}</p>
+                    <p class="mb-0">Phone: {{ $appSettings['company_phone'] }}</p>
                 </div>
                 <div class="col-md-4 text-end">
-                    <h4 class="fw-bold">Glass Works</h4>
+                    <h4 class="fw-bold">{{ $appSettings['company_name'] }}</h4>
                 </div>
             </div>
 
