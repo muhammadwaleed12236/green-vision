@@ -155,6 +155,7 @@ return [
     */
 
     'providers' => [
+        App\Providers\RbacServiceProvider::class,
 
         /*
          * Laravel Framework Service Providers...

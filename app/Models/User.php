@@ -12,30 +12,55 @@ class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
     protected $guarded = [];
-   
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var array<int, string>
-     */
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-    /**
-     * The attributes that should be cast.
-     *
-     * @var array<string, string>
-     */
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
+
+    public function role()
+    {
+        return $this->belongsTo(Role::class);
+    }
+
+    public function hasPermission(string $slug): bool
+    {
+        $role = $this->role;
+        if (!$role && $this->usertype) {
+            $role = Role::where('slug', $this->usertype)->first();
+        }
+
+        if (!$role) {
+            return $this->usertype === 'admin';
+        }
+
+        if ($role->slug === 'super-admin') {
+            return true;
+        }
+
+        return $role->permissions()
+            ->where(function($q) use ($slug) {
+                $q->where('slug', $slug);
+                $parts = explode('.', $slug);
+                if (count($parts) > 1) {
+                    array_pop($parts);
+                    $parentSlug = implode('.', $parts);
+                    $q->orWhere('slug', $parentSlug);
+                }
+            })
+            ->exists();
+    }
+
+    public function getUsertypeAttribute($value)
+    {
+        if ($value === 'user') {
+            return 'admin';
+        }
+        return $value;
+    }
 }

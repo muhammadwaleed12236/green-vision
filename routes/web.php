@@ -46,6 +46,8 @@ use Illuminate\Support\Facades\Route;
 // ========================= HOME ROUTES =========================
 Route::get('/home', [HomeController::class, 'index'])->middleware('auth')->name('home');
 
+Route::middleware(['auth', 'permission'])->group(function () {
+
 // ========================= CITY ROUTES =========================
 Route::get('/city', [CityAndAreaController::class, 'city'])->name('city');
 Route::post('/store-city', [CityAndAreaController::class, 'store_city'])->name('store-city');
@@ -405,6 +407,30 @@ Route::get('/qa/health-check', [QATestController::class, 'quickHealthCheck'])->n
 Route::middleware('auth')->group(function () {
     Route::get('/settings/company', [SettingsController::class, 'edit'])->name('settings.company.edit');
     Route::post('/settings/company', [SettingsController::class, 'update'])->name('settings.company.update');
+});
+
+});
+
+// ========================= RBAC ROUTES =========================
+use App\Http\Controllers\Rbac\UserController as RbacUserController;
+use App\Http\Controllers\Rbac\RoleController as RbacRoleController;
+use App\Http\Controllers\Rbac\PermissionController as RbacPermissionController;
+
+Route::prefix('admin')->name('rbac.')->middleware(['auth', 'permission'])->group(function () {
+    Route::get('/users/create', [RbacUserController::class, 'create'])->name('users.create');
+    Route::post('/users', [RbacUserController::class, 'store'])->name('users.store');
+    Route::get('/users/{user}/edit', [RbacUserController::class, 'edit'])->name('users.edit');
+    Route::put('/users/{user}', [RbacUserController::class, 'update'])->name('users.update');
+    Route::delete('/users/{user}', [RbacUserController::class, 'destroy'])->name('users.destroy');
+    Route::get('/users/{user}/toggle-status', [RbacUserController::class, 'toggleStatus'])->name('users.toggle-status');
+    Route::post('/users/{user}/reset-password', [RbacUserController::class, 'resetPassword'])->name('users.reset-password');
+    Route::resource('users', RbacUserController::class)->except(['create', 'store', 'edit', 'update', 'destroy']);
+
+    Route::resource('roles', RbacRoleController::class);
+    Route::post('/roles/{role}/duplicate', [RbacRoleController::class, 'duplicate'])->name('roles.duplicate');
+
+    Route::get('/permissions', [RbacPermissionController::class, 'index'])->name('permissions.index');
+    Route::post('/permissions/sync', [RbacPermissionController::class, 'sync'])->name('permissions.sync');
 });
 
 // ========================= PROFILE ROUTES =========================
