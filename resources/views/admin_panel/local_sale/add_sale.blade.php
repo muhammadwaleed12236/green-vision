@@ -139,10 +139,13 @@
                     <div class="d-flex gap-3 align-items-center">
                         <div class="btn-group" role="group">
                             <input type="radio" class="btn-check" name="sale_type" id="sale_type_estimate" value="estimate" checked autocomplete="off">
-                            <label class="btn btn-outline-primary px-3" for="sale_type_estimate">Estimate</label>
+                            <label class="btn btn-outline-info px-3" for="sale_type_estimate">Estimate</label>
 
                             <input type="radio" class="btn-check" name="sale_type" id="sale_type_sale" value="sale" autocomplete="off">
-                            <label class="btn btn-outline-primary px-3" for="sale_type_sale">Sale</label>
+                            <label class="btn btn-outline-info px-3" for="sale_type_sale">Sale</label>
+
+                            <input type="radio" class="btn-check" name="sale_type" id="sale_type_booking" value="booking" autocomplete="off">
+                            <label class="btn btn-outline-info px-3" for="sale_type_booking">Booking</label>
                         </div>
                         <div style="max-width: 260px;">
                             <label class="small text-muted d-block mb-0">Sale Date & Time</label>

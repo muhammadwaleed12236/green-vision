@@ -31,6 +31,7 @@
     <col style="width:95px">
     <col>
     <col style="width:105px">
+    <col style="width:85px">
     <col style="width:80px">
     <col style="width:90px">
 </colgroup>
@@ -42,6 +43,7 @@
     <th>Phone</th>
     <th>Items</th>
     <th>Net Amount</th>
+    <th>Type</th>
     <th>Status</th>
     <th>Actions</th>
 </tr>
@@ -86,6 +88,18 @@
     <td class="fw-bold text-end">{{ number_format($sale->net_amount, 2) }}</td>
 
     <td class="text-center">
+        @if($sale->sale_type == 'estimate')
+            <span class="badge bg-info">Estimate</span>
+        @elseif($sale->sale_type == 'booking')
+            <span class="badge bg-warning text-dark">Booking</span>
+        @elseif($sale->sale_type == 'sale')
+            <span class="badge bg-success">Sale</span>
+        @else
+            <span class="badge bg-secondary">{{ ucfirst($sale->sale_type ?? 'Estimate') }}</span>
+        @endif
+    </td>
+
+    <td class="text-center">
         @if($sale->job_status == 'pending')
             <span class="badge bg-secondary">Pending</span>
         @elseif($sale->job_status == 'ready')
@@ -118,6 +132,35 @@
                         <i class="fa fa-edit me-2"></i>Edit
                     </a>
                 </li>
+                @if($sale->sale_type === 'estimate')
+                    <li><hr class="dropdown-divider"></li>
+                    <li>
+                        <form action="{{ route('local.sale.convert', [$sale->id, 'booking']) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to convert this Estimate to a Booking? This will affect the ledger balance.')">
+                            @csrf
+                            <button type="submit" class="dropdown-item text-primary">
+                                <i class="fa fa-calendar-alt me-2"></i>Convert to Booking
+                            </button>
+                        </form>
+                    </li>
+                    <li>
+                        <form action="{{ route('local.sale.convert', [$sale->id, 'sale']) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to convert this Estimate to a Sale? This will reduce stock and update the ledger.')">
+                            @csrf
+                            <button type="submit" class="dropdown-item text-success">
+                                <i class="fa fa-shopping-cart me-2"></i>Convert to Sale
+                            </button>
+                        </form>
+                    </li>
+                @elseif($sale->sale_type === 'booking')
+                    <li><hr class="dropdown-divider"></li>
+                    <li>
+                        <form action="{{ route('local.sale.convert', [$sale->id, 'sale']) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to convert this Booking to a Sale? This will reduce stock.')">
+                            @csrf
+                            <button type="submit" class="dropdown-item text-success">
+                                <i class="fa fa-shopping-cart me-2"></i>Convert to Sale
+                            </button>
+                        </form>
+                    </li>
+                @endif
                 <li><hr class="dropdown-divider"></li>
                 @if($sale->job_status == 'ready')
                     <li>
@@ -147,7 +190,7 @@
 </tr>
 @empty
 <tr>
-    <td colspan="8" class="text-center text-muted py-4">
+    <td colspan="9" class="text-center text-muted py-4">
         No Job Orders Found
     </td>
 </tr>
