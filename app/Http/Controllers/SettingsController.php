@@ -27,6 +27,10 @@ class SettingsController extends Controller
         Setting::set('company_address', $request->company_address);
 
         if ($request->hasFile('company_logo')) {
+            $oldLogo = Setting::get('company_logo');
+            if ($oldLogo && Storage::disk('public')->exists($oldLogo)) {
+                Storage::disk('public')->delete($oldLogo);
+            }
             $path = $request->file('company_logo')->store('logos', 'public');
             Setting::set('company_logo', $path);
         }
