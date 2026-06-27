@@ -166,7 +166,7 @@ class LocalSaleController extends Controller
             }
 
             // Update Customer Ledger: Previous + Remaining = New Closing
-            if ($partyType === 'customer' && $remaining > 0) {
+            if ($partyType === 'customer' && $remaining > 0 && ($request->sale_type !== 'estimate')) {
                 // Fetch or Create Ledger
                 $ledger = CustomerLedger::where('customer_id', $request->customer_id)
                     ->where('admin_or_user_id', $userId)
@@ -184,7 +184,7 @@ class LocalSaleController extends Controller
                 $ledger->save();
             }
 
-            if ($partyType === 'vendor' && $remaining > 0) {
+            if ($partyType === 'vendor' && $remaining > 0 && ($request->sale_type !== 'estimate')) {
                 $ledger = VendorLedger::where('vendor_id', $request->vendor_id)
                     ->where('admin_or_user_id', $userId)
                     ->first();
@@ -293,7 +293,7 @@ class LocalSaleController extends Controller
             
             // Defaut Values
             $current_ledger_balance = 0;
-            $invoice_effect_amount = $sale->remaining_amount; // The amount that hits the ledger
+            $invoice_effect_amount = ($sale->sale_type === 'estimate') ? 0 : $sale->remaining_amount; // The amount that hits the ledger
 
             // 1. Customer
             if ($sale->party_type == 'customer' && $sale->customer) {
@@ -372,7 +372,7 @@ class LocalSaleController extends Controller
         
         // Default Values
         $current_ledger_balance = 0;
-        $invoice_effect_amount = $sale->remaining_amount;
+        $invoice_effect_amount = ($sale->sale_type === 'estimate') ? 0 : $sale->remaining_amount;
 
         // 1. Customer
         if ($sale->party_type == 'customer' && $sale->customer) {
@@ -446,35 +446,29 @@ class LocalSaleController extends Controller
         $cartonQtys = json_decode($sale->carton_qty) ?? [];
         $pcs = json_decode($sale->pcs) ?? [];
 
-        for ($i = 0; $i < count($codes); $i++) {
-            $product = Product::where('item_code', $codes[$i])
-                ->where('item_name', $items[$i])
-                ->where('category', $categories[$i])
-                ->where('sub_category', $subcategories[$i])
-                ->where('size', $sizes[$i])
-                ->first();
-
-            if ($product) {
-                $cartonQty = (int) $cartonQtys[$i];
-                $pcsReturned = (int) $pcs[$i];
-                $pcsPerCarton = (int) $product->pcs_in_carton;
-
-                $product->carton_quantity += $cartonQty;
-                $product->initial_stock += ($cartonQty * $pcsPerCarton) + $pcsReturned;
-
-                $product->save();
+        if ($sale->sale_type === 'sale') {
+            $stockOuts = \App\Models\StockOut::where('local_sales_id', $sale->id)->get();
+            foreach ($stockOuts as $so) {
+                $product = Product::find($so->product_id);
+                if ($product) {
+                    $product->initial_stock += floatval($so->total_stock);
+                    $product->save();
+                }
+                $so->delete();
             }
         }
 
         $sale->forceDelete();
 
-        $ledger = CustomerLedger::where('customer_id', $customerId)->latest()->first();
-        if ($ledger) {
-            $ledger->closing_balance -= $netAmount;
-            $ledger->save();
+        if ($sale->sale_type !== 'estimate') {
+            $ledger = CustomerLedger::where('customer_id', $customerId)->latest()->first();
+            if ($ledger) {
+                $ledger->closing_balance -= $netAmount;
+                $ledger->save();
+            }
         }
 
-        return redirect()->back()->with('success', 'Local Sale deleted, stock restored, and Customer ledger updated.');
+        return redirect()->back()->with('success', 'Local Sale deleted successfully.');
     }
 
     public function localsaleEdit($id)
@@ -550,7 +544,7 @@ class LocalSaleController extends Controller
                 'remaining_amount' => $remaining,
             ]);
 
-            if ($request->party_type === 'customer') {
+            if ($request->party_type === 'customer' && $sale->sale_type !== 'estimate') {
                 $diff = $remaining - $oldRemaining;
                 if ($diff != 0) {
                     $ledger = CustomerLedger::where('customer_id', $request->customer_id)
@@ -572,5 +566,155 @@ class LocalSaleController extends Controller
         return redirect()
             ->route('local.sale.invoice', $sale->id)
             ->with('success', 'Sale updated successfully');
+    }
+
+    public function convert_localsale($id, $targetType)
+    {
+        if (!Auth::check()) {
+            return redirect()->back()->with('error', 'Unauthorized');
+        }
+
+        if (!in_array($targetType, ['booking', 'sale'])) {
+            return redirect()->back()->with('error', 'Invalid target type');
+        }
+
+        $sale = LocalSale::findOrFail($id);
+        $userId = Auth::id();
+
+        if ($sale->sale_type === 'sale') {
+            return redirect()->back()->with('error', 'Cannot convert a completed sale');
+        }
+        if ($sale->sale_type === $targetType) {
+            return redirect()->back()->with('error', 'Already in target state');
+        }
+
+        DB::beginTransaction();
+        try {
+            $oldType = $sale->sale_type;
+            $remaining = floatval($sale->remaining_amount);
+            $partyType = $sale->party_type;
+
+            // 1. If target is booking (conversion: estimate -> booking)
+            if ($targetType === 'booking') {
+                if ($remaining > 0) {
+                    if ($partyType === 'customer' && $sale->customer_id) {
+                        $ledger = CustomerLedger::where('customer_id', $sale->customer_id)
+                            ->where('admin_or_user_id', $userId)
+                            ->first();
+
+                        if (!$ledger) {
+                            $ledger = new CustomerLedger();
+                            $ledger->customer_id = $sale->customer_id;
+                            $ledger->admin_or_user_id = $userId;
+                            $ledger->opening_balance = 0;
+                            $ledger->previous_balance = 0;
+                        }
+                        $ledger->closing_balance += $remaining;
+                        $ledger->save();
+                    } elseif ($partyType === 'vendor' && $sale->vendor_id) {
+                        $ledger = VendorLedger::where('vendor_id', $sale->vendor_id)
+                            ->where('admin_or_user_id', $userId)
+                            ->first();
+
+                        if (!$ledger) {
+                            $ledger = new VendorLedger();
+                            $ledger->vendor_id = $sale->vendor_id;
+                            $ledger->admin_or_user_id = $userId;
+                            $ledger->opening_balance = 0;
+                            $ledger->previous_balance = 0;
+                        }
+                        $ledger->closing_balance -= $remaining;
+                        $ledger->save();
+                    }
+                }
+
+                $sale->update([
+                    'sale_type' => 'booking'
+                ]);
+            }
+
+            // 2. If target is sale (conversion: estimate -> sale, or booking -> sale)
+            if ($targetType === 'sale') {
+                // If it was an Estimate, the ledger was not updated. Update it now!
+                if ($oldType === 'estimate') {
+                    if ($remaining > 0) {
+                        if ($partyType === 'customer' && $sale->customer_id) {
+                            $ledger = CustomerLedger::where('customer_id', $sale->customer_id)
+                                ->where('admin_or_user_id', $userId)
+                                ->first();
+
+                            if (!$ledger) {
+                                $ledger = new CustomerLedger();
+                                $ledger->customer_id = $sale->customer_id;
+                                $ledger->admin_or_user_id = $userId;
+                                $ledger->opening_balance = 0;
+                                $ledger->previous_balance = 0;
+                            }
+                            $ledger->closing_balance += $remaining;
+                            $ledger->save();
+                        } elseif ($partyType === 'vendor' && $sale->vendor_id) {
+                            $ledger = VendorLedger::where('vendor_id', $sale->vendor_id)
+                                ->where('admin_or_user_id', $userId)
+                                ->first();
+
+                            if (!$ledger) {
+                                $ledger = new VendorLedger();
+                                $ledger->vendor_id = $sale->vendor_id;
+                                $ledger->admin_or_user_id = $userId;
+                                $ledger->opening_balance = 0;
+                                $ledger->previous_balance = 0;
+                            }
+                            $ledger->closing_balance -= $remaining;
+                            $ledger->save();
+                        }
+                    }
+                }
+
+                // Automatically reduce stock and create StockOut records
+                $items = json_decode($sale->item, true) ?? [];
+                $qtys = json_decode($sale->qty, true) ?? [];
+
+                foreach ($items as $index => $itemName) {
+                    if (!empty($itemName)) {
+                        $productModel = Product::where('item_name', $itemName)->first();
+                        if ($productModel) {
+                            $openingStock = floatval($productModel->initial_stock ?? 0);
+                            $usedStock = floatval($qtys[$index] ?? 0);
+                            $closingStock = max($openingStock - $usedStock, 0);
+
+                            // Create StockOut record
+                            \App\Models\StockOut::create([
+                                'admin_or_user_id' => $userId,
+                                'product_id' => $productModel->id,
+                                'local_sales_id' => $sale->id,
+                                'current_stock' => $openingStock,
+                                'close_stock' => $closingStock,
+                                'total_stock' => $usedStock,
+                                'created_at' => \Carbon\Carbon::now(),
+                                'updated_at' => \Carbon\Carbon::now(),
+                            ]);
+
+                            // Update product's initial_stock
+                            $productModel->initial_stock = $closingStock;
+                            $productModel->save();
+                        }
+                    }
+                }
+
+                $sale->update([
+                    'sale_type' => 'sale',
+                    'job_status' => 'completed',
+                    'delivery_date' => null,
+                    'notify_days_before' => 0,
+                ]);
+            }
+
+            DB::commit();
+            return redirect()->back()->with('success', 'Sale converted successfully.');
+
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error', $e->getMessage());
+        }
     }
 }

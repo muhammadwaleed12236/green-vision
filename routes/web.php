@@ -245,6 +245,7 @@ Route::get('/local/sale/invoice/{id}', [LocalSaleController::class, 'localsaleIn
 Route::get('/local/sale/delete/{id}', [LocalSaleController::class, 'delete_localsale'])->name('local.sale.delete');
 Route::get('/local/sale/edit/{id}', [LocalSaleController::class, 'localsaleEdit'])->name('local.sale.edit');
 Route::put('/local/sale/update/{id}', [LocalSaleController::class, 'localsaleupdate'])->name('local.sale.update');
+Route::post('/local/sale/convert/{id}/{targetType}', [LocalSaleController::class, 'convert_localsale'])->name('local.sale.convert');
 
 // ========================= NOTIFICATIONS ROUTES =========================
 Route::prefix('notifications')->group(function () {
