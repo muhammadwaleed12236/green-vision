@@ -28,11 +28,24 @@ class SettingsController extends Controller
 
         if ($request->hasFile('company_logo')) {
             $oldLogo = Setting::get('company_logo');
-            if ($oldLogo && Storage::disk('public')->exists($oldLogo)) {
-                Storage::disk('public')->delete($oldLogo);
+            
+            // Delete old logo if it exists
+            if ($oldLogo) {
+                if (file_exists(public_path('storage/' . $oldLogo))) {
+                    @unlink(public_path('storage/' . $oldLogo));
+                }
+                if (Storage::disk('public')->exists($oldLogo)) {
+                    Storage::disk('public')->delete($oldLogo);
+                }
             }
-            $path = $request->file('company_logo')->store('logos', 'public');
-            Setting::set('company_logo', $path);
+            
+            $file = $request->file('company_logo');
+            $filename = time() . '_' . preg_replace('/[^a-zA-Z0-9.]/', '_', $file->getClientOriginalName());
+            
+            // Move directly to public/storage/logos to bypass symlink issues on shared hosting
+            $file->move(public_path('storage/logos'), $filename);
+            
+            Setting::set('company_logo', 'logos/' . $filename);
         }
 
         return redirect()->route('settings.company.edit')

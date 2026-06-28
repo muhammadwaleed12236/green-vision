@@ -3,9 +3,14 @@
 if (!function_exists('base64storage')) {
     function base64storage(string $relativePath): string
     {
-        $fullPath = storage_path("app/public/{$relativePath}");
+        $storagePath = storage_path("app/public/{$relativePath}");
+        $publicPath = public_path("storage/{$relativePath}");
 
-        if (!file_exists($fullPath)) {
+        if (file_exists($publicPath)) {
+            $fullPath = $publicPath;
+        } elseif (file_exists($storagePath)) {
+            $fullPath = $storagePath;
+        } else {
             return '';
         }
 
