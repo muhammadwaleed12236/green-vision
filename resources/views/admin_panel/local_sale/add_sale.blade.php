@@ -138,14 +138,14 @@
                     <h4 class="mb-0">🧾 Job Order / Sale</h4>
                     <div class="d-flex gap-3 align-items-center">
                         <div class="btn-group" role="group">
-                            <input type="radio" class="btn-check" name="sale_type" id="sale_type_estimate" value="estimate" checked autocomplete="off">
-                            <label class="btn btn-outline-info px-3" for="sale_type_estimate">Estimate</label>
+                            <input type="radio" class="btn-check" name="sale_type" id="sale_type_estimate" value="estimate" {{ old('sale_type') == 'estimate' ? 'checked' : '' }} autocomplete="off">
+                            <label class="btn btn-outline-secondary px-3 sale-type-label" for="sale_type_estimate">Estimate</label>
 
-                            <input type="radio" class="btn-check" name="sale_type" id="sale_type_sale" value="sale" autocomplete="off">
-                            <label class="btn btn-outline-info px-3" for="sale_type_sale">Sale</label>
+                            <input type="radio" class="btn-check" name="sale_type" id="sale_type_sale" value="sale" {{ old('sale_type') == 'sale' ? 'checked' : '' }} autocomplete="off">
+                            <label class="btn btn-outline-secondary px-3 sale-type-label" for="sale_type_sale">Sale</label>
 
-                            <input type="radio" class="btn-check" name="sale_type" id="sale_type_booking" value="booking" autocomplete="off">
-                            <label class="btn btn-outline-info px-3" for="sale_type_booking">Booking</label>
+                            <input type="radio" class="btn-check" name="sale_type" id="sale_type_booking" value="booking" {{ old('sale_type', 'booking') == 'booking' ? 'checked' : '' }} autocomplete="off">
+                            <label class="btn btn-outline-secondary px-3 sale-type-label" for="sale_type_booking">Booking</label>
                         </div>
                         <div style="max-width: 260px;">
                             <label class="small text-muted d-block mb-0">Sale Date & Time</label>
@@ -545,6 +545,12 @@
         // Sale/Estimate toggle logic
         function handleSaleTypeToggle() {
             let saleType = $('input[name="sale_type"]:checked').val();
+            
+            // Update Active State Styles
+            $('.sale-type-label').removeClass('btn-primary text-white shadow-sm border-primary').addClass('btn-outline-secondary');
+            let checkedId = $('input[name="sale_type"]:checked').attr('id');
+            $('label[for="' + checkedId + '"]').removeClass('btn-outline-secondary').addClass('btn-primary text-white shadow-sm border-primary');
+
             if (saleType === 'sale') {
                 $('#deliveryPaymentPanel').hide();
                 $('[name="delivery_date"]').prop('required', false).val('');
