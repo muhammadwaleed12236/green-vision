@@ -254,7 +254,15 @@
             <p>{{ $appSettings['company_phone'] }}</p>
         </div>
         <div class="invoice-title">
-            <h2>SALES INVOICE</h2>
+            <h2>
+                @if(strtolower($sale->sale_type) === 'estimate')
+                    ESTIMATE RECEIPT
+                @elseif(strtolower($sale->sale_type) === 'booking')
+                    BOOKING RECEIPT
+                @else
+                    SALE RECEIPT
+                @endif
+            </h2>
             <p>Date: {{ \Carbon\Carbon::parse($sale->sale_date)->format('d-M-Y') }}</p>
             <p>Time: {{ \Carbon\Carbon::parse($sale->sale_date)->format('h:i A') }}</p>
         </div>
