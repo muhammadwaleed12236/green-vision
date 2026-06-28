@@ -11,14 +11,16 @@ i@include('admin_panel.include.header_include')
                     <!-- Header Section -->
                     <div class="row mb-2 align-items-center pt-2 pb-2" style="border-bottom: 3px solid #000;">
                         <div class="col-md-4 d-flex align-items-center">
-                            <img src="{{ asset('assets/img/logo.png') }}" alt="Green Vision Logo" style="max-width: 180px;">
+                            @if($appSettings['company_logo'])
+                                <img src="{{ asset('storage/' . $appSettings['company_logo']) }}" alt="{{ $appSettings['company_name'] }}" style="max-width: 180px;">
+                            @endif
                         </div>
                         <div class="col-md-4 text-center">
-                            <p class="mb-1" style="line-height: 1;">6-B Block-E, Latifabad No. 08, Hyderabad</p>
-                            <p class="mb-0" style="line-height: 1;">Phone: 0300 2529972 / 0334-2611233</p>
+                            <p class="mb-1" style="line-height: 1;">{{ $appSettings['company_address'] }}</p>
+                            <p class="mb-0" style="line-height: 1;">Phone: {{ $appSettings['company_phone'] }}</p>
                         </div>
                         <div class="col-md-4 text-end">
-                            <h4 class="fw-bold">Glass Works</h4>
+                            <h4 class="fw-bold">{{ $appSettings['company_name'] }}</h4>
                         </div>
                     </div>
                     <!-- Invoice Title with Bottom Border -->

@@ -23,6 +23,7 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SaleController;
 use App\Http\Controllers\SaleReturnController;
 use App\Http\Controllers\SalesmanController;
+use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\SizeController;
 use App\Http\Controllers\StaffAttendenceController;
 use App\Http\Controllers\StockOutController;
@@ -44,6 +45,8 @@ use Illuminate\Support\Facades\Route;
 
 // ========================= HOME ROUTES =========================
 Route::get('/home', [HomeController::class, 'index'])->middleware('auth')->name('home');
+
+Route::middleware(['auth', 'permission'])->group(function () {
 
 // ========================= CITY ROUTES =========================
 Route::get('/city', [CityAndAreaController::class, 'city'])->name('city');
@@ -401,6 +404,36 @@ Route::get('/business-report', [App\Http\Controllers\BusinessReportController::c
 Route::get('/qa-dashboard', [QATestController::class, 'dashboard'])->name('qa.dashboard');
 Route::get('/qa/test-purchase/{id}', [QATestController::class, 'testPurchaseFlow'])->name('qa.test.purchase');
 Route::get('/qa/health-check', [QATestController::class, 'quickHealthCheck'])->name('qa.health.check');
+
+// ========================= SETTINGS ROUTES =========================
+Route::middleware('auth')->group(function () {
+    Route::get('/settings/company', [SettingsController::class, 'edit'])->name('settings.company.edit');
+    Route::post('/settings/company', [SettingsController::class, 'update'])->name('settings.company.update');
+});
+
+});
+
+// ========================= RBAC ROUTES =========================
+use App\Http\Controllers\Rbac\UserController as RbacUserController;
+use App\Http\Controllers\Rbac\RoleController as RbacRoleController;
+use App\Http\Controllers\Rbac\PermissionController as RbacPermissionController;
+
+Route::prefix('admin')->name('rbac.')->middleware(['auth', 'permission'])->group(function () {
+    Route::get('/users/create', [RbacUserController::class, 'create'])->name('users.create');
+    Route::post('/users', [RbacUserController::class, 'store'])->name('users.store');
+    Route::get('/users/{user}/edit', [RbacUserController::class, 'edit'])->name('users.edit');
+    Route::put('/users/{user}', [RbacUserController::class, 'update'])->name('users.update');
+    Route::delete('/users/{user}', [RbacUserController::class, 'destroy'])->name('users.destroy');
+    Route::get('/users/{user}/toggle-status', [RbacUserController::class, 'toggleStatus'])->name('users.toggle-status');
+    Route::post('/users/{user}/reset-password', [RbacUserController::class, 'resetPassword'])->name('users.reset-password');
+    Route::resource('users', RbacUserController::class)->except(['create', 'store', 'edit', 'update', 'destroy']);
+
+    Route::resource('roles', RbacRoleController::class);
+    Route::post('/roles/{role}/duplicate', [RbacRoleController::class, 'duplicate'])->name('roles.duplicate');
+
+    Route::get('/permissions', [RbacPermissionController::class, 'index'])->name('permissions.index');
+    Route::post('/permissions/sync', [RbacPermissionController::class, 'sync'])->name('permissions.sync');
+});
 
 // ========================= PROFILE ROUTES =========================
 Route::middleware('auth')->group(function () {

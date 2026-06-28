@@ -13,11 +13,13 @@
 {{-- ================= HEADER ================= --}}
 <div class="row align-items-center mb-3" style="border-bottom:3px solid #000">
     <div class="col-md-4 d-flex align-items-center">
-        <img src="{{ asset('assets/img/logo.png') }}" alt="Green Vision Logo" style="max-width: 180px;">
+        @if($appSettings['company_logo'])
+            <img src="{{ asset('storage/' . $appSettings['company_logo']) }}" alt="{{ $appSettings['company_name'] }}" style="max-width: 180px;">
+        @endif
     </div>
     <div class="col-md-4 text-center">
-        <small>New Faran Hotel،, Sydena Tahir Saifuddin Road, Saddar, Hyderabad, 71110</small><br>
-        <small>0300 2529972</small>
+        <small>{{ $appSettings['company_address'] }}</small><br>
+        <small>{{ $appSettings['company_phone'] }}</small>
     </div>
     <div class="col-md-4 text-end">
         <h6 class="fw-bold">PURCHASE INVOICE</h6>

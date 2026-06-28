@@ -241,8 +241,10 @@
 <div class="invoice-container">
     <div class="invoice-header">
         <div class="company-logo">
-            <img src="{{ asset('assets/img/logo.png') }}" alt="Green Vision Logo" style="max-width: 180px; margin-bottom: 5px;">
-            <p>+92 311 7223 451 | +92 311 7223 442</p>
+            @if($appSettings['company_logo'])
+                <img src="{{ asset('storage/' . $appSettings['company_logo']) }}" alt="{{ $appSettings['company_name'] }}" style="max-width: 180px; margin-bottom: 5px;">
+            @endif
+            <p>{{ $appSettings['company_phone'] }}</p>
         </div>
         <div class="invoice-title">
             <h2>SALES INVOICE</h2>

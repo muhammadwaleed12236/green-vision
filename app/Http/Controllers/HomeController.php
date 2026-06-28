@@ -18,17 +18,15 @@ class HomeController extends Controller
                 return view('distributor_panel.dashboard', [
                     'userId' => $userId,
                 ]);
-            } elseif ($usertype == 'admin') {
-                // Dashboard Statistics
-                $stats = $this->getAdminStats();
-
-                return view('admin_panel.dashboard', compact('stats', 'userId'));
-            } elseif ($usertype == 'local_salesman') {
+            } elseif ($usertype == 'local_salesman' || $usertype == 'salesman') {
                 return view('salesman_panel.dashboard', [
                     'userId' => $userId,
                 ]);
             } else {
-                return redirect()->back();
+                // Default to admin dashboard for 'admin', 'user' and other administrative roles
+                $stats = $this->getAdminStats();
+
+                return view('admin_panel.dashboard', compact('stats', 'userId'));
             }
         }
     }

@@ -5,8 +5,13 @@
             <div class="flex">
                 <!-- Logo -->
                 <div class="shrink-0 flex items-center">
-                    <a href="{{ route('home') }}">
-                        <x-application-logo class="block h-9 w-auto fill-current text-white" />
+                    <a href="{{ route('home') }}" class="d-flex align-items-center text-white text-decoration-none">
+                        @if($appSettings['company_logo'])
+                            <img src="{{ asset('storage/' . $appSettings['company_logo']) }}" alt="{{ $appSettings['company_name'] }}" style="height: 36px; margin-right: 8px;">
+                        @else
+                            <x-application-logo class="block h-9 w-auto fill-current text-white" />
+                        @endif
+                        <span class="fw-bold ms-2" style="color: #fff;">{{ $appSettings['company_name'] }}</span>
                     </a>
                 </div>
 

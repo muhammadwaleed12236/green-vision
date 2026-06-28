@@ -154,7 +154,9 @@
 
         <div class="company-info">
             <div>
-                <img src="{{ asset('assets/img/logo.png') }}" alt="Green Vision Logo" style="height: 100px; max-width: 250px; object-fit: contain;">
+                @if($appSettings['company_logo'])
+                    <img src="{{ asset('storage/' . $appSettings['company_logo']) }}" alt="{{ $appSettings['company_name'] }}" style="height: 100px; max-width: 250px; object-fit: contain;">
+                @endif
             </div>
             <div class="voucher-date">
                 <label>Date</label>

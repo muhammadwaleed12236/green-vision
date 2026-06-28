@@ -29,10 +29,12 @@
             {{-- Receipt Card --}}
             <div class="card p-4" id="receiptCard" style="max-width: 600px; margin: auto;">
                 <div class="text-center mb-4" style="border-bottom: 2px solid #000; padding-bottom: 15px;">
-                    <img src="{{ asset('assets/img/logo.png') }}" alt="Green Vision Logo" style="max-width: 200px; margin-bottom: 10px;">
-                    <p class="mb-1">Glass & Aluminum Works</p>
-                    <small>Shop # 37/8 saddar cant, Hyderabad</small><br>
-                    <small>0300 2529972 | 0334-2611233</small>
+                    @if($appSettings['company_logo'])
+                        <img src="{{ asset('storage/' . $appSettings['company_logo']) }}" alt="{{ $appSettings['company_name'] }}" style="max-width: 200px; margin-bottom: 10px;">
+                    @endif
+                    <p class="mb-1 fw-bold">{{ $appSettings['company_name'] }}</p>
+                    <small>{{ $appSettings['company_address'] }}</small><br>
+                    <small>{{ $appSettings['company_phone'] }}</small>
                 </div>
 
                 <h5 class="text-center mb-4" style="background: #f0f0f0; padding: 10px; border-radius: 5px;">

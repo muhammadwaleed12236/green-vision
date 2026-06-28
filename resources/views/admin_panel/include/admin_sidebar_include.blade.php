@@ -27,166 +27,249 @@
                         <a href="{{ route('home') }}"><i class="fas fa-home"></i><span> Dashboard</span> </a>
                     </li>
 
+
+
                     <!-- Business Report -->
+                    @haspermission('business-report.view')
                     <li>
                         <a href="{{ route('business-report.index') }}"><i class="fas fa-chart-pie"></i><span> Business Report</span></a>
                     </li>
+                    @endhaspermission
+                    @haspermission('journal-voucher.view')
                     <li>
                         <a href="{{ route('journal-voucher.index') }}"><i class="fas fa-receipt"></i><span> All Vouchers</span></a>
                     </li>
-
-                    <!-- 📒 Journal Voucher System -->
-                    <li class="submenu">
-                        <!-- <a href="javascript:void(0);"><i class="fas fa-book"></i><span> Accounting</span> <span class="menu-arrow"></span></a> -->
-                        <ul>
-                            <!-- <li><a href="{{ route('journal-voucher.index') }}"><i class="fas fa-receipt"></i> All Vouchers</a></li> -->
-                            <!-- <li><a href="{{ route('journal-voucher.daybook') }}"><i class="fas fa-calendar-day"></i> Day Book</a></li> -->
-                            <!-- <li><a href="{{ route('journal-voucher.daily-closing') }}"><i class="fas fa-calculator"></i> Daily Closing</a></li> -->
-                            <!-- <li><a href="{{ route('journal-voucher.closing-history') }}"><i class="fas fa-history"></i> Closing History</a></li> -->
-                        </ul>
-                    </li>
+                    @endhaspermission
 
                     <!-- Price List -->
+                    @haspermission('price-list.view')
                     <li>
                         <a href="{{ route('price-list.index') }}"><i class="fas fa-tags"></i><span>Price List</span></a>
                     </li>
+                    @endhaspermission
 
                     <!-- Product Management -->
+                    @haspermission('product.view')
                     <li>
                         <a href="{{ route('product') }}"><i class="fas fa-box-open"></i> <span>Product </span> </a>
                     </li>
+                    @endhaspermission
 
                     <!-- Vendors -->
+                    @haspermission('vendor.view')
                     <li class="submenu">
                         <a href="javascript:void(0);"><i class="fas fa-user-friends"></i><span> Vendors</span> <span
                                 class="menu-arrow"></span></a>
                         <ul>
+                            @haspermission('vendor.view')
                             <li><a href="{{ route('vendors') }}">All Vendors</a></li>
+                            @endhaspermission
+                            @haspermission('vendor.view')
                             <li><a href="{{ route('vendors-ledger') }}">Vendors Ledger </a></li>
-                            <!-- <li><a href="{{ route('amount-paid-vendors') }}">Vendors Given Payments </a></li> -->
-                            <!-- <li><a href="{{ route('vendors-builty') }}">Vendors Builty </a></li> -->
+                            @endhaspermission
                         </ul>
                     </li>
+                    @endhaspermission
 
                     <!-- Purchase -->
+                    @if(auth()->user()->hasPermission('purchase.create') || auth()->user()->hasPermission('purchase.view'))
                     <li class="submenu">
                         <a href="javascript:void(0);"><i class="fas fa-shopping-basket"></i><span> Purchase</span> <span
                                 class="menu-arrow"></span></a>
                         <ul>
+                            @haspermission('purchase.create')
                             <li><a href="{{ route('Purchase') }}">Add Purchase</a></li>
+                            @endhaspermission
+                            @haspermission('purchase.view')
                             <li><a href="{{ route('all-Purchases') }}">All Purchase</a></li>
+                            @endhaspermission
+                            @haspermission('purchase.view')
                             <li><a href="{{ route('all-purchase-return') }}"> Purchase Returns</a></li>
+                            @endhaspermission
                         </ul>
                     </li>
+                    @endif
 
                     <!-- Customers -->
+                    @haspermission('customer.view')
                     <li class="submenu">
                         <a href="javascript:void(0);"><i class="fas fa-users"></i><span> Customer</span>
                             <span class="menu-arrow"></span></a>
                         <ul>
+                            @haspermission('customer.view')
                             <li><a href="{{ route('customer') }}">All Customers</a></li>
+                            @endhaspermission
+                            @haspermission('customer.view')
                             <li><a href="{{ route('customer-ledger') }}">Customer Ledger</a></li>
+                            @endhaspermission
+                            @haspermission('customer.view')
                             <li><a href="{{ route('customer-recovery') }}">Customer Recoveries</a></li>
+                            @endhaspermission
                         </ul>
                     </li>
+                    @endhaspermission
 
                     <!-- Sale -->
+                    @if(auth()->user()->hasPermission('local-sale.view') || auth()->user()->hasPermission('sale.view'))
                     <li class="submenu">
                         <a href="javascript:void(0);"><i class="fas fa-shopping-bag"></i><span>Sale</span> <span
                                 class="menu-arrow"></span></a>
                         <ul>
+                            @haspermission('local-sale.view')
                             <li><a href="{{ route('local-sale') }}">Add Sale</a></li>
+                            @endhaspermission
+                            @haspermission('local-sale.view')
                             <li><a href="{{ route('all-local-sale') }}">All Sales</a></li>
+                            @endhaspermission
+                            @haspermission('sale.view')
                             <li><a href="{{ route('all-sale-return') }}">Return Sales</a></li>
+                            @endhaspermission
                         </ul>
                     </li>
+                    @endif
 
                     <!-- Stock Out -->
+                    @haspermission('stock-out.view')
                     <li>
                         <a href="{{ route('stockout.index') }}"><i class="fas fa-level-down-alt"></i><span> Stock Out</span></a>
                     </li>
+                    @endhaspermission
 
                     <!-- Job Assignment -->
+                    @if(auth()->user()->hasPermission('job-order.view') || auth()->user()->hasPermission('job-assignment.view'))
                     <li class="submenu">
                         <a href="javascript:void(0);"><i class="fas fa-clipboard-list"></i><span> Job Management</span> <span
                                 class="menu-arrow"></span></a>
                         <ul>
-                            <li><a href="{{ route('job-orders.index') }}">Assign Job</a></li>
-                            <li><a href="{{ route('job-assignments') }}">Job Assignments</a></li>
+                            @haspermission('job-order.view')<li><a href="{{ route('job-orders.index') }}">Assign Job</a></li>@endhaspermission
+                            @haspermission('job-assignment.view')<li><a href="{{ route('job-assignments') }}">Job Assignments</a></li>@endhaspermission
                         </ul>
                     </li>
+                    @endif
 
                     <!-- Contractor -->
+                    @haspermission('contractor.view')
                     <li class="submenu">
                         <a href="javascript:void(0);"><i class="fa fa-wrench"></i><span> Contractor</span> <span
                                 class="menu-arrow"></span></a>
                         <ul>
+                            @haspermission('contractor.view')
                             <li><a href="{{ route('contractor') }}">All Contractor</a></li>
+                            @endhaspermission
+                            @haspermission('contractor.view')
                             <li><a href="{{ route('contractor-ledger') }}">Contractor Payments</a></li>
+                            @endhaspermission
+                            @haspermission('contractor.view')
                             <li><a href="{{ route('contractor-recovery') }}">Contractor Given Payments</a></li>
+                            @endhaspermission
                         </ul>
                     </li>
+                    @endhaspermission
 
                     <!-- Staff -->
+                    @if(auth()->user()->hasPermission('designation.view') || auth()->user()->hasPermission('salesman.view') || auth()->user()->hasPermission('staff-report.view'))
                     <li class="submenu">
                         <a href="javascript:void(0);"><i class="fas fa-user-tie"></i><span> Staff</span> <span
                                 class="menu-arrow"></span></a>
                         <ul>
+                            @haspermission('designation.view')
                             <li><a href="{{ route('designation') }}">Add Designation</a></li>
+                            @endhaspermission
+                            @haspermission('salesman.view')
                             <li><a href="{{ route('salesmen') }}">Add Staff</a></li>
+                            @endhaspermission
+                            @haspermission('staff-report.view')
                             <li><a href="{{ route('staff-wise-report') }}"><i class="fas fa-money-check-alt"></i> Weekly Staff Payment</a></li>
+                            @endhaspermission
+                            @haspermission('salesman.view')
                             <li><a href="{{ route('staff-recovery') }}">Staff Given Payments</a></li>
+                            @endhaspermission
                         </ul>
                     </li>
+                    @endif
 
                     <!-- Staff Attendance -->
+                    @if(auth()->user()->hasPermission('staff-attendance.view') || auth()->user()->hasPermission('staff-advance.view') || auth()->user()->hasPermission('staff-salary.view') || auth()->user()->hasPermission('staff-ledger.view'))
                     <li class="submenu">
                         <a href="javascript:void(0);"><i class="fas fa-user-check"></i><span> Staff Management</span> <span class="menu-arrow"></span></a>
                         <ul>
+                            @haspermission('staff-attendance.view')
                             <li><a href="{{ route('staff-attendance.index') }}">Attendance</a></li>
+                            @endhaspermission
+                            @haspermission('staff-advance.view')
                             <li><a href="{{ route('staff-advance.index') }}">Advance / Loan</a></li>
+                            @endhaspermission
+                            @haspermission('staff-salary.view')
                             <li><a href="{{ route('staff-salary.index') }}">Pay Salary</a></li>
+                            @endhaspermission
+                            @haspermission('staff-ledger.view')
                             <li><a href="{{ route('staff-ledger-view') }}">Staff Ledger</a></li>
+                            @endhaspermission
                         </ul>
                     </li>
+                    @endif
 
                     <!-- Cash Book / Ledger -->
+                    @haspermission('cash-book.view')
                     <li>
                         <a href="{{ route('cash-book') }}"><i class="fas fa-book"></i><span> Cash Book</span></a>
                     </li>
+                    @endhaspermission
 
                     <!-- Expenses -->
+                    @haspermission('expense.view')
                     <li class="submenu">
                         <a href="javascript:void(0);"><i class="fas fa-money-bill-wave"></i><span> Expense Categories</span> <span
                                 class="menu-arrow"></span></a>
                         <ul>
+                            @haspermission('expense.view')
                             <li><a href="{{ route('expense') }}">Manage Categories</a></li>
+                            @endhaspermission
+                            @haspermission('expense.view')
                             <li><a href="{{ route('add-expenses') }}">All Expenses</a></li>
+                            @endhaspermission
                         </ul>
                     </li>
+                    @endhaspermission
 
                     <!-- Reports -->
+                    @if(auth()->user()->hasPermission('stock-report.view') || auth()->user()->hasPermission('purchase-report.view') || auth()->user()->hasPermission('sales-report.view') || auth()->user()->hasPermission('staff-report.view'))
                     <li class="submenu">
                         <a href="javascript:void(0);"><i class="fas fa-chart-line"></i><span> Reports</span> <span
                                 class="menu-arrow"></span></a>
                         <ul>
-                            <li><a href="{{ route('stock-Record') }}">Stock Report</a></li>
-                            <!-- <li><a href="{{ route('job.profit.report') }}">General Report</a></li> -->
-                            <li><a href="{{ route('vendor-Ledger-Record') }}">Vendor Ledger</a></li>
-                            <li><a href="{{ route('Customer-Ledger-Record') }}">Customer Ledger</a></li>
-                            <!-- <li><a href="{{ route('date-wise-recovery-report') }}">Recovery Report</a></li> -->
-                            <li><a href="{{ route('date-wise-purcahse-report') }}">Purchase Report</a></li>
-                            <li><a href="{{ route('vendor-wise-purcahse-report') }}">Vendor Purchase</a></li>
-                            <li><a href="{{ route('Date-wise-Sales-Report') }}">Sales Report</a></li>
-                            <li><a href="{{ route('Product-wise-Sales-Report') }}">Product Sales</a></li>
-                            <li><a href="{{ route('contractor-wise-report') }}">Contractor Report</a></li>
-                            <li><a href="{{ route('staff-wise-report') }}">Staff Report</a></li>
-                            <!-- Payment Reports - Now handled via Journal Voucher -->
-                            <!-- <li><a href="{{ route('vendors-payments') }}">Vendor Payments</a></li>
-                            <li><a href="{{ route('customer-payments') }}">Customer Payments</a></li>
-                            <li><a href="{{ route('staff-payments') }}">Staff Payments</a></li> -->
+                            @haspermission('stock-report.view')<li><a href="{{ route('stock-Record') }}">Stock Report</a></li>@endhaspermission
+                            @haspermission('purchase-report.view')<li><a href="{{ route('date-wise-purcahse-report') }}">Purchase Report</a></li>@endhaspermission
+                            @haspermission('sales-report.view')<li><a href="{{ route('Date-wise-Sales-Report') }}">Sales Report</a></li>@endhaspermission
+                            @haspermission('staff-report.view')<li><a href="{{ route('staff-wise-report') }}">Staff Report</a></li>@endhaspermission
                         </ul>
                     </li>
+                    @endif
+
+                    <!-- User Management -->
+                    @if(auth()->user()->hasPermission('user-management-users.view') || auth()->user()->hasPermission('user-management-roles.view') || auth()->user()->hasPermission('user-management-permissions.view'))
+                    <li class="submenu">
+                        <a href="javascript:void(0);"><i class="fas fa-users-cog"></i><span> User Management</span> <span class="menu-arrow"></span></a>
+                        <ul>
+                            @if(auth()->user()->hasPermission('user-management-users.view'))
+                            <li><a href="{{ route('rbac.users.index') }}"><i class="fas fa-user"></i> Users</a></li>
+                            @endif
+                            @if(auth()->user()->hasPermission('user-management-roles.view'))
+                            <li><a href="{{ route('rbac.roles.index') }}"><i class="fas fa-user-tag"></i> Roles</a></li>
+                            @endif
+                            @if(auth()->user()->hasPermission('user-management-permissions.view'))
+                            <li><a href="{{ route('rbac.permissions.index') }}"><i class="fas fa-shield-alt"></i> Permissions</a></li>
+                            @endif
+                        </ul>
+                    </li>
+                    @endif
+
+                    <!-- Company Settings -->
+                    @haspermission('settings.edit')
+                    <li>
+                        <a href="{{ route('settings.company.edit') }}"><i class="fas fa-cog"></i><span> Company Settings</span></a>
+                    </li>
+                    @endhaspermission
 
                     <!-- Reporting -->
                     <!-- <li class="submenu">

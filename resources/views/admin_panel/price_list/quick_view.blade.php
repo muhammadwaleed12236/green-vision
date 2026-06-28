@@ -159,9 +159,11 @@
 <div class="rate-container">
     {{-- Company Header --}}
     <div class="company-header">
-        <img src="{{ asset('assets/img/logo.png') }}" alt="Green Vision Logo" style="height: 60px; margin-bottom: 10px;">
-        <p><i class="fa fa-map-marker-alt me-1"></i> Shop # 37/8 saddar cant, Hyderabad</p>
-        <p><i class="fa fa-phone me-1"></i> 0300-2529972 | 0334-2611233</p>
+        @if($appSettings['company_logo'])
+            <img src="{{ asset('storage/' . $appSettings['company_logo']) }}" alt="{{ $appSettings['company_name'] }}" style="max-height: 60px; margin-bottom: 10px;">
+        @endif
+        <p><i class="fa fa-map-marker-alt me-1"></i> {{ $appSettings['company_address'] }}</p>
+        <p><i class="fa fa-phone me-1"></i> {{ $appSettings['company_phone'] }}</p>
     </div>
 
     {{-- Rate Cards --}}

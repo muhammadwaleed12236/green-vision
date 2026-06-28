@@ -1,10 +1,12 @@
 <div class="header">
 	<div class="header-left active">
 		<a href="#" class="logo">
-			<h6>Prowave Technologies</h6>
+			<h6>{{ $appSettings['company_name'] }}</h6>
 		</a>
 		<a href="#" class="logo-small">
-			<img src="{{ url('logo.png') }}" alt="">
+			@if($appSettings['company_logo'])
+				<img src="{{ asset('storage/' . $appSettings['company_logo']) }}" alt="{{ $appSettings['company_name'] }}" style="max-height: 30px;">
+			@endif
 		</a>
 		<a id="toggle_btn" href="javascript:void(0);">
 		</a>
