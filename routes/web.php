@@ -169,7 +169,7 @@ Route::put('/contractor-recovery/{id}', [ContractorController::class, 'updateRec
 
 // ========================= SALE ROUTES =========================
 Route::get('/add-sale', [SaleController::class, 'add_sale'])->name('add-sale');
-Route::post('/store-sale', [SaleController::class, 'store_sale'])->name('store-sale');
+Route::post('/store-sale', [SalseController::class, 'store_sale'])->name('store-sale');
 Route::get('/all-sale', [SaleController::class, 'all_sale'])->name('all-sale');
 Route::get('/sale/{id}', [SaleController::class, 'show_sale'])->name('show_sale');
 Route::get('/sale/invoice/{id}', [SaleController::class, 'saleInvoice'])->name('sale.invoice');
@@ -178,6 +178,7 @@ Route::get('/sale/delete/{id}', [SaleController::class, 'delete'])->name('sale.d
 Route::put('/sale/update/{id}', [SaleController::class, 'saleupdate'])->name('sale.update');
 Route::post('/sale/assign/{id}', [SaleController::class, 'assignSalesman'])->name('sale.assign');
 Route::get('/sale/cancel/{id}', [SaleController::class, 'cancelSale'])->name('sale.cancel');
+Route::get('/sale/add', [SaleController::class, 'add'])->name('add.sale'); // Manual input
 
 // ========================= SALE RETURN ROUTES =========================
 Route::get('/add-sale-return', [SaleReturnController::class, 'add_sale_return'])->name('add-sale-return');

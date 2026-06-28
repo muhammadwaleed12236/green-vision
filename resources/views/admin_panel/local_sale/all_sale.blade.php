@@ -12,12 +12,35 @@
         <h4 class="mb-0">Job Orders</h4>
         <small class="text-muted">All Job Orders (Read Only)</small>
     </div>
-    <div class="ms-3">
+    
+    <!-- <div class="ms-3">
         <form method="GET" action="{{ route('all-local-sale') }}" class="d-flex">
             <input type="text" name="q" value="{{ $query ?? request('q') }}" class="form-control form-control-sm me-2" placeholder="Search invoice, customer, vendor or items">
             <button class="btn btn-sm btn-primary">Search</button>
         </form>
-    </div>
+        <div>
+            <a class="btn btn-success" href="{{ route('local-sale') }}" role="button">+ Add New Sale</a>
+        </div>
+        
+    </div> -->
+    
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+
+    <form method="GET" action="{{ route('all-local-sale') }}" class="d-flex flex-grow-1 me-3">
+        <input type="text"
+               name="q"
+               value="{{ $query ?? request('q') }}"
+               class="form-control me-2"
+               placeholder="Search invoice, customer, vendor or items">
+        <button class="btn btn-primary">Search</button>
+    </form>
+
+    <a class="btn btn-success" href="{{ route('local-sale') }}">
+        + Add New Sale
+    </a>
+
+</div>
 </div>
 
 <div class="card">

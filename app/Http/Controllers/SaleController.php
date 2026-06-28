@@ -486,4 +486,14 @@ class SaleController extends Controller
 
         return redirect()->back()->with('success', 'Sale cancelled, stock restored, and ledger adjusted.');
     }
+
+    // Manual input: Show add new sale btn in all sales
+    public function add()
+    {
+        if (Auth::id()) {
+            return view('admin_panel.sale.add_sale');
+        }
+
+        return redirect()->back();
+    }
 }
