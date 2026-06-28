@@ -256,13 +256,19 @@
                 border: none;
                 max-width: 100%; 
             }
-            .print-button {
-                display: none;
+            .print-button, .no-print {
+                display: none !important;
             }
         }
     </style>
 </head>
 <body>
+
+<div class="no-print" style="max-width: 900px; margin: 0 auto 15px auto;">
+    <a href="{{ url()->previous() }}" style="display: inline-block; padding: 8px 16px; background-color: #000; color: #fff; text-decoration: none; border-radius: 4px; font-size: 14px; font-weight: 500;">
+        &larr; Back
+    </a>
+</div>
 
 <div class="invoice-container">
     <div class="invoice-header">

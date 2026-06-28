@@ -235,8 +235,15 @@
             max-width: 100%; 
             box-shadow: none;
         }
+        .no-print { display: none !important; }
     }
 </style>
+
+<div class="no-print" style="max-width: 900px; margin: 30px auto 0 auto;">
+    <a href="{{ route('local-sale') }}" style="display: inline-block; padding: 10px 20px; background-color: #16a34a; color: #fff; text-decoration: none; border-radius: 4px; font-size: 14px; font-weight: 500;">
+        &larr; Create New Sale
+    </a>
+</div>
 
 <div class="invoice-container">
     <div class="invoice-header">
