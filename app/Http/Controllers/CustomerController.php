@@ -108,6 +108,15 @@ class CustomerController extends Controller
                 'created_at' => Carbon::now(),
             ]);
 
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'customer' => [
+                        'id' => $customer->id,
+                        'name' => $customer->customer_name ?? $customer->shop_name
+                    ]
+                ]);
+            }
             return redirect()->back()->with('success', 'Customer created successfully');
         } else {
             return redirect()->back();

@@ -170,16 +170,23 @@
 
                                 <div class="col-md-3 party-box" id="customerBox">
                                     <label>Customer</label>
-                                    <select class="form-control search" name="customer_id" id="customer">
-                                        <option value="">Select</option>
-                                        @foreach ($Customers as $c)
-                                            <option value="{{ $c->id }}" data-phone="{{ $c->phone_number }}"
-                                                data-address="{{ $c->address }}"
-                                                {{ old('customer_id') == $c->id ? 'selected' : '' }}>
-                                                {{ $c->customer_name ?? $c->shop_name }}
-                                            </option>
-                                        @endforeach
-                                    </select>
+                                    <div class="d-flex">
+                                        <div style="flex: 1;">
+                                            <select class="form-control search" name="customer_id" id="customer">
+                                                <option value="">Select</option>
+                                                @foreach ($Customers as $c)
+                                                    <option value="{{ $c->id }}" data-phone="{{ $c->phone_number }}"
+                                                        data-address="{{ $c->address }}"
+                                                        {{ old('customer_id') == $c->id ? 'selected' : '' }}>
+                                                        {{ $c->customer_name ?? $c->shop_name }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <button type="button" class="btn btn-primary btn-sm ms-2" data-bs-toggle="modal" data-bs-target="#quickAddCustomerModal" style="height: 38px;">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                    </div>
                                 </div>
 
                                 <div class="col-md-3 party-box d-none" id="vendorBox">
@@ -647,5 +654,75 @@
                 });
             }
         });
+        // Quick Add Customer AJAX
+        $('#quickAddCustomerForm').on('submit', function(e) {
+            e.preventDefault();
+            let btn = $('#saveQuickCustomerBtn');
+            btn.prop('disabled', true).text('Saving...');
+            
+            $.ajax({
+                url: '{{ route("customer.store") }}',
+                method: 'POST',
+                data: $(this).serialize(),
+                success: function(response) {
+                    if(response.success) {
+                        // Add new option to dropdown
+                        let newOption = new Option(response.customer.name, response.customer.id, true, true);
+                        $('#customer').append(newOption).trigger('change');
+                        
+                        // Close modal and reset form
+                        $('#quickAddCustomerModal').modal('hide');
+                        $('#quickAddCustomerForm')[0].reset();
+                        
+                        alert('Customer added successfully!');
+                    } else {
+                        alert('Error adding customer.');
+                    }
+                },
+                error: function() {
+                    alert('Error adding customer. Please check the inputs.');
+                },
+                complete: function() {
+                    btn.prop('disabled', false).text('Save');
+                }
+            });
+        });
+
     });
 </script>
+
+<!-- Quick Add Customer Modal -->
+<div class="modal fade" id="quickAddCustomerModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="quickAddCustomerForm">
+                @csrf
+                <div class="modal-header">
+                    <h5 class="modal-title">Quick Add Customer</h5>
+                    <button type="button" class="btn-close text-black" data-bs-dismiss="modal">X</button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Customer Name *</label>
+                        <input type="text" name="customer_name" class="form-control mt-2" required placeholder="Enter Name">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Address</label>
+                        <input type="text" name="address" class="form-control mt-2" placeholder="Enter Address">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Phone Number</label>
+                        <input type="text" name="phone_number" class="form-control mt-2" placeholder="Enter Phone Number">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Opening Balance</label>
+                        <input type="number" name="opening_balance" class="form-control mt-2" value="0" placeholder="Enter Opening Balance">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary" id="saveQuickCustomerBtn">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
