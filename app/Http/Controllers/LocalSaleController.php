@@ -28,20 +28,22 @@ class LocalSaleController extends Controller
     {
         $userId = Auth::id();
 
-        $request->validate([
-            'party_type' => 'required|in:customer,vendor,walkin',
-
-            'customer_id' => 'required_if:party_type,customer|nullable',
-            'vendor_id' => 'required_if:party_type,vendor|nullable',
-
-            'walkin_name' => 'required_if:party_type,walkin|nullable|string',
-            'walkin_phone' => 'required_if:party_type,walkin|nullable|string',
-            'walkin_address' => 'required_if:party_type,walkin|nullable|string',
-
+        $rules = [
             'item_name' => 'required|array|min:1',
             'amount' => 'required|array|min:1',
             'net_amount' => 'required|numeric|min:0.01',
-        ]);
+        ];
+
+        if ($request->sale_type !== 'estimate') {
+            $rules['party_type'] = 'required|in:customer,vendor,walkin';
+            $rules['customer_id'] = 'required_if:party_type,customer|nullable';
+            $rules['vendor_id'] = 'required_if:party_type,vendor|nullable';
+            $rules['walkin_name'] = 'required_if:party_type,walkin|nullable|string';
+            $rules['walkin_phone'] = 'required_if:party_type,walkin|nullable|string';
+            $rules['walkin_address'] = 'required_if:party_type,walkin|nullable|string';
+        }
+
+        $request->validate($rules);
 
         DB::beginTransaction();
 
