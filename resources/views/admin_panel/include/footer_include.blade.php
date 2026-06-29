@@ -45,7 +45,9 @@
 
         // Optional: Initialize DataTables for tables with class 'datatable'
         if ($.fn.DataTable) {
-            $('.datatable').DataTable();
+            $('.datatable').DataTable({
+                retrieve: true
+            });
         }
     });
 </script>
