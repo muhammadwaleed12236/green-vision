@@ -21,7 +21,7 @@
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
 <!-- Custom JS -->
-<script src="{{ url('assets/js/script.js') }}"></script>
+<script src="{{ url('assets/js/script.js') }}?v=3"></script>
 
 <script>
     $(document).ready(function () {

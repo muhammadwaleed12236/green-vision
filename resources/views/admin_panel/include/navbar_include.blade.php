@@ -9,6 +9,7 @@
 			@endif
 		</a>
 		<a id="toggle_btn" href="javascript:void(0);">
+			<i class="fas fa-align-left"></i>
 		</a>
 	</div>
 	<a id="mobile_btn" class="mobile_btn" href="#sidebar">

@@ -1,4 +1,4 @@
-﻿<style>
+<style>
     /* Active Link Styles */
     #sidebar-menu ul li.active > a {
         background-color: rgba(40, 167, 69, 0.15) !important; /* Transparent dark green background */
@@ -497,7 +497,7 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-    var currentUrl = window.location.href.split('#')[0].split('?')[0];
+    var currentPath = window.location.pathname;
 
     // Remove static active classes
     var staticActives = document.querySelectorAll('#sidebar-menu li.active');
@@ -515,9 +515,16 @@ document.addEventListener("DOMContentLoaded", function() {
     var isMatched = false;
 
     links.forEach(function(link) {
-        if (link.href === currentUrl && link.getAttribute('href') !== 'javascript:void(0);') {
-            link.parentElement.classList.add('active');
-            link.classList.add('active'); // Add to a tag too if needed
+        var linkHref = link.getAttribute('href');
+        if (linkHref && linkHref !== 'javascript:void(0);' && linkHref !== '#') {
+            var linkPath = '';
+            try {
+                linkPath = new URL(link.href, window.location.origin).pathname;
+            } catch(e) {}
+            
+            if (linkPath === currentPath) {
+                link.parentElement.classList.add('active');
+                link.classList.add('active'); // Add to a tag too if needed
             
             // If it's a submenu child, highlight parent and open the submenu
             var parentUl = link.closest('ul');
@@ -533,6 +540,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 parentUl.style.display = 'block'; // Make submenu visible
             }
             isMatched = true;
+            }
         }
     });
 

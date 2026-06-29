@@ -4060,8 +4060,11 @@ span.select2-container.select2-container--default.select2-container--open {
 }
 .sidebar .slimScrollDiv {
     width: 260px !important;
-    overflow: visible !important;
+    overflow: hidden !important;
     background: #1a1a2e;
+}
+body.mini-sidebar .sidebar .slimScrollDiv {
+    overflow: visible !important;
 }
 @media (max-width: 575px) {
     .sidebar .slimScrollDiv {
