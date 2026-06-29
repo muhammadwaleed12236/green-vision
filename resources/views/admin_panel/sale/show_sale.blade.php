@@ -116,6 +116,7 @@
                     </table>
 
                     <a href="{{ route('all-sale') }}" class="btn btn-primary mt-3">Back to Sales List</a>
+                    <a href="{{ route('add-sale') }}" class="btn btn-success mt-3 ms-2">Create New Sale</a>
                 </div>
             </div>
         </div>

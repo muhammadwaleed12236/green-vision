@@ -141,14 +141,14 @@
                     <h4 class="mb-0">🧾 Job Order / Sale</h4>
                     <div class="d-flex gap-3 align-items-center">
                         <div class="btn-group" role="group">
-                            <input type="radio" class="btn-check" name="sale_type" id="sale_type_estimate" value="estimate" checked autocomplete="off">
-                            <label class="btn btn-outline-info px-3" for="sale_type_estimate">Estimate</label>
+                            <input type="radio" class="btn-check" name="sale_type" id="sale_type_estimate" value="estimate" {{ old('sale_type') == 'estimate' ? 'checked' : '' }} autocomplete="off">
+                            <label class="btn btn-outline-secondary px-3 sale-type-label" for="sale_type_estimate">Estimate</label>
 
-                            <input type="radio" class="btn-check" name="sale_type" id="sale_type_sale" value="sale" autocomplete="off">
-                            <label class="btn btn-outline-info px-3" for="sale_type_sale">Sale</label>
+                            <input type="radio" class="btn-check" name="sale_type" id="sale_type_sale" value="sale" {{ old('sale_type') == 'sale' ? 'checked' : '' }} autocomplete="off">
+                            <label class="btn btn-outline-secondary px-3 sale-type-label" for="sale_type_sale">Sale</label>
 
-                            <input type="radio" class="btn-check" name="sale_type" id="sale_type_booking" value="booking" autocomplete="off">
-                            <label class="btn btn-outline-info px-3" for="sale_type_booking">Booking</label>
+                            <input type="radio" class="btn-check" name="sale_type" id="sale_type_booking" value="booking" {{ old('sale_type', 'booking') == 'booking' ? 'checked' : '' }} autocomplete="off">
+                            <label class="btn btn-outline-secondary px-3 sale-type-label" for="sale_type_booking">Booking</label>
                         </div>
                         <div style="max-width: 260px;">
                             <label class="small text-muted d-block mb-0">Sale Date & Time</label>
@@ -170,19 +170,26 @@
                                      </select>
                                  </div>
 
-                                 <div class="col-md-3 party-box" id="customerBox">
-                                     <label>Customer</label>
-                                     <select class="form-control search" name="customer_id" id="customer">
-                                         <option value="">Select</option>
-                                         @foreach ($Customers as $c)
-                                             <option value="{{ $c->id }}" data-phone="{{ $c->phone_number }}"
-                                                 data-address="{{ $c->address }}"
-                                                 {{ (old('customer_id') ?? ($cloneEstimate->customer_id ?? '')) == $c->id ? 'selected' : '' }}>
-                                                 {{ $c->customer_name ?? $c->shop_name }}
-                                             </option>
-                                         @endforeach
-                                     </select>
-                                 </div>
+                                <div class="col-md-3 party-box" id="customerBox">
+                                    <label>Customer</label>
+                                    <div class="d-flex">
+                                        <div style="flex: 1;">
+                                            <select class="form-control search" name="customer_id" id="customer">
+                                                <option value="">Select</option>
+                                                @foreach ($Customers as $c)
+                                                    <option value="{{ $c->id }}" data-phone="{{ $c->phone_number }}"
+                                                        data-address="{{ $c->address }}"
+                                                        {{ old('customer_id') == $c->id ? 'selected' : '' }}>
+                                                        {{ $c->customer_name ?? $c->shop_name }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <button type="button" class="btn btn-primary btn-sm ms-2" data-bs-toggle="modal" data-bs-target="#quickAddCustomerModal" style="height: 38px;">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                    </div>
+                                </div>
 
                                  <div class="col-md-3 party-box d-none" id="vendorBox">
                                      <label>Vendor</label>
@@ -325,10 +332,10 @@
                                  <input name="gross_discount" class="form-control" value="{{ old('gross_discount') ?? ($cloneEstimate->discount_value ?? '0') }}">
                              </div>
 
-                             <div class="col-md-3">
-                                 <label>Advance</label>
-                                 <input id="advance" name="advance_amount" class="form-control" value="{{ old('advance_amount') ?? ($cloneEstimate->advance_amount ?? '') }}">
-                             </div>
+                            <div class="col-md-3">
+                                <label id="advanceLabel">Advance</label>
+                                <input id="advance" name="advance_amount" class="form-control" value="{{ old('advance_amount') }}">
+                            </div>
 
                              <div class="col-md-3">
                                  <label>Remaining</label>
@@ -389,6 +396,7 @@
         $('.readonly-wrap').addClass('d-none');
 
         $('#advance').prop('readonly', false);
+        $('#advanceLabel').text('Advance');
         $('#remaining').closest('.col-md-3').removeClass('d-none');
 
         if (t === 'customer') {
@@ -404,6 +412,7 @@
         if (t === 'walkin') {
             $('#walkinName,#walkinPhone,#walkinAddress').removeClass('d-none');
             $('#advance').val($('#grandTotal').val()).prop('readonly', true);
+            $('#advanceLabel').text('Paid Amount');
             $('#remaining').val('0');
             $('#remaining').closest('.col-md-3').addClass('d-none');
         }
@@ -543,6 +552,12 @@
         // Sale/Estimate toggle logic
         function handleSaleTypeToggle() {
             let saleType = $('input[name="sale_type"]:checked').val();
+            
+            // Update Active State Styles
+            $('.sale-type-label').removeClass('btn-primary text-white shadow-sm border-primary').addClass('btn-outline-secondary');
+            let checkedId = $('input[name="sale_type"]:checked').attr('id');
+            $('label[for="' + checkedId + '"]').removeClass('btn-outline-secondary').addClass('btn-primary text-white shadow-sm border-primary');
+
             if (saleType === 'sale') {
                 $('#deliveryPaymentPanel').hide();
                 $('[name="delivery_date"]').prop('required', false).val('');
@@ -654,5 +669,75 @@
                 });
             }
         });
+        // Quick Add Customer AJAX
+        $('#quickAddCustomerForm').on('submit', function(e) {
+            e.preventDefault();
+            let btn = $('#saveQuickCustomerBtn');
+            btn.prop('disabled', true).text('Saving...');
+            
+            $.ajax({
+                url: '{{ route("customer.store") }}',
+                method: 'POST',
+                data: $(this).serialize(),
+                success: function(response) {
+                    if(response.success) {
+                        // Add new option to dropdown
+                        let newOption = new Option(response.customer.name, response.customer.id, true, true);
+                        $('#customer').append(newOption).trigger('change');
+                        
+                        // Close modal and reset form
+                        $('#quickAddCustomerModal').modal('hide');
+                        $('#quickAddCustomerForm')[0].reset();
+                        
+                        alert('Customer added successfully!');
+                    } else {
+                        alert('Error adding customer.');
+                    }
+                },
+                error: function() {
+                    alert('Error adding customer. Please check the inputs.');
+                },
+                complete: function() {
+                    btn.prop('disabled', false).text('Save');
+                }
+            });
+        });
+
     });
 </script>
+
+<!-- Quick Add Customer Modal -->
+<div class="modal fade" id="quickAddCustomerModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="quickAddCustomerForm">
+                @csrf
+                <div class="modal-header">
+                    <h5 class="modal-title">Quick Add Customer</h5>
+                    <button type="button" class="btn-close text-black" data-bs-dismiss="modal">X</button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Customer Name *</label>
+                        <input type="text" name="customer_name" class="form-control mt-2" required placeholder="Enter Name">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Address</label>
+                        <input type="text" name="address" class="form-control mt-2" placeholder="Enter Address">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Phone Number</label>
+                        <input type="text" name="phone_number" class="form-control mt-2" placeholder="Enter Phone Number">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Opening Balance</label>
+                        <input type="number" name="opening_balance" class="form-control mt-2" value="0" placeholder="Enter Opening Balance">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary" id="saveQuickCustomerBtn">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

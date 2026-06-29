@@ -256,13 +256,19 @@
                 border: none;
                 max-width: 100%; 
             }
-            .print-button {
-                display: none;
+            .print-button, .no-print {
+                display: none !important;
             }
         }
     </style>
 </head>
 <body>
+
+<div class="no-print" style="max-width: 900px; margin: 0 auto 15px auto;">
+    <a href="{{ url()->previous() }}" style="display: inline-block; padding: 8px 16px; background-color: #000; color: #fff; text-decoration: none; border-radius: 4px; font-size: 14px; font-weight: 500;">
+        &larr; Back
+    </a>
+</div>
 
 <div class="invoice-container">
     <div class="invoice-header">
@@ -273,7 +279,15 @@
             <p>{{ $appSettings['company_phone'] }}</p>
         </div>
         <div class="invoice-title">
-            <h2>SALES INVOICE</h2>
+            <h2>
+                @if(strtolower($sale->sale_type) === 'estimate')
+                    ESTIMATE RECEIPT
+                @elseif(strtolower($sale->sale_type) === 'booking')
+                    BOOKING RECEIPT
+                @else
+                    SALE RECEIPT
+                @endif
+            </h2>
             <p>Date: {{ \Carbon\Carbon::parse($sale->sale_date)->format('d-M-Y') }}</p>
             <p>Time: {{ \Carbon\Carbon::parse($sale->sale_date)->format('h:i A') }}</p>
         </div>
@@ -365,7 +379,7 @@
                 <span>RS {{ number_format($sale->net_amount, 2) }}</span>
             </div>
             <div class="total-row">
-                <span>Advance Paid</span>
+                <span>{{ $sale->party_type === 'walkin' ? 'Amount Paid' : 'Advance Paid' }}</span>
                 <span>{{ number_format($sale->advance_amount, 2) }}</span>
             </div>
             <div class="total-row balance-due">

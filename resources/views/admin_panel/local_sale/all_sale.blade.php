@@ -46,18 +46,8 @@
 <div class="card">
 <div class="card-body p-0">
 
-<table class="table table-bordered align-middle mb-0" style="table-layout:fixed">
-<colgroup>
-    <col style="width:75px">
-    <col style="width:95px">
-    <col style="width:110px">
-    <col style="width:95px">
-    <col>
-    <col style="width:105px">
-    <col style="width:85px">
-    <col style="width:80px">
-    <col style="width:90px">
-</colgroup>
+<div class="table-responsive">
+<table class="table table-bordered align-middle mb-0 text-nowrap">
 <thead class="table-light text-center">
 <tr>
     <th>Job No</th>
@@ -85,17 +75,19 @@
         @if($sale->party_type === 'vendor' && $sale->vendor)
             {{ $sale->vendor->Party_name ?? $sale->vendor->business_name ?? $sale->vendor->name ?? 'Vendor' }}
         @else
-            {{ $sale->customer->customer_name
-                ?? $sale->customer->shop_name
-                ?? $sale->customer->business_name
-                ?? $sale->customer_shopname
-                ?? 'Walk-in' }}
+            <span style="white-space: normal; display: block; min-width: 120px;">
+                {{ $sale->customer->customer_name
+                    ?? $sale->customer->shop_name
+                    ?? $sale->customer->business_name
+                    ?? $sale->customer_shopname
+                    ?? 'Walk-in' }}
+            </span>
         @endif
     </td>
 
     <td class="text-center">{{ $sale->customer_phone ?? '-' }}</td>
 
-    <td style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="{{ is_array($items) ? implode(', ', $items) : '' }}">
+    <td style="max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="{{ is_array($items) ? implode(', ', $items) : '' }}">
         @php
             $itemsArray = is_array($items) ? $items : [];
         @endphp
@@ -217,6 +209,7 @@
 @endforelse
 </tbody>
 </table>
+</div>
 
 <div class="d-flex justify-content-end mt-3">
     <style>

@@ -1,4 +1,4 @@
-i@include('admin_panel.include.header_include')
+@include('admin_panel.include.header_include')
 
 <div class="main-wrapper">
     @include('admin_panel.include.navbar_include')
@@ -6,6 +6,13 @@ i@include('admin_panel.include.header_include')
 
     <div class="page-wrapper">
         <div class="content">
+            <div class="page-header d-flex justify-content-between align-items-center no-print mb-3">
+                <div class="page-title">
+                    <a href="{{ url()->previous() }}" class="btn btn-primary">
+                        <i class="fas fa-arrow-left"></i> Back
+                    </a>
+                </div>
+            </div>
             <div class="card p-4" id="invoice">
                 <div class="card-body">
                     <!-- Header Section -->
