@@ -251,6 +251,7 @@ Route::get('/local/sale/delete/{id}', [LocalSaleController::class, 'delete_local
 Route::get('/local/sale/edit/{id}', [LocalSaleController::class, 'localsaleEdit'])->name('local.sale.edit');
 Route::put('/local/sale/update/{id}', [LocalSaleController::class, 'localsaleupdate'])->name('local.sale.update');
 Route::post('/local/sale/convert/{id}/{targetType}', [LocalSaleController::class, 'convert_localsale'])->name('local.sale.convert');
+Route::put('/api/v1/transactions/status-update', [LocalSaleController::class, 'statusUpdateAjax'])->name('api.transactions.status-update');
 
 // ========================= NOTIFICATIONS ROUTES =========================
 Route::prefix('notifications')->group(function () {

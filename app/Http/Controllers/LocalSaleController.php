@@ -14,13 +14,21 @@ use Illuminate\Support\Facades\DB;
 
 class LocalSaleController extends Controller
 {
-    public function local_sale()
+    public function local_sale(Request $request)
     {
         $userId = Auth::id();
+        $cloneEstimate = null;
+
+        if ($request->filled('clone_from_estimate')) {
+            $cloneEstimate = LocalSale::where('admin_or_user_id', $userId)
+                ->where('id', $request->clone_from_estimate)
+                ->first();
+        }
 
         return view('admin_panel.local_sale.add_sale', [
             'Customers' => Customer::where('admin_or_user_id', $userId)->get(),
             'Vendors' => Vendor::where('admin_or_user_id', $userId)->get(),
+            'cloneEstimate' => $cloneEstimate,
         ]);
     }
 
@@ -103,6 +111,7 @@ class LocalSaleController extends Controller
 
             $sale = LocalSale::create([
                 'admin_or_user_id' => $userId,
+                'estimate_id' => $request->estimate_id,
                 'sale_type' => $request->sale_type ?? 'estimate',
                 'invoice_number' => LocalSale::generateSaleInvoiceNo(),
                 'sale_date' => $request->sale_date ?? now(),
@@ -139,7 +148,8 @@ class LocalSaleController extends Controller
                 foreach ($items as $index => $itemName) {
                     $productId = isset($itemIds[$index]) ? intval($itemIds[$index]) : null;
                     if ($productId) {
-                        $productModel = Product::find($productId);
+                        // Pessimistic lock to prevent race conditions on concurrent stock updates
+                        $productModel = Product::where('id', $productId)->lockForUpdate()->first();
                         if ($productModel) {
                             $openingStock = floatval($productModel->initial_stock ?? 0);
                             $usedStock = floatval($qtys[$index] ?? 0);
@@ -203,6 +213,10 @@ class LocalSaleController extends Controller
 
             DB::commit();
 
+            if ($sale->sale_type === 'booking') {
+                return redirect()->route('job-orders.index', ['booking_id' => $sale->id, 'quick_assign' => 'true'])->with('success', 'Booking Saved Successfully');
+            }
+
             return redirect()->route('show-local-sale', $sale->id)->with('success', 'Job Order Saved Successfully');
 
         } catch (\Throwable $e) {
@@ -256,7 +270,11 @@ class LocalSaleController extends Controller
 
         $Sales = $baseQuery->orderBy('id', 'desc')->paginate(30)->withQueryString();
 
-        return view('admin_panel.local_sale.all_sale', compact('Sales', 'query'));
+        $Customers = Customer::where('admin_or_user_id', $authUser->id)->orderBy('customer_name')->get();
+        $Vendors   = Vendor::where('admin_or_user_id', $authUser->id)->orderBy('Party_name')->get();
+        $Products  = Product::where('admin_or_user_id', $authUser->id)->orderBy('item_name')->get();
+
+        return view('admin_panel.local_sale.all_sale', compact('Sales', 'query', 'Customers', 'Vendors', 'Products'));
     }
 
     public function deliveryNotifications()
@@ -563,6 +581,11 @@ class LocalSaleController extends Controller
             }
         });
 
+        // If convert_to was passed (from Convert to Booking / Sale flow), trigger conversion
+        if ($request->filled('convert_to')) {
+            return $this->convert_localsale($sale->id, $request->convert_to);
+        }
+
         return redirect()
             ->route('local.sale.invoice', $sale->id)
             ->with('success', 'Sale updated successfully');
@@ -715,6 +738,172 @@ class LocalSaleController extends Controller
         } catch (\Throwable $e) {
             DB::rollBack();
             return redirect()->back()->with('error', $e->getMessage());
+        }
+    }
+
+    public function statusUpdateAjax(Request $request)
+    {
+        if (!Auth::check()) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+        }
+
+        $request->validate([
+            'transaction_id' => 'required|exists:local_sales,id',
+            'status' => 'required|in:booking,sale'
+        ]);
+
+        $userId = Auth::id();
+        $targetType = $request->status;
+
+        DB::beginTransaction();
+        try {
+            // Use lockForUpdate to prevent race conditions on the transaction object
+            $sale = LocalSale::where('admin_or_user_id', $userId)
+                ->where('id', $request->transaction_id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            $oldType = $sale->sale_type;
+            $remaining = floatval($sale->remaining_amount);
+            $partyType = $sale->party_type;
+
+            if ($sale->sale_type === 'sale') {
+                return response()->json(['success' => false, 'message' => 'Cannot convert a completed sale'], 400);
+            }
+            if ($sale->sale_type === $targetType) {
+                return response()->json(['success' => false, 'message' => 'Already in target state'], 400);
+            }
+
+            // 1. Target is booking
+            if ($targetType === 'booking') {
+                if ($remaining > 0) {
+                    if ($partyType === 'customer' && $sale->customer_id) {
+                        $ledger = CustomerLedger::where('customer_id', $sale->customer_id)
+                            ->where('admin_or_user_id', $userId)
+                            ->first();
+
+                        if (!$ledger) {
+                            $ledger = new CustomerLedger();
+                            $ledger->customer_id = $sale->customer_id;
+                            $ledger->admin_or_user_id = $userId;
+                            $ledger->opening_balance = 0;
+                            $ledger->previous_balance = 0;
+                        }
+                        $ledger->closing_balance += $remaining;
+                        $ledger->save();
+                    } elseif ($partyType === 'vendor' && $sale->vendor_id) {
+                        $ledger = VendorLedger::where('vendor_id', $sale->vendor_id)
+                            ->where('admin_or_user_id', $userId)
+                            ->first();
+
+                        if (!$ledger) {
+                            $ledger = new VendorLedger();
+                            $ledger->vendor_id = $sale->vendor_id;
+                            $ledger->admin_or_user_id = $userId;
+                            $ledger->opening_balance = 0;
+                            $ledger->previous_balance = 0;
+                        }
+                        $ledger->closing_balance -= $remaining;
+                        $ledger->save();
+                    }
+                }
+
+                $sale->update([
+                    'sale_type' => 'booking'
+                ]);
+            }
+
+            // 2. Target is sale
+            if ($targetType === 'sale') {
+                if ($oldType === 'estimate') {
+                    if ($remaining > 0) {
+                        if ($partyType === 'customer' && $sale->customer_id) {
+                            $ledger = CustomerLedger::where('customer_id', $sale->customer_id)
+                                ->where('admin_or_user_id', $userId)
+                                ->first();
+
+                            if (!$ledger) {
+                                $ledger = new CustomerLedger();
+                                $ledger->customer_id = $sale->customer_id;
+                                $ledger->admin_or_user_id = $userId;
+                                $ledger->opening_balance = 0;
+                                $ledger->previous_balance = 0;
+                            }
+                            $ledger->closing_balance += $remaining;
+                            $ledger->save();
+                        } elseif ($partyType === 'vendor' && $sale->vendor_id) {
+                            $ledger = VendorLedger::where('vendor_id', $sale->vendor_id)
+                                ->where('admin_or_user_id', $userId)
+                                ->first();
+
+                            if (!$ledger) {
+                                $ledger = new VendorLedger();
+                                $ledger->vendor_id = $sale->vendor_id;
+                                $ledger->admin_or_user_id = $userId;
+                                $ledger->opening_balance = 0;
+                                $ledger->previous_balance = 0;
+                            }
+                            $ledger->closing_balance -= $remaining;
+                            $ledger->save();
+                        }
+                    }
+                }
+
+                // Automatically reduce stock and create StockOut records
+                $items = json_decode($sale->item, true) ?? [];
+                $qtys = json_decode($sale->qty, true) ?? [];
+
+                foreach ($items as $index => $itemName) {
+                    if (!empty($itemName)) {
+                        // Use lockForUpdate to prevent race conditions on stock decrements
+                        $productModel = Product::where('item_name', $itemName)
+                            ->lockForUpdate()
+                            ->first();
+
+                        if ($productModel) {
+                            $openingStock = floatval($productModel->initial_stock ?? 0);
+                            $usedStock = floatval($qtys[$index] ?? 0);
+                            
+                            // Prevent negative stock levels
+                            if ($openingStock < $usedStock) {
+                                throw new \Exception("Insufficient stock for item: {$itemName}. Available: {$openingStock}, Required: {$usedStock}");
+                            }
+
+                            $closingStock = $openingStock - $usedStock;
+
+                            // Create StockOut record
+                            \App\Models\StockOut::create([
+                                'admin_or_user_id' => $userId,
+                                'product_id' => $productModel->id,
+                                'local_sales_id' => $sale->id,
+                                'current_stock' => $openingStock,
+                                'close_stock' => $closingStock,
+                                'total_stock' => $usedStock,
+                                'created_at' => \Carbon\Carbon::now(),
+                                'updated_at' => \Carbon\Carbon::now(),
+                            ]);
+
+                            // Update product's initial_stock
+                            $productModel->initial_stock = $closingStock;
+                            $productModel->save();
+                        }
+                    }
+                }
+
+                $sale->update([
+                    'sale_type' => 'sale',
+                    'job_status' => 'completed',
+                    'delivery_date' => null,
+                    'notify_days_before' => 0,
+                ]);
+            }
+
+            DB::commit();
+            return response()->json(['success' => true, 'message' => 'Status updated successfully', 'sale_type' => $sale->sale_type]);
+
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 400);
         }
     }
 }

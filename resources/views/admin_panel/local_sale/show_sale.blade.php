@@ -363,6 +363,82 @@
     <div class="invoice-footer">
         <p>Powered by ProWave Software Solutions | Contact: 0317-3836223</p>
     </div>
+
+    <!-- Action Footer container with single DynamicActionButton -->
+    <div class="card-footer border-top p-3 bg-light text-end no-print">
+        @if($sale->sale_type === 'estimate')
+            <button id="dynamicActionBtn" class="btn btn-warning" data-id="{{ $sale->id }}" data-status="booking">
+                <i class="fa fa-arrow-circle-right me-1"></i>Update to Booking
+            </button>
+        @elseif($sale->sale_type === 'booking')
+            <button id="dynamicActionBtn" class="btn btn-success" data-id="{{ $sale->id }}" data-status="sale">
+                <i class="fa fa-check-circle me-1"></i>Finalize Sale
+            </button>
+        @else
+            <span class="badge bg-success p-2"><i class="fa fa-check-double me-1"></i>Completed Sale</span>
+        @endif
+        <a href="{{ route('local-sale', ['clone_from_estimate' => $sale->id]) }}" class="btn btn-outline-info ms-2">
+            <i class="fa fa-copy me-1"></i>Clone Estimate
+        </a>
+    </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const btn = document.getElementById('dynamicActionBtn');
+    if (btn) {
+        btn.addEventListener('click', function() {
+            const transactionId = this.dataset.id;
+            const targetStatus = this.dataset.status;
+
+            Swal.fire({
+                title: 'Confirm Transition',
+                text: `Do you want to change this order status to ${targetStatus}?`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, proceed',
+                showLoaderOnConfirm: true,
+                preConfirm: () => {
+                    return axios.put("{{ route('api.transactions.status-update') }}", {
+                        transaction_id: transactionId,
+                        status: targetStatus,
+                        _token: "{{ csrf_token() }}"
+                    })
+                    .then(response => {
+                        if (!response.data.success) {
+                            throw new Error(response.data.message || 'Error updating status');
+                        }
+                        return response.data;
+                    })
+                    .catch(error => {
+                        Swal.showValidationMessage(
+                            `Request failed: ${error.response ? error.response.data.message : error.message}`
+                        );
+                    });
+                },
+                allowOutsideClick: () => !Swal.isLoading()
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Updated!',
+                        text: result.value.message,
+                        timer: 1500,
+                        showConfirmButton: false
+                    }).then(() => {
+                        if (result.value.sale_type === 'booking') {
+                            window.location.href = "{{ route('job-orders.index') }}?booking_id=" + transactionId + "&quick_assign=true";
+                        } else {
+                            window.location.reload();
+                        }
+                    });
+                }
+            });
+        });
+    }
+});
+</script>
 
 @include('admin_panel.include.footer_include')

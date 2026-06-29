@@ -461,6 +461,37 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     });
+
+    // Auto-open assignment modal if quick_assign query param is present
+    const urlParams = new URLSearchParams(window.location.search);
+    const bookingId = urlParams.get('booking_id');
+    const quickAssign = urlParams.get('quick_assign');
+    if (bookingId && quickAssign === 'true') {
+        // Find matching job row button to click or simulate
+        let found = false;
+        document.querySelectorAll('.manage-job-btn').forEach(btn => {
+            const jobs = groupedJobsData[btn.dataset.jobNumber];
+            if (jobs && jobs.some(job => String(job.sale_id) === String(bookingId))) {
+                btn.click();
+                found = true;
+            }
+        });
+        
+        // If no jobs exist yet, open the top "Add Job Order" modal and pre-select the booking
+        if (!found) {
+            const addJobBtn = document.querySelector('[data-bs-target="#addJobModal"]');
+            if (addJobBtn) {
+                addJobBtn.click();
+                const selectElement = document.getElementById('jobSelect');
+                if (selectElement) {
+                    selectElement.value = bookingId;
+                    // Trigger change event to populate details automatically
+                    const event = new Event('change');
+                    selectElement.dispatchEvent(event);
+                }
+            }
+        }
+    }
 });
 </script>
 

@@ -63,11 +63,23 @@
     <div class="page-wrapper">
         <div class="content">
 
-            <h4 class="mb-3">✏️ Edit Job Order</h4>
+            @php $convertTo = request('convert_to'); @endphp
+            <h4 class="mb-3">
+                @if($convertTo === 'booking')
+                    📋 Convert Estimate to Booking
+                @elseif($convertTo === 'sale')
+                    🛒 Convert to Sale
+                @else
+                    ✏️ Edit Job Order
+                @endif
+            </h4>
 
             <form method="POST" action="{{ route('local.sale.update', $original->id) }}">
                 @csrf
                 @method('PUT')
+                @if($convertTo)
+                    <input type="hidden" name="convert_to" value="{{ $convertTo }}">
+                @endif
 
                 {{-- ================= PARTY ================= --}}
                 <div class="card mb-3">
@@ -274,7 +286,13 @@
                     </div>
                 </div>
 
-                <button class="btn btn-primary">Update Sale</button>
+                @if($convertTo === 'booking')
+                    <button class="btn btn-warning"><i class="fa fa-calendar-alt me-1"></i> Save & Convert to Booking</button>
+                @elseif($convertTo === 'sale')
+                    <button class="btn btn-success"><i class="fa fa-shopping-cart me-1"></i> Save & Convert to Sale</button>
+                @else
+                    <button class="btn btn-primary">Update Sale</button>
+                @endif
 
             </form>
         </div>

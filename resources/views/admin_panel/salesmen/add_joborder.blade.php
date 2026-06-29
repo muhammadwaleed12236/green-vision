@@ -1630,5 +1630,24 @@
             });
         });
 
+        // Auto-open assignment modal if quick_assign query param is present
+        const urlParams = new URLSearchParams(window.location.search);
+        const bookingId = urlParams.get('booking_id');
+        const quickAssign = urlParams.get('quick_assign');
+        
+        if (bookingId && quickAssign === 'true') {
+            const addJobBtn = document.querySelector('[data-bs-target="#addJobModal"]');
+            if (addJobBtn) {
+                addJobBtn.click();
+                setTimeout(() => {
+                    const selectElement = document.getElementById('jobSelect');
+                    if (selectElement) {
+                        selectElement.value = bookingId;
+                        // Trigger change event to populate details automatically
+                        $(selectElement).trigger('change');
+                    }
+                }, 500); // Give modal time to show
+            }
+        }
     });
 </script>

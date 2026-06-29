@@ -144,3 +144,12 @@
 		</div>
 	</div>
 </div>
+
+<script>
+document.addEventListener('keydown', function(e) {
+    if (e.ctrlKey && e.altKey && (e.key === 's' || e.key === 'S')) {
+        e.preventDefault();
+        window.location.href = "{{ route('local-sale') }}";
+    }
+});
+</script>

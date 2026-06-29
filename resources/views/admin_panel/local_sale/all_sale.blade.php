@@ -158,12 +158,9 @@
                 @if($sale->sale_type === 'estimate')
                     <li><hr class="dropdown-divider"></li>
                     <li>
-                        <form action="{{ route('local.sale.convert', [$sale->id, 'booking']) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to convert this Estimate to a Booking? This will affect the ledger balance.')">
-                            @csrf
-                            <button type="submit" class="dropdown-item text-primary">
-                                <i class="fa fa-calendar-alt me-2"></i>Convert to Booking
-                            </button>
-                        </form>
+                        <a class="dropdown-item text-primary" href="{{ route('local.sale.edit', $sale->id) }}?convert_to=booking">
+                            <i class="fa fa-calendar-alt me-2"></i>Convert to Booking
+                        </a>
                     </li>
                     <li>
                         <form action="{{ route('local.sale.convert', [$sale->id, 'sale']) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to convert this Estimate to a Sale? This will reduce stock and update the ledger.')">
@@ -243,6 +240,7 @@
 </div>
 </div>
 </div>
+
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
