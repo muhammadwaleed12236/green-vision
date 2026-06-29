@@ -305,7 +305,9 @@
             <div class="info-block-title">Invoice Details</div>
             <p><strong>Invoice No:</strong> #{{ $sale->invoice_number }}</p>
             <p><strong>Invoice Date:</strong> {{ date('d-M-Y', strtotime($sale->sale_date)) }}</p>
+            @if(strtolower($sale->sale_type) !== 'estimate')
             <p><strong>Delivery Date:</strong> {{ !empty($sale->delivery_date) ? date('d-M-Y', strtotime($sale->delivery_date)) : 'Not Scheduled' }}</p>
+            @endif
         </div>
     </div>
 

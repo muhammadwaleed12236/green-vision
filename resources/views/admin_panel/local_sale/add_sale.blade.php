@@ -1,4 +1,4 @@
-@include('admin_panel.include.header_include')
+﻿@include('admin_panel.include.header_include')
 
 <style>
     /* General Table Styling */
@@ -164,9 +164,9 @@
                                  <div class="col-md-3">
                                      <label>Party Type</label>
                                      <select id="partyType" name="party_type" class="form-control">
-                                         <option value="customer" {{ (old('party_type') ?? ($cloneEstimate->party_type ?? '')) == 'customer' ? 'selected' : '' }}>Customer</option>
-                                         <option value="vendor" {{ (old('party_type') ?? ($cloneEstimate->party_type ?? '')) == 'vendor' ? 'selected' : '' }}>Vendor</option>
-                                         <option value="walkin" {{ (old('party_type') ?? ($cloneEstimate->party_type ?? '')) == 'walkin' ? 'selected' : '' }}>Walk-In</option>
+                                         <option value="customer" {{ (old('party_type') ?? ($cloneEstimate?->party_type ?? '')) == 'customer' ? 'selected' : '' }}>Customer</option>
+                                         <option value="vendor" {{ (old('party_type') ?? ($cloneEstimate?->party_type ?? '')) == 'vendor' ? 'selected' : '' }}>Vendor</option>
+                                         <option value="walkin" {{ (old('party_type') ?? ($cloneEstimate?->party_type ?? '')) == 'walkin' ? 'selected' : '' }}>Walk-In</option>
                                      </select>
                                  </div>
 
@@ -198,7 +198,7 @@
                                          @foreach ($Vendors as $v)
                                              <option value="{{ $v->id }}" data-phone="{{ $v->Party_phone }}"
                                                  data-address="{{ $v->Party_address }}"
-                                                 {{ (old('vendor_id') ?? ($cloneEstimate->vendor_id ?? '')) == $v->id ? 'selected' : '' }}>
+                                                 {{ (old('vendor_id') ?? ($cloneEstimate?->vendor_id ?? '')) == $v->id ? 'selected' : '' }}>
                                                  {{ $v->Party_name }}
                                              </option>
                                          @endforeach
@@ -217,17 +217,17 @@
 
                                  <div class="col-md-3 d-none" id="walkinName">
                                      <label>Name</label>
-                                     <input name="walkin_name" class="form-control" value="{{ old('walkin_name') ?? ($cloneEstimate->party_type === 'walkin' ? $cloneEstimate->customer_shopname : '') }}">
+                                     <input name="walkin_name" class="form-control" value="{{ old('walkin_name') ?? ($cloneEstimate?->party_type === 'walkin' ? $cloneEstimate?->customer_shopname : '') }}">
                                  </div>
 
                                  <div class="col-md-3 d-none" id="walkinPhone">
                                      <label>Phone</label>
-                                     <input name="walkin_phone" class="form-control" value="{{ old('walkin_phone') ?? ($cloneEstimate->party_type === 'walkin' ? $cloneEstimate->customer_phone : '') }}">
+                                     <input name="walkin_phone" class="form-control" value="{{ old('walkin_phone') ?? ($cloneEstimate?->party_type === 'walkin' ? $cloneEstimate?->customer_phone : '') }}">
                                  </div>
 
                                  <div class="col-md-3 d-none" id="walkinAddress">
                                      <label>Address</label>
-                                     <input name="walkin_address" class="form-control" value="{{ old('walkin_address') ?? ($cloneEstimate->party_type === 'walkin' ? $cloneEstimate->customer_address : '') }}">
+                                     <input name="walkin_address" class="form-control" value="{{ old('walkin_address') ?? ($cloneEstimate?->party_type === 'walkin' ? $cloneEstimate?->customer_address : '') }}">
                                  </div>
                             </div>
                         </div>
@@ -255,11 +255,11 @@
                                 <tbody id="saleTableBody">
                                  @php
                                      $oldItemNames = old('item_name', []);
-                                     $cloneItems = isset($cloneEstimate) ? json_decode($cloneEstimate->item, true) : [];
-                                     $cloneQtys = isset($cloneEstimate) ? json_decode($cloneEstimate->qty, true) : [];
-                                     $cloneUnits = isset($cloneEstimate) ? json_decode($cloneEstimate->unit, true) : [];
-                                     $cloneRates = isset($cloneEstimate) ? json_decode($cloneEstimate->rate, true) : [];
-                                     $cloneAmounts = isset($cloneEstimate) ? json_decode($cloneEstimate->amount, true) : [];
+                                     $cloneItems = isset($cloneEstimate) ? json_decode($cloneEstimate?->item, true) : [];
+                                     $cloneQtys = isset($cloneEstimate) ? json_decode($cloneEstimate?->qty, true) : [];
+                                     $cloneUnits = isset($cloneEstimate) ? json_decode($cloneEstimate?->unit, true) : [];
+                                     $cloneRates = isset($cloneEstimate) ? json_decode($cloneEstimate?->rate, true) : [];
+                                     $cloneAmounts = isset($cloneEstimate) ? json_decode($cloneEstimate?->amount, true) : [];
                                      
                                      $rowCount = max(5, count($oldItemNames), count($cloneItems));
                                  @endphp
@@ -308,11 +308,11 @@
                          <div class="row g-3 mb-3">
                              <div class="col-md-4">
                                  <label class="fw-bold">Delivery Date <span class="text-danger">*</span></label>
-                                 <input type="date" name="delivery_date" class="form-control" value="{{ old('delivery_date') ?? ($cloneEstimate->delivery_date ?? '') }}" required>
+                                 <input type="date" name="delivery_date" class="form-control" value="{{ old('delivery_date') ?? ($cloneEstimate?->delivery_date ?? '') }}" required>
                              </div>
                              <div class="col-md-4">
                                  <label class="fw-bold">Notify Before (Days)</label>
-                                 <input type="number" name="notify_days_before" class="form-control" value="{{ old('notify_days_before') ?? ($cloneEstimate->notify_days_before ?? '2') }}" min="1" max="30">
+                                 <input type="number" name="notify_days_before" class="form-control" value="{{ old('notify_days_before') ?? ($cloneEstimate?->notify_days_before ?? '2') }}" min="1" max="30">
                                  <small class="text-muted">System will notify you X days before delivery</small>
                              </div>
                          </div>
@@ -324,12 +324,12 @@
                          <div class="row g-3">
                              <div class="col-md-3">
                                  <label>Gross Total</label>
-                                 <input id="grandTotal" class="form-control readonly-box" value="{{ $cloneEstimate->grand_total ?? '' }}" readonly>
+                                 <input id="grandTotal" class="form-control readonly-box" value="{{ $cloneEstimate?->grand_total ?? '' }}" readonly>
                              </div>
 
                              <div class="col-md-3">
                                  <label>Discount</label>
-                                 <input name="gross_discount" class="form-control" value="{{ old('gross_discount') ?? ($cloneEstimate->discount_value ?? '0') }}">
+                                 <input name="gross_discount" class="form-control" value="{{ old('gross_discount') ?? ($cloneEstimate?->discount_value ?? '0') }}">
                              </div>
 
                             <div class="col-md-3">
@@ -339,7 +339,7 @@
 
                              <div class="col-md-3">
                                  <label>Remaining</label>
-                                 <input id="remaining" class="form-control readonly-box" value="{{ $cloneEstimate->remaining_amount ?? '' }}" readonly>
+                                 <input id="remaining" class="form-control readonly-box" value="{{ $cloneEstimate?->remaining_amount ?? '' }}" readonly>
                              </div>
                          </div>
                      </div>

@@ -513,27 +513,32 @@ class LocalSaleController extends Controller
         }
 
         $sale = LocalSale::findOrFail($id);
-        $oldRemaining = $sale->remaining_amount;
+        $oldRemaining = floatval($sale->remaining_amount);
+        $oldType = $sale->sale_type;
+        $newType = $request->sale_type ?? $oldType;
+        $userId = Auth::id();
 
-        DB::transaction(function () use ($request, $sale, $oldRemaining) {
+        DB::beginTransaction();
 
+        try {
             $netAmount = floatval($request->net_amount ?? 0);
             $advance = floatval($request->advance_amount ?? 0);
             $remaining = $netAmount - $advance;
+            $partyType = $request->party_type;
 
-            if ($request->party_type === 'walkin') {
+            if ($partyType === 'walkin') {
                 $advance = $netAmount;
                 $remaining = 0;
             }
 
             // Save editable party fields back to their source
-            if ($request->party_type === 'customer' && $sale->customer) {
+            if ($partyType === 'customer' && $sale->customer) {
                 $sale->customer->update([
                     'customer_name' => $request->party_name,
                     'phone_number'  => $request->customer_phone,
                     'address'       => $request->customer_address,
                 ]);
-            } elseif ($request->party_type === 'vendor' && $sale->vendor) {
+            } elseif ($partyType === 'vendor' && $sale->vendor) {
                 $sale->vendor->update([
                     'Party_name'    => $request->party_name,
                     'Party_phone'   => $request->customer_phone,
@@ -546,11 +551,98 @@ class LocalSaleController extends Controller
                 $sale->customer_address  = $request->customer_address;
             }
 
+            // 1. Stock / StockOut adjustments
+            // First, if it was a Sale previously, we restore the stock
+            if ($oldType === 'sale') {
+                $stockOuts = \App\Models\StockOut::where('local_sales_id', $sale->id)->get();
+                foreach ($stockOuts as $so) {
+                    $product = Product::find($so->product_id);
+                    if ($product) {
+                        $product->initial_stock += floatval($so->total_stock);
+                        $product->save();
+                    }
+                    $so->delete();
+                }
+            }
+
+            // Now, if the new type is a Sale, we reduce stock
+            $items = $request->item ?? [];
+            $qtys = $request->qty ?? [];
+            if ($newType === 'sale') {
+                foreach ($items as $index => $itemName) {
+                    if (!empty($itemName)) {
+                        $productModel = Product::where('item_name', $itemName)->first();
+                        if ($productModel) {
+                            $openingStock = floatval($productModel->initial_stock ?? 0);
+                            $usedStock = floatval($qtys[$index] ?? 0);
+                            $closingStock = max($openingStock - $usedStock, 0);
+
+                            // Create StockOut record
+                            \App\Models\StockOut::create([
+                                'admin_or_user_id' => $userId,
+                                'product_id' => $productModel->id,
+                                'local_sales_id' => $sale->id,
+                                'current_stock' => $openingStock,
+                                'close_stock' => $closingStock,
+                                'total_stock' => $usedStock,
+                                'created_at' => \Carbon\Carbon::now(),
+                                'updated_at' => \Carbon\Carbon::now(),
+                            ]);
+
+                            // Update product's initial_stock
+                            $productModel->initial_stock = $closingStock;
+                            $productModel->save();
+                        }
+                    }
+                }
+            }
+
+            // 2. Ledger Adjustments
+            // Calculate unified change diff
+            $ledgerDiff = 0;
+            if ($oldType !== 'estimate') {
+                $ledgerDiff -= $oldRemaining;
+            }
+            if ($newType !== 'estimate') {
+                $ledgerDiff += $remaining;
+            }
+
+            if ($ledgerDiff != 0) {
+                if ($partyType === 'customer' && $request->customer_id) {
+                    $ledger = CustomerLedger::where('customer_id', $request->customer_id)
+                        ->where('admin_or_user_id', $userId)
+                        ->first();
+                    if ($ledger) {
+                        $ledger->increment('closing_balance', $ledgerDiff);
+                    } else {
+                        CustomerLedger::create([
+                            'customer_id' => $request->customer_id,
+                            'admin_or_user_id' => $userId,
+                            'closing_balance' => $ledgerDiff,
+                        ]);
+                    }
+                } elseif ($partyType === 'vendor' && $request->vendor_id) {
+                    $ledger = VendorLedger::where('vendor_id', $request->vendor_id)
+                        ->where('admin_or_user_id', $userId)
+                        ->first();
+                    if ($ledger) {
+                        $ledger->decrement('closing_balance', $ledgerDiff); // Vendor is payable (opposite)
+                    } else {
+                        VendorLedger::create([
+                            'vendor_id' => $request->vendor_id,
+                            'admin_or_user_id' => $userId,
+                            'closing_balance' => -$ledgerDiff,
+                        ]);
+                    }
+                }
+            }
+
+            // 3. Update the LocalSale model
             $sale->update([
                 'party_type' => $request->party_type,
                 'customer_id' => $request->customer_id,
                 'vendor_id' => $request->vendor_id,
-                'item' => json_encode($request->item ?? []),
+                'item' => json_encode($items),
                 'height' => json_encode($request->height ?? []),
                 'width' => json_encode($request->width ?? []),
                 'unit' => json_encode($request->unit ?? []),
@@ -562,35 +654,23 @@ class LocalSaleController extends Controller
                 'advance_amount' => $advance,
                 'net_amount' => $netAmount,
                 'remaining_amount' => $remaining,
+                'sale_type' => $newType,
+                'sale_date' => $request->sale_date ?? $sale->sale_date,
+                'job_status' => ($newType === 'sale') ? 'completed' : (($oldType === 'sale') ? 'pending' : $sale->job_status),
+                'delivery_date' => ($newType === 'sale') ? null : ($request->delivery_date ?? $sale->delivery_date),
+                'notify_days_before' => ($newType === 'sale') ? 0 : ($request->notify_days_before ?? $sale->notify_days_before ?? 2),
             ]);
 
-            if ($request->party_type === 'customer' && $sale->sale_type !== 'estimate') {
-                $diff = $remaining - $oldRemaining;
-                if ($diff != 0) {
-                    $ledger = CustomerLedger::where('customer_id', $request->customer_id)
-                        ->where('admin_or_user_id', Auth::id())
-                        ->first();
-                    if ($ledger) {
-                        $ledger->increment('closing_balance', $diff);
-                    } else {
-                        CustomerLedger::create([
-                            'customer_id' => $request->customer_id,
-                            'admin_or_user_id' => Auth::id(),
-                            'closing_balance' => $remaining,
-                        ]);
-                    }
-                }
-            }
-        });
+            DB::commit();
 
-        // If convert_to was passed (from Convert to Booking / Sale flow), trigger conversion
-        if ($request->filled('convert_to')) {
-            return $this->convert_localsale($sale->id, $request->convert_to);
+            return redirect()
+                ->route('local.sale.invoice', $sale->id)
+                ->with('success', 'Invoice updated successfully');
+
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            return back()->with('error', $e->getMessage());
         }
-
-        return redirect()
-            ->route('local.sale.invoice', $sale->id)
-            ->with('success', 'Sale updated successfully');
     }
 
     public function convert_localsale($id, $targetType)

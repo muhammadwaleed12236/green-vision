@@ -63,23 +63,29 @@
     <div class="page-wrapper">
         <div class="content">
 
-            @php $convertTo = request('convert_to'); @endphp
-            <h4 class="mb-3">
-                @if($convertTo === 'booking')
-                    📋 Convert Estimate to Booking
-                @elseif($convertTo === 'sale')
-                    🛒 Convert to Sale
-                @else
-                    ✏️ Edit Job Order
-                @endif
-            </h4>
-
             <form method="POST" action="{{ route('local.sale.update', $original->id) }}">
                 @csrf
                 @method('PUT')
-                @if($convertTo)
-                    <input type="hidden" name="convert_to" value="{{ $convertTo }}">
-                @endif
+
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4 class="mb-0">✏️ Edit Job Order</h4>
+                    <div class="d-flex gap-3 align-items-center">
+                        <div class="btn-group" role="group">
+                            <input type="radio" class="btn-check" name="sale_type" id="sale_type_estimate" value="estimate" {{ old('sale_type', $original->sale_type) == 'estimate' ? 'checked' : '' }} autocomplete="off">
+                            <label class="btn btn-outline-secondary px-3 sale-type-label" for="sale_type_estimate">Estimate</label>
+
+                            <input type="radio" class="btn-check" name="sale_type" id="sale_type_sale" value="sale" {{ old('sale_type', $original->sale_type) == 'sale' ? 'checked' : '' }} autocomplete="off">
+                            <label class="btn btn-outline-secondary px-3 sale-type-label" for="sale_type_sale">Sale</label>
+
+                            <input type="radio" class="btn-check" name="sale_type" id="sale_type_booking" value="booking" {{ old('sale_type', $original->sale_type) == 'booking' ? 'checked' : '' }} autocomplete="off">
+                            <label class="btn btn-outline-secondary px-3 sale-type-label" for="sale_type_booking">Booking</label>
+                        </div>
+                        <div style="max-width: 260px;">
+                            <label class="small text-muted d-block mb-0">Sale Date & Time</label>
+                            <input type="datetime-local" name="sale_date" class="form-control form-control-sm" value="{{ old('sale_date', \Carbon\Carbon::parse($original->sale_date)->format('Y-m-d\TH:i')) }}">
+                        </div>
+                    </div>
+                </div>
 
                 {{-- ================= PARTY ================= --}}
                 <div class="card mb-3">
@@ -253,6 +259,24 @@
                     </div>
                 </div>
 
+                {{-- ================= DELIVERY & PAYMENT ================= --}}
+                <div class="card mb-3" id="deliveryPaymentPanel">
+                    <div class="card-body">
+                        <h6 class="mb-3 fw-bold text-primary">Delivery & Payment Details</h6>
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-4">
+                                <label class="fw-bold">Delivery Date <span class="text-danger">*</span></label>
+                                <input type="date" name="delivery_date" class="form-control" value="{{ old('delivery_date', $original->delivery_date) }}" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="fw-bold">Notify Before (Days)</label>
+                                <input type="number" name="notify_days_before" class="form-control" value="{{ old('notify_days_before', $original->notify_days_before ?? 2) }}" min="1" max="30">
+                                <small class="text-muted">System will notify you X days before delivery</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 {{-- ================= TOTAL ================= --}}
                 <div class="card mb-3">
                     <div class="card-body">
@@ -271,8 +295,8 @@
                             </div>
 
                             <div class="col-md-3">
-                                <label>Advance</label>
-                                <input name="advance_amount" class="form-control"
+                                <label id="advanceLabel">Advance</label>
+                                <input id="advance" name="advance_amount" class="form-control"
                                     value="{{ $original->advance_amount }}">
                             </div>
 
@@ -286,13 +310,7 @@
                     </div>
                 </div>
 
-                @if($convertTo === 'booking')
-                    <button class="btn btn-warning"><i class="fa fa-calendar-alt me-1"></i> Save & Convert to Booking</button>
-                @elseif($convertTo === 'sale')
-                    <button class="btn btn-success"><i class="fa fa-shopping-cart me-1"></i> Save & Convert to Sale</button>
-                @else
-                    <button class="btn btn-primary">Update Sale</button>
-                @endif
+                <button class="btn btn-primary"><i class="fa fa-save me-1"></i> Update Invoice</button>
 
             </form>
         </div>
@@ -488,5 +506,29 @@
             }
             return false;
         }
+    });
+
+    function handleSaleTypeToggle() {
+        let saleType = $('input[name="sale_type"]:checked').val();
+        let advanceLabel = $('#advanceLabel');
+
+        if (saleType === 'sale') {
+            $('#deliveryPaymentPanel').addClass('d-none');
+            $('[name="delivery_date"]').prop('required', false).val('');
+            advanceLabel.text('Received Amount');
+        } else {
+            $('#deliveryPaymentPanel').removeClass('d-none');
+            $('[name="delivery_date"]').prop('required', true);
+            if (saleType === 'booking') {
+                advanceLabel.text('Advance Amount');
+            } else {
+                advanceLabel.text('Advance/Received');
+            }
+        }
+    }
+
+    $(document).ready(function() {
+        handleSaleTypeToggle();
+        $('input[name="sale_type"]').on('change', handleSaleTypeToggle);
     });
 </script>

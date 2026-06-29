@@ -142,38 +142,13 @@
                         <i class="fa fa-file-invoice me-2"></i>Invoice
                     </a>
                 </li>
+                @if($sale->sale_type !== 'sale')
                 <li>
                     <a class="dropdown-item" href="{{ route('local.sale.edit', $sale->id) }}">
-                        <i class="fa fa-edit me-2"></i>Edit
+                        <i class="fa fa-edit me-2"></i>Update Invoice
                     </a>
                 </li>
-                @if($sale->sale_type === 'estimate')
-                    <li><hr class="dropdown-divider"></li>
-                    <li>
-                        <a class="dropdown-item text-primary" href="{{ route('local.sale.edit', $sale->id) }}?convert_to=booking">
-                            <i class="fa fa-calendar-alt me-2"></i>Convert to Booking
-                        </a>
-                    </li>
-                    <li>
-                        <form action="{{ route('local.sale.convert', [$sale->id, 'sale']) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to convert this Estimate to a Sale? This will reduce stock and update the ledger.')">
-                            @csrf
-                            <button type="submit" class="dropdown-item text-success">
-                                <i class="fa fa-shopping-cart me-2"></i>Convert to Sale
-                            </button>
-                        </form>
-                    </li>
-                @elseif($sale->sale_type === 'booking')
-                    <li><hr class="dropdown-divider"></li>
-                    <li>
-                        <form action="{{ route('local.sale.convert', [$sale->id, 'sale']) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to convert this Booking to a Sale? This will reduce stock.')">
-                            @csrf
-                            <button type="submit" class="dropdown-item text-success">
-                                <i class="fa fa-shopping-cart me-2"></i>Convert to Sale
-                            </button>
-                        </form>
-                    </li>
                 @endif
-                <li><hr class="dropdown-divider"></li>
                 @if($sale->job_status == 'ready')
                     <li>
                         <a class="dropdown-item text-success mark-complete-btn" href="javascript:void(0);"
