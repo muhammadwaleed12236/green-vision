@@ -387,6 +387,9 @@
             <button id="dynamicActionBtn" class="btn btn-warning" data-id="{{ $sale->id }}" data-status="booking">
                 <i class="fa fa-arrow-circle-right me-1"></i>Update to Booking
             </button>
+            <a href="{{ route('local.sale.edit', $sale->id) }}" class="btn btn-primary ms-2">
+                <i class="fa fa-edit me-1"></i>Edit Estimate
+            </a>
         @elseif($sale->sale_type === 'booking')
             <button id="dynamicActionBtn" class="btn btn-success" data-id="{{ $sale->id }}" data-status="sale">
                 <i class="fa fa-check-circle me-1"></i>Finalize Sale

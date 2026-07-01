@@ -531,24 +531,15 @@ class LocalSaleController extends Controller
                 $remaining = 0;
             }
 
-            // Save editable party fields back to their source
-            if ($partyType === 'customer' && $sale->customer) {
-                $sale->customer->update([
-                    'customer_name' => $request->party_name,
-                    'phone_number'  => $request->customer_phone,
-                    'address'       => $request->customer_address,
-                ]);
-            } elseif ($partyType === 'vendor' && $sale->vendor) {
-                $sale->vendor->update([
-                    'Party_name'    => $request->party_name,
-                    'Party_phone'   => $request->customer_phone,
-                    'Party_address' => $request->customer_address,
-                ]);
+            // Walk-in: store directly on the sale row
+            if ($partyType === 'walkin') {
+                $sale->customer_shopname = $request->walkin_name;
+                $sale->customer_phone    = $request->walkin_phone;
+                $sale->customer_address  = $request->walkin_address;
             } else {
-                // Walk-in: store directly on the sale row
-                $sale->customer_shopname = $request->party_name;
-                $sale->customer_phone    = $request->customer_phone;
-                $sale->customer_address  = $request->customer_address;
+                $sale->customer_shopname = null;
+                $sale->customer_phone    = null;
+                $sale->customer_address  = null;
             }
 
             // 1. Stock / StockOut adjustments

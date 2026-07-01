@@ -92,51 +92,69 @@
                     <div class="card-body">
                         <div class="row g-3">
 
-                            @php
-                            // determine party display values
-                            $partyName = '';
-                            $phone = '';
-                            $address = '';
-
-                            if ($original->party_type === 'customer' && $original->customer) {
-                                $partyName = $original->customer->customer_name ?? $original->customer->shop_name;
-                                $phone = $original->customer->phone_number;
-                                $address = $original->customer->address;
-                            } elseif ($original->party_type === 'vendor' && $original->vendor) {
-                                $partyName = $original->vendor->Party_name;
-                                $phone = $original->vendor->Party_phone;
-                                $address = $original->vendor->Party_address;
-                            } else {
-                                // walkin or fallback
-                                $partyName = $original->customer_shopname;
-                                $phone = $original->customer_phone;
-                                $address = $original->customer_address;
-                            }
+                        @php
+                            $cloneEstimate = $original; // Reuse add_sale logic
                         @endphp
-
-                        <input type="hidden" name="party_type" value="{{ $original->party_type }}">
-                        <input type="hidden" name="customer_id" value="{{ $original->customer_id }}">
-                        <input type="hidden" name="vendor_id" value="{{ $original->vendor_id }}">
-                        <input type="hidden" name="walkin_name" value="{{ $original->customer_shopname }}">
-
                         <div class="col-md-3">
                             <label>Party Type</label>
-                            <input class="form-control readonly-box" value="{{ ucfirst($original->party_type) }}" readonly>
+                            <select id="partyType" name="party_type" class="form-control">
+                                <option value="customer" {{ (old('party_type') ?? ($cloneEstimate?->party_type ?? '')) == 'customer' ? 'selected' : '' }}>Customer</option>
+                                <option value="vendor" {{ (old('party_type') ?? ($cloneEstimate?->party_type ?? '')) == 'vendor' ? 'selected' : '' }}>Vendor</option>
+                                <option value="walkin" {{ (old('party_type') ?? ($cloneEstimate?->party_type ?? '')) == 'walkin' ? 'selected' : '' }}>Walk-In</option>
+                            </select>
                         </div>
 
-                        <div class="col-md-3">
-                            <label>Party</label>
-                            <input class="form-control readonly-box" value="{{ $partyName }}" readonly>
+                        <div class="col-md-3 party-box" id="customerBox">
+                            <label>Customer</label>
+                            <select class="form-control search" name="customer_id" id="customer">
+                                <option value="">Select</option>
+                                @foreach ($Customers as $c)
+                                    <option value="{{ $c->id }}" data-phone="{{ $c->phone_number }}"
+                                        data-address="{{ $c->address }}"
+                                        {{ (old('customer_id') ?? ($cloneEstimate?->customer_id ?? '')) == $c->id ? 'selected' : '' }}>
+                                        {{ $c->customer_name ?? $c->shop_name }}
+                                    </option>
+                                @endforeach
+                            </select>
                         </div>
 
-                        <div class="col-md-3">
+                        <div class="col-md-3 party-box d-none" id="vendorBox">
+                            <label>Vendor</label>
+                            <select class="form-control search" name="vendor_id" id="vendor">
+                                <option value="">Select</option>
+                                @foreach ($Vendors as $v)
+                                    <option value="{{ $v->id }}" data-phone="{{ $v->Party_phone }}"
+                                        data-address="{{ $v->Party_address }}"
+                                        {{ (old('vendor_id') ?? ($cloneEstimate?->vendor_id ?? '')) == $v->id ? 'selected' : '' }}>
+                                        {{ $v->Party_name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div class="col-md-3 readonly-wrap">
                             <label>Phone</label>
-                            <input class="form-control readonly-box" value="{{ $phone }}" readonly>
+                            <input id="phone" class="form-control readonly-box" readonly>
                         </div>
 
-                        <div class="col-md-3">
+                        <div class="col-md-3 readonly-wrap mt-3">
                             <label>Address</label>
-                            <input class="form-control readonly-box" value="{{ $address }}" readonly>
+                            <input id="address" class="form-control readonly-box" readonly>
+                        </div>
+
+                        <div class="col-md-3 d-none mt-3" id="walkinName">
+                            <label>Name</label>
+                            <input name="walkin_name" class="form-control" value="{{ old('walkin_name') ?? ($cloneEstimate?->party_type === 'walkin' ? $cloneEstimate?->customer_shopname : '') }}">
+                        </div>
+
+                        <div class="col-md-3 d-none mt-3" id="walkinPhone">
+                            <label>Phone</label>
+                            <input name="walkin_phone" class="form-control" value="{{ old('walkin_phone') ?? ($cloneEstimate?->party_type === 'walkin' ? $cloneEstimate?->customer_phone : '') }}">
+                        </div>
+
+                        <div class="col-md-3 d-none mt-3" id="walkinAddress">
+                            <label>Address</label>
+                            <input name="walkin_address" class="form-control" value="{{ old('walkin_address') ?? ($cloneEstimate?->party_type === 'walkin' ? $cloneEstimate?->customer_address : '') }}">
                         </div>
 
                         </div>
@@ -530,5 +548,55 @@
     $(document).ready(function() {
         handleSaleTypeToggle();
         $('input[name="sale_type"]').on('change', handleSaleTypeToggle);
+
+        $('#partyType').on('change', function () {
+            let t = this.value;
+            $('#customerBox,#vendorBox').addClass('d-none');
+            $('#walkinName,#walkinPhone,#walkinAddress').addClass('d-none');
+            $('.readonly-wrap').addClass('d-none');
+
+            $('#advance').prop('readonly', false);
+            $('#advanceLabel').text('Advance');
+            $('#remaining').closest('.col-md-3').removeClass('d-none');
+
+            if (t === 'customer') {
+                $('#customerBox').removeClass('d-none');
+                $('.readonly-wrap').removeClass('d-none');
+            }
+
+            if (t === 'vendor') {
+                $('#vendorBox').removeClass('d-none');
+                $('.readonly-wrap').removeClass('d-none');
+            }
+
+            if (t === 'walkin') {
+                $('#walkinName,#walkinPhone,#walkinAddress').removeClass('d-none');
+                $('#advance').val($('#grandTotal').val()).prop('readonly', true);
+                $('#advanceLabel').text('Paid Amount');
+                $('#remaining').val('0');
+                $('#remaining').closest('.col-md-3').addClass('d-none');
+            }
+            calcGrand();
+        });
+
+        $('#partyType').trigger('change');
+
+        $('#customer').on('change', function () {
+            let o = $('option:selected', this);
+            $('#phone').val(o.data('phone') || '');
+            $('#address').val(o.data('address') || '');
+        });
+
+        $('#vendor').on('change', function () {
+            let o = $('option:selected', this);
+            $('#phone').val(o.data('phone') || '');
+            $('#address').val(o.data('address') || '');
+        });
+
+        // Populate phone/address from old selection on load
+        let selCust = $('#customer').find('option:selected');
+        if (selCust.val()) { $('#phone').val(selCust.data('phone') || ''); $('#address').val(selCust.data('address') || ''); }
+        let selVend = $('#vendor').find('option:selected');
+        if (selVend.val()) { $('#phone').val(selVend.data('phone') || ''); $('#address').val(selVend.data('address') || ''); }
     });
 </script>
