@@ -162,41 +162,20 @@
                             <thead class="table-light">
                                 <tr>
                                     <th>Product</th>
-                                    <th>Unit</th>
-                                    <th>Opening Stock</th>
-                                    <th>Used Stock</th>
-                                    <th>Closing Stock</th>
-                                    <th>Action</th>
+                                    <th>Unit (UOM)</th>
+                                    <th>Available Stock</th>
+                                    <th>Job Quantity</th>
+                                    <th>Used Quantity</th>
+                                    <th>Unit Price</th>
+                                    <th>Total Price</th>
                                 </tr>
                             </thead>
 
                             <tbody id="productTableBody">
-                                <tr>
-                                    <td>
-                                        <select class="form-control product-select" name="products[0][product_id]" required>
-                                            <option value="">Select Product</option>
-                                        </select>
-                                    </td>
-
-                                    <td><input type="text" class="form-control bg-light unit-input" readonly></td>
-                                    <td><input type="number" class="form-control opening-stock" readonly></td>
-                                    <td><input type="number" class="form-control used-stock" name="products[0][used_stock]" required></td>
-                                    <td><input type="text" class="form-control closing-stock bg-light" readonly></td>
-
-                                    <td>
-                                        <button type="button" class="btn btn-danger btn-sm remove-row" disabled>Delete</button>
-                                    </td>
-                                </tr>
+                                <!-- Auto-populated by JS -->
                             </tbody>
-
                         </table>
                     </div>
-
-                    <div class="mt-3">
-                        <strong>Total Closing Stock: </strong>
-                        <span id="grandTotal">0</span>
-                    </div>
-
                 </div>
 
                 <div class="modal-footer">
@@ -215,33 +194,6 @@
 @push('scripts')
 <script>
 $(document).ready(function () {
-
-    // Cache products so we only fetch once
-    let productsCache = null;
-
-    // Load products via AJAX and populate all product dropdowns
-    function loadProducts() {
-        if (productsCache) {
-            populateProductDropdowns(productsCache);
-            return;
-        }
-        $.get('/get-products', function (response) {
-            productsCache = response;
-            populateProductDropdowns(response);
-        });
-    }
-
-    function populateProductDropdowns(products) {
-        $('.product-select').each(function () {
-            let currentVal = $(this).val();
-            let html = '<option value="">Select Product</option>';
-            products.forEach(function (p) {
-                html += `<option value="${p.id}" data-unit="${p.unit}" data-stock="${p.available_stock}">${p.item_name}</option>`;
-            });
-            $(this).html(html);
-            if (currentVal) $(this).val(currentVal);
-        });
-    }
 
     // Track the in-flight AJAX request so we can abort stale ones
     let pendingJobsReq = null;
@@ -263,6 +215,7 @@ $(document).ready(function () {
         destroySelect2(dropdown);
         dropdown.html('<option value="">Select Job</option>');
         $('#add_customer_name').val('');
+        $('#productTableBody').empty();
 
         pendingJobsReq = $.ajax({
             url: '/get-invoices-by-date',
@@ -303,9 +256,8 @@ $(document).ready(function () {
         });
     }
 
-    // Initialize when modal is shown - load products + jobs
+    // Initialize when modal is shown
     $('#addStockOutModal').on('shown.bs.modal', function () {
-        loadProducts();
         let today = new Date().toISOString().split('T')[0];
         let thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
         $('#from_date').val(thirtyDaysAgo);
@@ -321,6 +273,7 @@ $(document).ready(function () {
         }
         destroySelect2($('#add_job_number'));
         $('#add_customer_name').val('');
+        $('#productTableBody').empty();
     });
 
     // Listen for date range changes
@@ -337,46 +290,70 @@ $(document).ready(function () {
     // Listen for job selection (delegated, works with Select2)
     $(document).on('change', '#add_job_number', function () {
         let val = $(this).val();
-        if (!val) { $('#add_customer_name').val(''); return; }
+        let tbody = $('#productTableBody');
+        tbody.empty();
+        
+        if (!val) { 
+            $('#add_customer_name').val(''); 
+            return; 
+        }
+        
         let selected = $(this).find('option:selected');
         let customerName = selected.data('customer') || '-';
         $('#add_customer_name').val(customerName);
+
+        // Fetch products for this job
+        tbody.html('<tr><td colspan="7" class="text-center">Loading products...</td></tr>');
+        
+        $.ajax({
+            url: '/get-job-products/' + val,
+            type: 'GET',
+            success: function(response) {
+                tbody.empty();
+                if(response.length === 0) {
+                    tbody.html('<tr><td colspan="7" class="text-center">No products found for this job.</td></tr>');
+                    return;
+                }
+
+                response.forEach(function(product, index) {
+                    tbody.append(`
+                        <tr>
+                            <td>
+                                <input type="hidden" name="products[${index}][product_id]" value="${product.product_id}">
+                                <input type="text" class="form-control bg-light" value="${product.item_name}" readonly>
+                            </td>
+                            <td><input type="text" class="form-control bg-light" value="${product.unit}" readonly></td>
+                            <td><input type="number" class="form-control bg-light available-stock" value="${product.available_stock}" readonly></td>
+                            <td><input type="number" class="form-control bg-light" value="${product.job_quantity}" readonly></td>
+                            <td><input type="number" class="form-control used-stock" name="products[${index}][used_stock]" required min="0" step="any" placeholder="Enter qty"></td>
+                            <td><input type="number" class="form-control bg-light" value="${product.unit_price}" readonly></td>
+                            <td><input type="number" class="form-control bg-light" value="${product.total_price}" readonly></td>
+                        </tr>
+                    `);
+                });
+            },
+            error: function() {
+                tbody.html('<tr><td colspan="7" class="text-center text-danger">Failed to load products.</td></tr>');
+            }
+        });
     });
 
-    // Handle product selection
-    $(document).on('change', '.product-select', function () {
-        let row = $(this).closest('tr');
-        let selectedOption = $(this).find('option:selected');
-        let unit = selectedOption.data('unit') || '';
-        let stock = selectedOption.data('stock') || 0;
-
-        row.find('.unit-input').val(unit);
-        row.find('.opening-stock').val(stock);
-        row.find('.closing-stock').val(stock);
-    });
-
-    // Handle used stock input change
+    // Handle used stock input change and validation
     $(document).on('input', '.used-stock', function () {
         let row = $(this).closest('tr');
-        let openingStock = parseFloat(row.find('.opening-stock').val()) || 0;
-        let usedStock = parseFloat($(this).val()) || 0;
-        let closingStock = openingStock - usedStock;
+        let availableStock = parseFloat(row.find('.available-stock').val()) || 0;
+        let usedStock = parseFloat($(this).val());
 
-        if (closingStock < 0) closingStock = 0;
+        if (isNaN(usedStock)) return;
 
-        row.find('.closing-stock').val(closingStock.toFixed(2));
-        calculateGrandTotal();
+        if (usedStock < 0) {
+            alert('Used quantity cannot be negative.');
+            $(this).val(0);
+        } else if (usedStock > availableStock) {
+            alert('Used quantity cannot exceed Available Stock (' + availableStock + ').');
+            $(this).val(availableStock);
+        }
     });
-
-    // Calculate grand total
-    function calculateGrandTotal() {
-        let grandTotal = 0;
-        $('.closing-stock').each(function () {
-            let value = parseFloat($(this).val()) || 0;
-            grandTotal += value;
-        });
-        $('#grandTotal').text(grandTotal.toFixed(2));
-    }
 
     // CSRF token setup for AJAX requests
     $.ajaxSetup({

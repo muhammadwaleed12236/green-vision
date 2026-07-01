@@ -249,6 +249,8 @@ class StockOutController extends Controller
         $sales = LocalSale::with(['customer', 'vendor'])
             ->whereDate('sale_date', '>=', $fromDate)
             ->whereDate('sale_date', '<=', $toDate)
+            ->where('sale_type', 'booking')
+            ->where('job_status', '!=', 'completed')
             ->select('id', 'invoice_number', 'sale_date', 'customer_id', 'vendor_id', 'party_type', 'customer_shopname')
             ->orderBy('sale_date')
             ->get()
@@ -296,5 +298,43 @@ class StockOutController extends Controller
         } else {
             return $sale->customer_shopname ?? 'Walk-in';
         }
+    }
+
+    /**
+     * Get products associated with a specific job (LocalSale)
+     */
+    public function getJobProducts($jobId)
+    {
+        $sale = LocalSale::find($jobId);
+        if (!$sale) {
+            return response()->json(['error' => 'Job not found'], 404);
+        }
+
+        $items = json_decode($sale->item, true) ?? [];
+        $qtys = json_decode($sale->qty, true) ?? [];
+        $units = json_decode($sale->unit, true) ?? [];
+        $rates = json_decode($sale->rate, true) ?? [];
+        $amounts = json_decode($sale->amount, true) ?? [];
+
+        $productsData = [];
+
+        foreach ($items as $index => $itemName) {
+            if (empty($itemName)) continue;
+
+            $product = Product::where('item_name', $itemName)->first();
+            if ($product) {
+                $productsData[] = [
+                    'product_id' => $product->id,
+                    'item_name' => $product->item_name,
+                    'unit' => $units[$index] ?? $product->unit,
+                    'available_stock' => floatval($product->initial_stock ?? 0),
+                    'job_quantity' => floatval($qtys[$index] ?? 0),
+                    'unit_price' => floatval($rates[$index] ?? 0),
+                    'total_price' => floatval($amounts[$index] ?? 0)
+                ];
+            }
+        }
+
+        return response()->json($productsData);
     }
 }

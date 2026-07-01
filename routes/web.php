@@ -119,6 +119,7 @@ Route::delete('/delete-stockout', [StockOutController::class, 'delete_stockout']
 Route::delete('/delete-job-stockout', [StockOutController::class, 'delete_job_stockout'])->name('delete-job-stockout');
 Route::get('/stockout-details/{jobId}', [StockOutController::class, 'stockout_details'])->name('stockout-details');
 Route::get('/get-invoices-by-date', [StockOutController::class, 'getInvoicesByDate'])->name('get-invoices-by-date');
+Route::get('/get-job-products/{id}', [StockOutController::class, 'getJobProducts'])->name('get-job-products');
 Route::get('/get-products', [StockOutController::class, 'getProducts'])->name('get-products');
 
 // ========================= CASH BOOK / LEDGER ROUTES =========================
