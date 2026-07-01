@@ -136,6 +136,7 @@
                     @endhaspermission
 
                     <!-- Job Assignment -->
+                    {{--
                     @if(auth()->user()->hasPermission('job-order.view') || auth()->user()->hasPermission('job-assignment.view'))
                     <li class="submenu">
                         <a href="javascript:void(0);"><i class="fas fa-clipboard-list"></i><span> Job Management</span> <span
@@ -146,6 +147,7 @@
                         </ul>
                     </li>
                     @endif
+                    --}}
 
                     <!-- Contractor -->
                     @haspermission('contractor.view')
@@ -360,6 +362,7 @@
                     <li>
                         <a href="{{ route('all-sale') }}"><i class="fas fa-box-open"></i> <span> Purchase </span> </a>
                     </li>
+                    {{--
                     <li class="submenu">
                         <a href="javascript:void(0);"><i class="fas fa-clipboard-list"></i><span> Assign Job</span> <span
                                 class="menu-arrow"></span></a>
@@ -367,6 +370,7 @@
                            <li><a href="{{ route('job-orders.index') }}">Add Job</a></li>
                         </ul>
                     </li>
+                    --}}
 
                     <li class="submenu">
                         <a href="javascript:void(0);"><i class="fa fa-wrench"></i><span> Contractor</span> <span
@@ -439,6 +443,7 @@
                         <a href="{{ route('home') }}"><i class="fas fa-home"></i><span> Dashboard</span> </a>
                     </li>
 
+                    {{--
                     <li class="submenu">
                         <a href="javascript:void(0);"><i class="fas fa-clipboard-list"></i><span> Assign Job</span> <span
                                 class="menu-arrow"></span></a>
@@ -446,6 +451,7 @@
                            <li><a href="{{ route('job-orders.index') }}">Add Job</a></li>
                         </ul>
                     </li>
+                    --}}
 
                     <li class="submenu">
                         <a href="javascript:void(0);"><i class="fa fa-wrench"></i><span> Contractor</span> <span

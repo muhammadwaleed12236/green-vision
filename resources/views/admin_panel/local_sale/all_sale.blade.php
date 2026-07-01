@@ -142,14 +142,12 @@
                         <i class="fa fa-file-invoice me-2"></i>Invoice
                     </a>
                 </li>
-                @if($sale->sale_type !== 'sale')
                 <li>
                     <a class="dropdown-item" href="{{ route('local.sale.edit', $sale->id) }}">
                         <i class="fa fa-edit me-2"></i>Update Invoice
                     </a>
                 </li>
-                @endif
-                @if($sale->job_status == 'ready')
+                @if($sale->sale_type == 'booking' && $sale->job_status != 'completed')
                     <li>
                         <a class="dropdown-item text-success mark-complete-btn" href="javascript:void(0);"
                            data-sale-id="{{ $sale->id }}">
@@ -157,12 +155,12 @@
                         </a>
                     </li>
                 @endif
-                <li>
+                {{-- <li>
                     <a class="dropdown-item text-primary"
                        href="{{ route('job-assignments', ['q' => $sale->invoice_number]) }}">
                         <i class="fa fa-user-plus me-2"></i>Assign Job
                     </a>
-                </li>
+                </li> --}}
                 <li><hr class="dropdown-divider"></li>
                 <li>
                     <a class="dropdown-item text-danger"

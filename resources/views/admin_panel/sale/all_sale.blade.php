@@ -205,7 +205,7 @@
                     </a>
                 </li>
                 <li><hr class="dropdown-divider"></li>
-                @if($sale->job_status == 'ready')
+                @if($sale->sale_type == 'booking' && $sale->job_status != 'completed')
                 <li>
                     <a class="dropdown-item text-success mark-complete-btn" href="javascript:void(0);"
                        data-sale-id="{{ $sale->id }}">
@@ -213,7 +213,7 @@
                     </a>
                 </li>
                 @endif
-                <li>
+                {{-- <li>
                     <button class="dropdown-item text-primary"
                             data-bs-toggle="modal"
                             data-bs-target="#assignJobModal"
@@ -222,7 +222,7 @@
                             data-amount="{{ $sale->net_amount }}">
                         <i class="fa fa-user-plus me-2"></i>Assign Job
                     </button>
-                </li>
+                </li> --}}
                 <li><hr class="dropdown-divider"></li>
                 <li>
                     <a class="dropdown-item text-danger"

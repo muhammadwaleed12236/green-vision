@@ -1,4 +1,4 @@
-﻿@include('admin_panel.include.header_include')
+@include('admin_panel.include.header_include')
 
 <style>
     :root {
@@ -239,6 +239,7 @@
 
             <!-- Stats Mini Cards Row -->
             <div class="row">
+                {{--
                 <div class="col-lg-3 col-sm-6 col-12">
                     <div class="stat-mini-card" onclick="window.location='{{ route('job-orders.index') }}'" title="View Job Orders">
                         <div class="stat-mini-icon" style="background: rgba(239, 68, 68, 0.1); color: #ef4444;">
@@ -251,6 +252,7 @@
                         </div>
                     </div>
                 </div>
+                --}}
 
                 <div class="col-lg-3 col-sm-6 col-12">
                     <div class="stat-mini-card" onclick="window.location='{{ route('add-expenses') }}'" title="View Expenses">

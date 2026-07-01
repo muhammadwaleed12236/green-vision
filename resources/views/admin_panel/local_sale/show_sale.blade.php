@@ -449,7 +449,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         showConfirmButton: false
                     }).then(() => {
                         if (result.value.sale_type === 'booking') {
-                            window.location.href = "{{ route('job-orders.index') }}?booking_id=" + transactionId + "&quick_assign=true";
+                            window.location.reload();
                         } else {
                             window.location.reload();
                         }

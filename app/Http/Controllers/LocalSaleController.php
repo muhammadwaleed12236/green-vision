@@ -216,7 +216,7 @@ class LocalSaleController extends Controller
             DB::commit();
 
             if ($sale->sale_type === 'booking') {
-                return redirect()->route('job-orders.index', ['booking_id' => $sale->id, 'quick_assign' => 'true'])->with('success', 'Booking Saved Successfully');
+                return redirect()->route('show-local-sale', $sale->id)->with('success', 'Booking Saved Successfully');
             }
 
             return redirect()->route('show-local-sale', $sale->id)->with('success', 'Job Order Saved Successfully');

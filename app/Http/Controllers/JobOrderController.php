@@ -820,13 +820,6 @@ class JobOrderController extends Controller
     {
         $sale = LocalSale::findOrFail($saleId);
 
-        if ($sale->job_status !== 'ready') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Sale status must be Ready before marking as Completed',
-            ], 400);
-        }
-
         $sale->job_status   = 'completed';
         $sale->completed_at = now();
         $sale->save();
