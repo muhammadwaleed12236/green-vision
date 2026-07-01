@@ -46,7 +46,7 @@
 <div class="card">
 <div class="card-body p-0">
 
-<div class="table-responsive">
+<div class="table-responsive" style="min-height: 350px;">
 <table class="table table-bordered align-middle mb-0 text-nowrap">
 <thead class="table-light text-center">
 <tr>
