@@ -637,18 +637,47 @@ class LocalSaleController extends Controller
                 }
             }
 
+            // Filter out empty items from request arrays
+            $rawItems = $request->item ?? [];
+            $rawHeights = $request->height ?? [];
+            $rawWidths = $request->width ?? [];
+            $rawUnits = $request->unit ?? [];
+            $rawQtys = $request->qty ?? [];
+            $rawRates = $request->rate ?? [];
+            $rawAmounts = $request->amount ?? [];
+
+            $finalItems = [];
+            $finalHeights = [];
+            $finalWidths = [];
+            $finalUnits = [];
+            $finalQtys = [];
+            $finalRates = [];
+            $finalAmounts = [];
+
+            foreach ($rawItems as $index => $itemName) {
+                if (!empty($itemName)) {
+                    $finalItems[] = $itemName;
+                    $finalHeights[] = $rawHeights[$index] ?? 0;
+                    $finalWidths[] = $rawWidths[$index] ?? 0;
+                    $finalUnits[] = $rawUnits[$index] ?? '';
+                    $finalQtys[] = $rawQtys[$index] ?? 1;
+                    $finalRates[] = $rawRates[$index] ?? 0;
+                    $finalAmounts[] = $rawAmounts[$index] ?? 0;
+                }
+            }
+
             // 3. Update the LocalSale model
             $sale->update([
                 'party_type' => $request->party_type,
                 'customer_id' => $request->customer_id,
                 'vendor_id' => $request->vendor_id,
-                'item' => json_encode($items),
-                'height' => json_encode($request->height ?? []),
-                'width' => json_encode($request->width ?? []),
-                'unit' => json_encode($request->unit ?? []),
-                'qty' => json_encode($request->qty ?? []),
-                'rate' => json_encode($request->rate ?? []),
-                'amount' => json_encode($request->amount ?? []),
+                'item' => json_encode($finalItems),
+                'height' => json_encode($finalHeights),
+                'width' => json_encode($finalWidths),
+                'unit' => json_encode($finalUnits),
+                'qty' => json_encode($finalQtys),
+                'rate' => json_encode($finalRates),
+                'amount' => json_encode($finalAmounts),
                 'grand_total' => $request->grand_total ?? 0,
                 'discount_value' => $request->discount_value ?? 0,
                 'advance_amount' => $advance,

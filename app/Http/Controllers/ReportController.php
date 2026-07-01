@@ -191,11 +191,13 @@ class ReportController extends Controller
 
             $previousSales = DB::table('local_sales')
                 ->where('vendor_id', $vendorId)
+                ->where('sale_type', '!=', 'estimate')
                 ->where('created_at', '<', $startDate)
                 ->sum('net_amount');
 
             $previousSalesAdvances = DB::table('local_sales')
                 ->where('vendor_id', $vendorId)
+                ->where('sale_type', '!=', 'estimate')
                 ->where('created_at', '<', $startDate)
                 ->sum('advance_amount');
 
@@ -295,6 +297,7 @@ class ReportController extends Controller
 
             $local_sales = DB::table('local_sales')
                 ->where('vendor_id', $vendorId)
+                ->where('sale_type', '!=', 'estimate')
                 ->whereBetween('created_at', [$startDate, $endDate])
                 ->select('invoice_number', 'created_at as Date', 'net_amount', 'advance_amount', 'item')
                 ->get();
@@ -387,12 +390,14 @@ class ReportController extends Controller
             // 1. Sales before Start Date
             $previousSales = DB::table('local_sales')
                 ->where('customer_id', $CustomerId)
+                ->where('sale_type', '!=', 'estimate')
                 ->where('created_at', '<', $startDate)
                 ->sum('net_amount');
 
             // 2. Advances before Start Date
             $previousAdvances = DB::table('local_sales')
                 ->where('customer_id', $CustomerId)
+                ->where('sale_type', '!=', 'estimate')
                 ->where('created_at', '<', $startDate)
                 ->sum('advance_amount');
 
@@ -431,6 +436,7 @@ class ReportController extends Controller
 
             $localSales = DB::table('local_sales')
                 ->where('customer_id', $CustomerId)
+                ->where('sale_type', '!=', 'estimate')
                 ->whereBetween('created_at', [$startDate, $endDate])
                 ->select('invoice_number', 'sale_date', 'customer_shopname', 'grand_total',
                     'discount_value', 'net_amount', 'advance_amount', 'created_at')
