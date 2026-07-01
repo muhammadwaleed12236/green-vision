@@ -249,7 +249,7 @@
 
                     // ✅ Job Orders assigned to Vendor (Debit = total_amount assigned, Credit = paid_amount)
                     if (response.job_orders) {
-                        response.job_ordePKRforEach(entry => {
+                        response.job_orders.forEach(entry => {
                             // Job Assign Entry (Debit - we owe vendor)
                             if (parseFloat(entry.total_amount) > 0) {
                                 allEntries.push({

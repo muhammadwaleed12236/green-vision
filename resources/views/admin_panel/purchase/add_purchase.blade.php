@@ -265,18 +265,18 @@
 
             // Check if party is selected
             if (!$('#party_name').val()) {
-                erroPKRpush('Please select a Vendor');
+                errors.push('Please select a Vendor');
             }
 
             // Check if at least one item exists
             if (!hasValidItem) {
-                erroPKRpush('At least one complete item is required (with Item Name)');
+                errors.push('At least one complete item is required (with Item Name)');
             }
 
             // Show client-side errors
-            if (erroPKRlength > 0) {
+            if (errors.length > 0) {
                 let errorHtml = '<ul style="text-align:left; margin:0; padding-left:20px;">';
-                erroPKRforEach(function(msg) {
+                errors.forEach(function(msg) {
                     errorHtml += '<li>' + msg + '</li>';
                 });
                 errorHtml += '</ul>';
@@ -288,7 +288,7 @@
                         html: errorHtml
                     });
                 } else {
-                    alert('Validation Errors:\n' + erroPKRjoin('\n'));
+                    alert('Validation Errors:\n' + errors.join('\n'));
                 }
                 return false;
             }

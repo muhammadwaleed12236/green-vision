@@ -251,7 +251,7 @@
                     totalStock += parseFloat(item.initial_stock) || 0;
                     totalDistributorReturn += parseFloat(item.total_distributor_return) || 0;
                     totalLocalReturn += parseFloat(item.total_local_return) || 0;
-                    let formattedLiters = liters % 1 === 0 ? litePKRtoFixed(0) : litePKRtoFixed(2);
+                    let formattedLiters = liters % 1 === 0 ? liters.toFixed(0) : liters.toFixed(2);
 
                     tableContent += `<tr>
         <td>${item.item_code}</td>
@@ -274,7 +274,7 @@
                 });
 
                 // ✅ Footer Update:
-                let formattedTotalLiters = totalLiters % 1 === 0 ? totalLitePKRtoFixed(0) : totalLitePKRtoFixed(2);
+                let formattedTotalLiters = totalLiters % 1 === 0 ? totalLiters.toFixed(0) : totalLiters.toFixed(2);
 
                 let footerContent = `
 <tr>

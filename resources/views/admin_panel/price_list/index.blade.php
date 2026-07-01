@@ -308,7 +308,7 @@ function openAddModal() {
 function loadHeaders() {
     $.get('{{ url("/price-list/headers") }}', function(response) {
         let options = '';
-        response.headePKRforEach(h => {
+        response.headers.forEach(h => {
             options += `<option value="${h}">`;
         });
         document.getElementById('headerOptions').innerHTML = options;

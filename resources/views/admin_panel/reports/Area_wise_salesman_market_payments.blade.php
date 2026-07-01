@@ -177,7 +177,7 @@
                             Object.keys(areaData).forEach(area => {
                                 const customers = areaData[area];
 
-                                if (customePKRlength === 0) return;
+                                if (customers.length === 0) return;
 
                                 let cityTotal = 0;
 
@@ -199,7 +199,7 @@
                                 <tbody>
                         `;
 
-                                customePKRforEach(c => {
+                                customers.forEach(c => {
                                     let bal = parseFloat(c.balance || 0);
                                     cityTotal += bal;
 

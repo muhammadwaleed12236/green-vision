@@ -217,7 +217,7 @@
                     });
 
                     // Transfer Entries
-                    response.transfePKRforEach(entry => {
+                    response.transfers.forEach(entry => {
                         allEntries.push({
                             date: entry.transfer_date,
                             type: 'transfer',

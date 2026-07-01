@@ -239,8 +239,8 @@
                 // Job Orders Table
                 let jobRows = '';
                 let jobTotal = 0, jobPaid = 0, jobRemaining = 0;
-                if (response.job_orders && response.job_ordePKRlength > 0) {
-                    response.job_ordePKRforEach((job, i) => {
+                if (response.job_orders && response.job_orders.length > 0) {
+                    response.job_orders.forEach((job, i) => {
                         jobTotal += parseFloat(job.total_amount || 0);
                         jobPaid += parseFloat(job.paid_amount || 0);
                         jobRemaining += parseFloat(job.remaining_amount || 0);
@@ -305,7 +305,7 @@
                 $('#report-preview').show();
                 $('#no-data').hide();
 
-                if ((!response.job_orders || response.job_ordePKRlength === 0) && 
+                if ((!response.job_orders || response.job_orders.length === 0) && 
                     (!response.payments || response.payments.length === 0)) {
                     $('#no-data').show();
                 }

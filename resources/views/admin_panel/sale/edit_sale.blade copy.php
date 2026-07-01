@@ -467,7 +467,7 @@
         let litersFromCartons = cartonQty * packing * measurement;
         let litersFromPcs = pcsQty * measurement;
         let totalLiters = litersFromCartons + litersFromPcs;
-        row.find('.liter').val(parseFloat(totalLitePKRtoFixed(2)).toString());
+        row.find('.liter').val(parseFloat(totalLiters.toFixed(2)).toString());
         let cartonAmount = rate * cartonQty;
         let perPieceRate = (packing > 0) ? (rate / packing) : 0;
         let pcsAmount = perPieceRate * pcsQty;

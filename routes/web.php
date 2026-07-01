@@ -169,7 +169,7 @@ Route::put('/contractor-recovery/{id}', [ContractorController::class, 'updateRec
 
 // ========================= SALE ROUTES =========================
 Route::get('/add-sale', [SaleController::class, 'add_sale'])->name('add-sale');
-Route::post('/store-sale', [SalseController::class, 'store_sale'])->name('store-sale');
+Route::post('/store-sale', [SaleController::class, 'store_sale'])->name('store-sale');
 Route::get('/all-sale', [SaleController::class, 'all_sale'])->name('all-sale');
 Route::get('/sale/{id}', [SaleController::class, 'show_sale'])->name('show_sale');
 Route::get('/sale/invoice/{id}', [SaleController::class, 'saleInvoice'])->name('sale.invoice');
