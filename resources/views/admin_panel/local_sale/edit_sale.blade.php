@@ -306,19 +306,19 @@
                                     value="{{ $original->grand_total }}" readonly>
                             </div>
 
-                            <div class="col-md-3">
+                            <div class="col-md-3" id="discountContainer">
                                 <label>Discount</label>
                                 <input name="discount_value" class="form-control"
                                     value="{{ $original->discount_value }}">
                             </div>
 
-                            <div class="col-md-3">
+                            <div class="col-md-3" id="advanceContainer">
                                 <label id="advanceLabel">Advance</label>
                                 <input id="advance" name="advance_amount" class="form-control"
                                     value="{{ $original->advance_amount }}">
                             </div>
 
-                            <div class="col-md-3">
+                            <div class="col-md-3" id="remainingContainer">
                                 <label>Net Amount</label>
                                 <input id="netAmount" name="net_amount" class="form-control readonly-box"
                                     value="{{ $original->net_amount }}" readonly>
@@ -532,10 +532,23 @@
 
         if (saleType === 'sale') {
             $('#deliveryPaymentPanel').addClass('d-none');
+            $('#discountContainer').removeClass('d-none');
+            $('#advanceContainer').removeClass('d-none');
+            $('#remainingContainer').removeClass('d-none');
             $('[name="delivery_date"]').prop('required', false).val('');
             advanceLabel.text('Received Amount');
+        } else if (saleType === 'estimate') {
+            $('#deliveryPaymentPanel').addClass('d-none');
+            $('#discountContainer').addClass('d-none');
+            $('#advanceContainer').addClass('d-none');
+            $('#remainingContainer').addClass('d-none');
+            $('[name="delivery_date"]').prop('required', false).val('');
+            advanceLabel.text('Advance Amount');
         } else {
             $('#deliveryPaymentPanel').removeClass('d-none');
+            $('#discountContainer').removeClass('d-none');
+            $('#advanceContainer').removeClass('d-none');
+            $('#remainingContainer').removeClass('d-none');
             $('[name="delivery_date"]').prop('required', true);
             if (saleType === 'booking') {
                 advanceLabel.text('Advance Amount');

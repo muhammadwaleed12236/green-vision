@@ -1,4 +1,4 @@
-﻿@include('admin_panel.include.header_include')
+@include('admin_panel.include.header_include')
 
 <style>
     /* General Table Styling */
@@ -327,17 +327,17 @@
                                  <input id="grandTotal" class="form-control readonly-box" value="{{ $cloneEstimate?->grand_total ?? '' }}" readonly>
                              </div>
 
-                             <div class="col-md-3">
+                             <div class="col-md-3" id="discountContainer">
                                  <label>Discount</label>
                                  <input name="gross_discount" class="form-control" value="{{ old('gross_discount') ?? ($cloneEstimate?->discount_value ?? '0') }}">
                              </div>
 
-                            <div class="col-md-3">
+                            <div class="col-md-3" id="advanceContainer">
                                 <label id="advanceLabel">Advance</label>
                                 <input id="advance" name="advance_amount" class="form-control" value="{{ old('advance_amount') }}">
                             </div>
 
-                             <div class="col-md-3">
+                             <div class="col-md-3" id="remainingContainer">
                                  <label>Remaining</label>
                                  <input id="remaining" class="form-control readonly-box" value="{{ $cloneEstimate?->remaining_amount ?? '' }}" readonly>
                              </div>
@@ -560,11 +560,25 @@
 
             if (saleType === 'sale') {
                 $('#deliveryPaymentPanel').hide();
+                $('#discountContainer').show();
+                $('#advanceContainer').show();
+                $('#remainingContainer').show();
                 $('[name="delivery_date"]').prop('required', false).val('');
                 $('[name="notify_days_before"]').val('');
                 $('.btn-save-order').text('Save Sale');
-            } else {
+            } else if (saleType === 'estimate') {
+                $('#deliveryPaymentPanel').hide();
+                $('#discountContainer').hide();
+                $('#advanceContainer').hide();
+                $('#remainingContainer').hide();
+                $('[name="delivery_date"]').prop('required', false).val('');
+                $('[name="notify_days_before"]').val('');
+                $('.btn-save-order').text('Save Estimate');
+            } else { // booking
                 $('#deliveryPaymentPanel').show();
+                $('#discountContainer').show();
+                $('#advanceContainer').show();
+                $('#remainingContainer').show();
                 $('[name="delivery_date"]').prop('required', true);
                 if (!$('[name="notify_days_before"]').val()) {
                     $('[name="notify_days_before"]').val('2');
