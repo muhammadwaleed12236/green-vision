@@ -238,7 +238,7 @@ class JobOrderController extends Controller
         $items   = json_decode($sale->item, true) ?? [];
         $qtys    = json_decode($sale->qty, true) ?? [];
         $units   = json_decode($sale->unit, true) ?? [];
-        $amounts = json_decode($sale->amount, true) ?? [];
+        $rates   = json_decode($sale->rate, true) ?? [];
 
         $relatedJobs = JobOrder::where('sale_id', $sale->id)->get();
 
@@ -281,7 +281,7 @@ class JobOrderController extends Controller
                     'total_qty' => $totalQty,
                     'qty'       => $remaining,
                     'unit'      => $units[$index] ?? null,
-                    'rate'      => $amounts[$index] ?? 0,
+                    'rate'      => $rates[$index] ?? 0,
                 ];
             }
         }

@@ -1244,7 +1244,7 @@
                             max="${remainingForThisCard}" value="${remainingForThisCard}">
                     </td>
                     <td class="rate-col d-none">
-                        <input type="number" class="form-control form-control-sm assign-rate text-end" placeholder="0">
+                        <input type="number" class="form-control form-control-sm assign-rate text-end" placeholder="0" value="${item.rate || 0}">
                     </td>
                      <td class="text-center">
                     </td>
@@ -1265,6 +1265,7 @@
             // Scroll to new card smoothly
             $card[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
 
+            calculateCardTotal($card);
             recalculateGlobalRemaining();
         }
 
