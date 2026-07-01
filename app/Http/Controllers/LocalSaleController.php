@@ -323,11 +323,15 @@ class LocalSaleController extends Controller
                 $party->label = "Customer";
                 
                 $ledger = \DB::table('customer_ledgers')->where('customer_id', $sale->customer_id)->first();
-                $current_ledger_balance = $ledger->closing_balance ?? 0;
+                $actual_ledger_balance = $ledger->closing_balance ?? 0;
                 
-                // For Customer: We Receive. Logic: Previous + Bill = Closing
-                // So: Previous = Closing - Bill
-                $previous_balance = $current_ledger_balance - $invoice_effect_amount;
+                if ($sale->sale_type === 'estimate') {
+                    $previous_balance = $actual_ledger_balance;
+                    $current_ledger_balance = $actual_ledger_balance + $sale->remaining_amount;
+                } else {
+                    $current_ledger_balance = $actual_ledger_balance;
+                    $previous_balance = $current_ledger_balance - $sale->remaining_amount;
+                }
 
                 $ledger_info->type = 'receivable'; // We are to receive
                 $ledger_info->previous_balance = $previous_balance;
@@ -344,11 +348,16 @@ class LocalSaleController extends Controller
                 $party->label = "Vendor / Dealer";
                 
                 $ledger = \DB::table('vendor_ledgers')->where('vendor_id', $sale->vendor_id)->first();
-                $current_ledger_balance = $ledger->closing_balance ?? 0;
+                $actual_ledger_balance = $ledger->closing_balance ?? 0;
 
                 // For Vendor: We Pay. Logic: Previous - Bill = Closing (Since we sold to them, we owe less)
-                // So: Previous = Closing + Bill
-                $previous_balance = $current_ledger_balance + $invoice_effect_amount;
+                if ($sale->sale_type === 'estimate') {
+                    $previous_balance = $actual_ledger_balance;
+                    $current_ledger_balance = $actual_ledger_balance - $sale->remaining_amount;
+                } else {
+                    $current_ledger_balance = $actual_ledger_balance;
+                    $previous_balance = $current_ledger_balance + $sale->remaining_amount;
+                }
 
                 $ledger_info->type = 'payable'; // We are to pay
                 $ledger_info->previous_balance = $previous_balance;
@@ -365,8 +374,8 @@ class LocalSaleController extends Controller
                 $party->label = "Walk-in Party";
                 
                 // Walkin doesn't have a stored ledger usually, assumes just this bill
-                $current_ledger_balance = $sale->remaining_amount;
                 $previous_balance = 0;
+                $current_ledger_balance = $sale->remaining_amount;
 
                 $ledger_info->type = 'receivable';
                 $ledger_info->previous_balance = 0;

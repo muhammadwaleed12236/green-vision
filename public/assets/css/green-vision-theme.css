@@ -493,10 +493,42 @@ input[type="radio"]:checked {
 .swal2-confirm.swal2-styled {
     background-color: var(--gv-green) !important;
     border-color: var(--gv-green) !important;
+    margin-right: 10px;
 }
-
 .swal2-confirm.swal2-styled:hover {
     background-color: var(--gv-green-hover) !important;
+}
+
+/* Fix SweetAlert2 Icon Layout Glitch */
+.swal2-icon {
+    width: 5em !important;
+    height: 5em !important;
+    margin: 2.5em auto .6em !important;
+    border: .25em solid transparent !important;
+    border-radius: 50% !important;
+    box-sizing: content-box !important;
+    position: relative !important;
+}
+.swal2-icon.swal2-warning {
+    border-color: #f8bb86 !important;
+    color: #f8bb86 !important;
+}
+.swal2-icon .swal2-icon-content {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 3.75em !important;
+    font-family: serif !important;
+    width: 100% !important;
+    height: 100% !important;
+}
+.swal2-icon.swal2-success {
+    border-color: #a5dc86 !important;
+    color: #a5dc86 !important;
+}
+.swal2-icon.swal2-error {
+    border-color: #f27474 !important;
+    color: #f27474 !important;
 }
 
 /* ========== STATUS INDICATORS ========== */
