@@ -477,10 +477,31 @@
                         let invNum = $(this).data('inv');
                         let data = window.allItemsData[invNum];
                         if (data && data.items) {
+                            let itemsArray = data.items;
+                            
+                            // Ensure it's an array
+                            if (typeof itemsArray === 'string') {
+                                try { itemsArray = JSON.parse(itemsArray); } catch (e) { itemsArray = [itemsArray]; }
+                            }
+                            if (!Array.isArray(itemsArray)) {
+                                if (typeof itemsArray === 'object' && itemsArray !== null) {
+                                    itemsArray = Object.values(itemsArray);
+                                } else if (itemsArray) {
+                                    itemsArray = [itemsArray];
+                                } else {
+                                    itemsArray = [];
+                                }
+                            }
+
                             let itemsHTML = '<ul class="list-group">';
-                            data.items.forEach(item => {
-                                itemsHTML += '<li class="list-group-item"><strong>' + item + '</strong></li>';
-                            });
+                            if (itemsArray.length > 0) {
+                                itemsArray.forEach(item => {
+                                    let displayItem = typeof item === 'object' && item !== null ? JSON.stringify(item) : item;
+                                    itemsHTML += '<li class="list-group-item"><strong>' + displayItem + '</strong></li>';
+                                });
+                            } else {
+                                itemsHTML += '<li class="list-group-item"><strong>No items found</strong></li>';
+                            }
                             itemsHTML += '</ul>';
                             $('#itemsModalLabel').text('Items for Invoice: ' + invNum);
                             $('#itemsContent').html(itemsHTML);
