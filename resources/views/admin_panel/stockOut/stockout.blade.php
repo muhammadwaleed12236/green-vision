@@ -316,16 +316,23 @@ $(document).ready(function () {
                 }
 
                 response.forEach(function(product, index) {
+                    let stockDisplay = product.available_stock;
+                    let manualNote = product.is_manual ? '<br><small class="text-danger">Not in inventory</small>' : '';
+                    let usedStockHtml = product.is_manual 
+                        ? `<input type="number" class="form-control" name="products[${index}][used_stock]" min="0" step="any" placeholder="Manual Item" disabled>`
+                        : `<input type="number" class="form-control used-stock" name="products[${index}][used_stock]" required min="0" step="any" placeholder="Enter qty">`;
+
                     tbody.append(`
                         <tr>
                             <td>
                                 <input type="hidden" name="products[${index}][product_id]" value="${product.product_id}">
                                 <input type="text" class="form-control bg-light" value="${product.item_name}" readonly>
+                                ${manualNote}
                             </td>
                             <td><input type="text" class="form-control bg-light" value="${product.unit}" readonly></td>
-                            <td><input type="number" class="form-control bg-light available-stock" value="${product.available_stock}" readonly></td>
+                            <td><input type="text" class="form-control bg-light available-stock" value="${stockDisplay}" readonly></td>
                             <td><input type="number" class="form-control bg-light" value="${product.job_quantity}" readonly></td>
-                            <td><input type="number" class="form-control used-stock" name="products[${index}][used_stock]" required min="0" step="any" placeholder="Enter qty"></td>
+                            <td>${usedStockHtml}</td>
                             <td><input type="number" class="form-control bg-light" value="${product.unit_price}" readonly></td>
                             <td><input type="number" class="form-control bg-light" value="${product.total_price}" readonly></td>
                         </tr>

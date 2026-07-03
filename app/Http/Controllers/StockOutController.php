@@ -330,7 +330,19 @@ class StockOutController extends Controller
                     'available_stock' => floatval($product->initial_stock ?? 0),
                     'job_quantity' => floatval($qtys[$index] ?? 0),
                     'unit_price' => floatval($rates[$index] ?? 0),
-                    'total_price' => floatval($amounts[$index] ?? 0)
+                    'total_price' => floatval($amounts[$index] ?? 0),
+                    'is_manual' => false
+                ];
+            } else {
+                $productsData[] = [
+                    'product_id' => '',
+                    'item_name' => $itemName,
+                    'unit' => $units[$index] ?? 'N/A',
+                    'available_stock' => 'N/A',
+                    'job_quantity' => floatval($qtys[$index] ?? 0),
+                    'unit_price' => floatval($rates[$index] ?? 0),
+                    'total_price' => floatval($amounts[$index] ?? 0),
+                    'is_manual' => true
                 ];
             }
         }
