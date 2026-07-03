@@ -232,6 +232,39 @@
             font-style: italic;
         }
 
+        .terms-conditions-block {
+            margin: 20px 30px 0 30px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-left: 4px solid #000;
+            background-color: #f9f9f9;
+        }
+
+        .terms-conditions-block h4 {
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            color: #000;
+            letter-spacing: 0.5px;
+        }
+
+        .terms-conditions-block ul {
+            font-size: 11px;
+            color: #444;
+            padding-left: 20px;
+            margin: 0;
+            line-height: 1.6;
+        }
+        
+        .terms-conditions-block ul li {
+            margin-bottom: 4px;
+        }
+
+        .terms-conditions-block ul li:last-child {
+            margin-bottom: 0;
+        }
+
         .print-button {
             position: fixed;
             bottom: 20px;
@@ -390,6 +423,19 @@
             </div>
         </div>
     </div>
+
+    @if(!empty($appSettings['invoice_terms']))
+    <div class="terms-conditions-block">
+        <h4>Terms &amp; Conditions</h4>
+        <ul>
+            @foreach(explode("\n", str_replace("\r", "", $appSettings['invoice_terms'])) as $term)
+                @if(trim($term) !== '')
+                    <li>{{ $term }}</li>
+                @endif
+            @endforeach
+        </ul>
+    </div>
+    @endif
 
     <div class="signature-section">
         <div class="signature-box">

@@ -53,6 +53,14 @@
                             </div>
                         </div>
 
+                        <div class="row mb-4">
+                            <div class="col-md-12">
+                                <label class="form-label fw-semibold">Invoice Terms & Conditions (One rule per line)</label>
+                                <textarea name="invoice_terms" class="form-control" rows="5">{{ $appSettings['invoice_terms'] }}</textarea>
+                                <small class="text-muted">These terms will appear at the bottom of estimates, bookings, and sale invoices. Enter one term per line to display as a bulleted list.</small>
+                            </div>
+                        </div>
+
                         <button type="submit" class="btn btn-success">Save Settings</button>
                     </form>
                 </div>

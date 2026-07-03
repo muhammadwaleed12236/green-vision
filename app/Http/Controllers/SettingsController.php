@@ -20,11 +20,13 @@ class SettingsController extends Controller
             'company_phone' => 'nullable|string|max:255',
             'company_address' => 'nullable|string',
             'company_logo' => 'nullable|image|mimes:jpg,jpeg,png,svg|max:2048',
+            'invoice_terms' => 'nullable|string',
         ]);
 
         Setting::set('company_name', $request->company_name);
         Setting::set('company_phone', $request->company_phone);
         Setting::set('company_address', $request->company_address);
+        Setting::set('invoice_terms', $request->invoice_terms);
 
         if ($request->hasFile('company_logo')) {
             $oldLogo = Setting::get('company_logo');

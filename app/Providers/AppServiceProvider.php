@@ -21,6 +21,7 @@ class AppServiceProvider extends ServiceProvider
                 'company_phone'   => Setting::get('company_phone', ''),
                 'company_address' => Setting::get('company_address', ''),
                 'company_logo'    => Setting::get('company_logo', ''),
+                'invoice_terms'   => Setting::get('invoice_terms', "Green Vision basically provides high quality installation and commissioning services, therefore if any manufacturer rejects warranty claims, Green Vision will not be held responsible.\nWiring cost may vary from site to site.\n06 Months Free complaint warranty."),
             ]);
         });
     }

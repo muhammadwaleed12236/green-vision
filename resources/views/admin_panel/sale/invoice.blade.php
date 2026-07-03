@@ -150,6 +150,24 @@
                 </div>
             </div>
 
+            <!-- Terms and Conditions -->
+            @if(!empty($appSettings['invoice_terms']))
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div style="border: 1px solid #ddd; border-left: 4px solid #000; padding: 15px; background-color: #f9f9f9;">
+                        <h6 style="font-weight: bold; text-transform: uppercase; margin-bottom: 8px;">Terms &amp; Conditions</h6>
+                        <ul style="font-size: 12px; padding-left: 20px; margin: 0; line-height: 1.6; color: #444;">
+                            @foreach(explode("\n", str_replace("\r", "", $appSettings['invoice_terms'])) as $term)
+                                @if(trim($term) !== '')
+                                    <li>{{ $term }}</li>
+                                @endif
+                            @endforeach
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            @endif
+
             <!-- Print Button (Hidden in Print) -->
             <div class="text-end mt-4 no-print">
                 <button onclick="printInvoice()" class="btn btn-danger">
