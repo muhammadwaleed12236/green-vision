@@ -113,7 +113,9 @@ class CustomerController extends Controller
                     'success' => true,
                     'customer' => [
                         'id' => $customer->id,
-                        'name' => $customer->customer_name ?? $customer->shop_name
+                        'name' => $customer->customer_name ?? $customer->shop_name,
+                        'phone_number' => $customer->phone_number,
+                        'address' => $customer->address
                     ]
                 ]);
             }

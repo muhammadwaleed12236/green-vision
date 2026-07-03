@@ -1,4 +1,4 @@
-﻿@include('admin_panel.include.header_include')
+@include('admin_panel.include.header_include')
 <div class="main-wrapper">
     @include('admin_panel.include.navbar_include')
     @include('admin_panel.include.admin_sidebar_include')
@@ -18,9 +18,15 @@
             </div>
 
             @if (session()->has('success'))
-                <div class="alert alert-success">
-                    <strong>Success!</strong> {{ session('success') }}.
-                </div>
+                <script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Success!',
+                            text: '{{ session('success') }}'
+                        });
+                    });
+                </script>
             @endif
 
             <div class="container">

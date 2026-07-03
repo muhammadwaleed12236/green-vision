@@ -697,19 +697,33 @@
                     if(response.success) {
                         // Add new option to dropdown
                         let newOption = new Option(response.customer.name, response.customer.id, true, true);
+                        $(newOption).attr('data-phone', response.customer.phone_number || '');
+                        $(newOption).attr('data-address', response.customer.address || '');
                         $('#customer').append(newOption).trigger('change');
                         
                         // Close modal and reset form
                         $('#quickAddCustomerModal').modal('hide');
                         $('#quickAddCustomerForm')[0].reset();
                         
-                        alert('Customer added successfully!');
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Success!',
+                            text: 'Customer added successfully!'
+                        });
                     } else {
-                        alert('Error adding customer.');
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error!',
+                            text: 'Error adding customer.'
+                        });
                     }
                 },
                 error: function() {
-                    alert('Error adding customer. Please check the inputs.');
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error!',
+                        text: 'Error adding customer. Please check the inputs.'
+                    });
                 },
                 complete: function() {
                     btn.prop('disabled', false).text('Save');
