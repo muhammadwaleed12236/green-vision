@@ -24,14 +24,21 @@
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">Company Logo</label>
-                                <div class="mb-2">
-                                    @if($appSettings['company_logo'])
-                                        <img src="{{ asset('storage/' . $appSettings['company_logo']) }}" alt="Company Logo" style="max-height: 100px; border: 1px solid #ddd; padding: 5px; border-radius: 4px;">
-                                    @else
-                                        <p class="text-muted">No logo uploaded</p>
-                                    @endif
-                                </div>
-                                <input type="file" name="company_logo" class="form-control" accept="image/jpg,image/jpeg,image/png,image/svg+xml">
+                                <input type="file" name="company_logo" class="form-control" accept="image/*">
+                                @if($appSettings['company_logo'])
+                                    <div class="mt-2">
+                                        <img src="{{ asset('storage/' . $appSettings['company_logo']) }}" alt="Logo" style="max-height: 80px;">
+                                    </div>
+                                @endif
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Secondary Logo (e.g. PEC Certified)</label>
+                                <input type="file" name="secondary_logo" class="form-control" accept="image/*">
+                                @if(!empty($appSettings['secondary_logo']))
+                                    <div class="mt-2">
+                                        <img src="{{ asset('storage/' . $appSettings['secondary_logo']) }}" alt="Secondary Logo" style="max-height: 80px;">
+                                    </div>
+                                @endif
                             </div>
                         </div>
 
@@ -47,9 +54,24 @@
                         </div>
 
                         <div class="row mb-3">
-                            <div class="col-md-12">
-                                <label class="form-label fw-semibold">Address</label>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Address 1 (Branch 1)</label>
                                 <textarea name="company_address" class="form-control" rows="3">{{ $appSettings['company_address'] }}</textarea>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Address 2 (Branch 2 - Optional)</label>
+                                <textarea name="company_address_2" class="form-control" rows="3">{{ $appSettings['company_address_2'] }}</textarea>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Website Link</label>
+                                <input type="text" name="company_website" class="form-control" value="{{ $appSettings['company_website'] }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Social Media Account (e.g. facebook)</label>
+                                <input type="text" name="company_social" class="form-control" value="{{ $appSettings['company_social'] }}">
                             </div>
                         </div>
 

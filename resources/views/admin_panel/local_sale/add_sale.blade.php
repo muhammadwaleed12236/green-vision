@@ -563,14 +563,16 @@
                 $('#discountContainer').show();
                 $('#advanceContainer').show();
                 $('#remainingContainer').show();
+                $('#remainingContainer label').text('Remaining');
                 $('[name="delivery_date"]').prop('required', false).val('');
                 $('[name="notify_days_before"]').val('');
                 $('.btn-save-order').text('Save Sale');
             } else if (saleType === 'estimate') {
                 $('#deliveryPaymentPanel').hide();
-                $('#discountContainer').hide();
+                $('#discountContainer').show();
                 $('#advanceContainer').hide();
-                $('#remainingContainer').hide();
+                $('#remainingContainer').show();
+                $('#remainingContainer label').text('Net Total');
                 $('[name="delivery_date"]').prop('required', false).val('');
                 $('[name="notify_days_before"]').val('');
                 $('.btn-save-order').text('Save Estimate');
@@ -579,6 +581,7 @@
                 $('#discountContainer').show();
                 $('#advanceContainer').show();
                 $('#remainingContainer').show();
+                $('#remainingContainer label').text('Remaining');
                 $('[name="delivery_date"]').prop('required', true);
                 if (!$('[name="notify_days_before"]').val()) {
                     $('[name="notify_days_before"]').val('2');

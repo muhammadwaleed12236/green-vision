@@ -319,14 +319,16 @@
                             </div>
 
                             <div class="col-md-3" id="remainingContainer">
-                                <label>Net Amount</label>
-                                <input id="netAmount" name="net_amount" class="form-control readonly-box"
-                                    value="{{ $original->net_amount }}" readonly>
+                                <label>Remaining</label>
+                                <input id="remaining" class="form-control readonly-box"
+                                    value="{{ $original->remaining_amount }}" readonly>
                             </div>
 
                         </div>
                     </div>
                 </div>
+
+                <input type="hidden" name="net_amount" id="netAmount" value="{{ $original->net_amount }}">
 
                 <button class="btn btn-primary"><i class="fa fa-save me-1"></i> Update Invoice</button>
 
@@ -366,13 +368,15 @@
         let net = total - discount;
         $('#grandTotal').val(total.toFixed(2));
         $('#netAmount').val(net.toFixed(2));
+        let adv = parseFloat($('#advance').val()) || 0;
+        $('#remaining').val((net - adv).toFixed(2));
     }
 
     $(document).on('input change', '.rate,.qty', function () {
         calcRow($(this).closest('tr'));
     });
 
-    $(document).on('input change', '.item-total', function () {
+    $(document).on('input change', '.item-total, [name="discount_value"], #advance', function () {
         calcGrand();
     });
 
@@ -535,13 +539,15 @@
             $('#discountContainer').removeClass('d-none');
             $('#advanceContainer').removeClass('d-none');
             $('#remainingContainer').removeClass('d-none');
+            $('#remainingContainer label').text('Remaining');
             $('[name="delivery_date"]').prop('required', false).val('');
             advanceLabel.text('Received Amount');
         } else if (saleType === 'estimate') {
             $('#deliveryPaymentPanel').addClass('d-none');
-            $('#discountContainer').addClass('d-none');
+            $('#discountContainer').removeClass('d-none');
             $('#advanceContainer').addClass('d-none');
-            $('#remainingContainer').addClass('d-none');
+            $('#remainingContainer').removeClass('d-none');
+            $('#remainingContainer label').text('Net Total');
             $('[name="delivery_date"]').prop('required', false).val('');
             advanceLabel.text('Advance Amount');
         } else {
@@ -549,6 +555,7 @@
             $('#discountContainer').removeClass('d-none');
             $('#advanceContainer').removeClass('d-none');
             $('#remainingContainer').removeClass('d-none');
+            $('#remainingContainer label').text('Remaining');
             $('[name="delivery_date"]').prop('required', true);
             if (saleType === 'booking') {
                 advanceLabel.text('Advance Amount');

@@ -19,14 +19,23 @@ class SettingsController extends Controller
             'company_name' => 'nullable|string|max:255',
             'company_phone' => 'nullable|string|max:255',
             'company_address' => 'nullable|string',
+            'company_address_2' => 'nullable|string',
+            'company_website' => 'nullable|string|max:255',
+            'company_social' => 'nullable|string|max:255',
             'company_logo' => 'nullable|image|mimes:jpg,jpeg,png,svg|max:2048',
+            'secondary_logo' => 'nullable|image|mimes:jpg,jpeg,png,svg|max:2048',
             'invoice_terms' => 'nullable|string',
         ]);
 
         Setting::set('company_name', $request->company_name);
         Setting::set('company_phone', $request->company_phone);
         Setting::set('company_address', $request->company_address);
+        Setting::set('company_address_2', $request->company_address_2);
+        Setting::set('company_website', $request->company_website);
+        Setting::set('company_social', $request->company_social);
         Setting::set('invoice_terms', $request->invoice_terms);
+
+
 
         if ($request->hasFile('company_logo')) {
             $oldLogo = Setting::get('company_logo');
@@ -48,6 +57,26 @@ class SettingsController extends Controller
             $file->move(public_path('storage/logos'), $filename);
             
             Setting::set('company_logo', 'logos/' . $filename);
+        }
+
+        if ($request->hasFile('secondary_logo')) {
+            $oldSecLogo = Setting::get('secondary_logo');
+            
+            if ($oldSecLogo) {
+                if (file_exists(public_path('storage/' . $oldSecLogo))) {
+                    @unlink(public_path('storage/' . $oldSecLogo));
+                }
+                if (Storage::disk('public')->exists($oldSecLogo)) {
+                    Storage::disk('public')->delete($oldSecLogo);
+                }
+            }
+            
+            $fileSec = $request->file('secondary_logo');
+            $filenameSec = time() . '_sec_' . preg_replace('/[^a-zA-Z0-9.]/', '_', $fileSec->getClientOriginalName());
+            
+            $fileSec->move(public_path('storage/logos'), $filenameSec);
+            
+            Setting::set('secondary_logo', 'logos/' . $filenameSec);
         }
 
         return redirect()->route('settings.company.edit')
