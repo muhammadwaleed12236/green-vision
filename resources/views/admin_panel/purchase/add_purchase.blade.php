@@ -253,13 +253,24 @@
 
             $('#purchaseTable tbody tr').each(function () {
                 let row = $(this);
-                let itemName = row.find('.item-input').val().trim();
+                let input = row.find('.item-input');
+                let itemName = input.val().trim();
+                let itemId = row.find('.item-id').val();
                 let pcs = parseInt(row.find('.pcx').val()) || 0;
                 let rate = parseInt(row.find('.rate').val()) || 0;
+                let isManualMode = input.attr('data-mode') === 'manual';
 
                 // Check if at least one valid item exists
                 if (itemName) {
                     hasValidItem = true;
+                    
+                    if (!isManualMode && !itemId) {
+                        errors.push(`Row ${row.find('.row-index').text()}: Product "${itemName}" not found. Please select a valid product from the dropdown.`);
+                    }
+                    
+                    if (pcs <= 0) {
+                        errors.push(`Row ${row.find('.row-index').text()}: Quantity for product "${itemName}" must be greater than 0.`);
+                    }
                 }
             });
 
@@ -415,7 +426,7 @@
         </td>
 
         <td>
-            <input type="text" class="form-control unit" name="unit[]" placeholder="e.g. pcs, box">
+            <input type="text" class="form-control unit" name="unit[]" placeholder="e.g. pcs, box" readonly>
         </td>
 
         <td>
@@ -423,7 +434,7 @@
         </td>
 
         <td>
-            <input type="number" class="form-control amount" name="amount[]">
+            <input type="number" class="form-control amount" name="amount[]" readonly>
             <!-- Hidden backward-compatible inputs -->
             <input type="hidden" name="measurement[]" class="measurement" value="">
             <input type="hidden" name="gross_total[]" class="gross-total" value="0">
@@ -509,7 +520,13 @@
                 type: "GET",
                 data: { q: q },
                 success: function (res) {
-                    if (!Array.isArray(res) || res.length === 0) { $acList.addClass('d-none'); return; }
+                    if (!Array.isArray(res) || res.length === 0) { 
+                        let rect = input[0].getBoundingClientRect();
+                        $acList.css({ left: rect.left + 'px', top: rect.bottom + 'px', width: input.outerWidth() + 'px' });
+                        $acList.empty().removeClass('d-none');
+                        $('<div class="autocomplete-item text-danger not-found-item" style="cursor:default; font-weight: 500;"></div>').text('Not found').appendTo($acList);
+                        return; 
+                    }
                     let rect = input[0].getBoundingClientRect();
                     $acList.css({ left: rect.left + 'px', top: rect.bottom + 'px', width: input.outerWidth() + 'px' });
                     $acList.empty().removeClass('d-none');
@@ -521,7 +538,11 @@
 
         // ========== AUTOCOMPLETE LOGIC ==========
         $(document).on('focus', '.item-input', function () { fetchProducts($(this), ''); });
-        $(document).on('input', '.item-input', function () { fetchProducts($(this), $(this).val().trim()); });
+        $(document).on('input', '.item-input', function () { 
+            let input = $(this);
+            input.closest('tr').find('.item-id').val(''); 
+            fetchProducts(input, input.val().trim()); 
+        });
 
         // Hide autocomplete when clicking outside
         $(document).on('click', function (e) {
@@ -531,7 +552,7 @@
         });
 
         // Select item from autocomplete
-        $(document).on('click', '.autocomplete-item', function () {
+        $(document).on('click', '.autocomplete-item:not(.not-found-item)', function () {
             let it = $(this).data('item');
             let row = $acList.data('row');
 
