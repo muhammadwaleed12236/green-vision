@@ -85,7 +85,15 @@
         @endif
     </td>
 
-    <td class="text-center">{{ $sale->customer_phone ?? '-' }}</td>
+    <td class="text-center">
+        @if($sale->party_type === 'vendor' && $sale->vendor)
+            {{ $sale->vendor->Party_phone ?? $sale->vendor->phone_number ?? '-' }}
+        @elseif($sale->party_type === 'walkin')
+            {{ $sale->customer_phone ?? '-' }}
+        @else
+            {{ optional($sale->customer)->phone_number ?? $sale->customer_phone ?? '-' }}
+        @endif
+    </td>
 
     <td style="max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="{{ is_array($items) ? implode(', ', $items) : '' }}">
         @php

@@ -109,7 +109,7 @@
 
                     <div class="mb-3">
                         <label class="form-label">Opening Balance</label>
-                        <input type="number" name="opening_balance" class="form-control mt-2" value="{{ old('opening_balance') }}" placeholder="Enter Opening Balance">
+                        <input type="number" name="opening_balance" class="form-control mt-2" value="{{ old('opening_balance', '0') }}" placeholder="Enter Opening Balance">
                     </div>
 
                 </div>
@@ -153,7 +153,7 @@
 
                         <div class="col-md-6 mt-2">
                            <label class="form-label">Opening Balance</label>
-                            <input type="number" name="opening_balance" class="form-control" id="edit_opening_balance" placeholder="Enter Opening Balance">
+                            <input type="number" name="opening_balance" class="form-control" id="edit_opening_balance" value="0" placeholder="Enter Opening Balance">
                         </div>
                     </div>
 
