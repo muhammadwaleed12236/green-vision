@@ -201,7 +201,7 @@
                                                     <button type="button" class="btn btn-outline-secondary mode-toggle px-2" title="Toggle Search/Manual" tabindex="-1">
                                                         <i class="fas fa-search mode-icon"></i>
                                                     </button>
-                                                    <input name="item[]" class="form-control item-input" value="{{ $item }}" autocomplete="off" placeholder="Search Product" data-mode="search">
+                                                    <input name="item_name[]" class="form-control item-input" value="{{ $item }}" autocomplete="off" placeholder="Search Product" data-mode="search">
                                                 </div>
                                                 <div class="autocomplete-list d-none"></div>
                                             </td>
@@ -213,13 +213,13 @@
                                                 </div>
                                             </td>
                                             <td>
-                                                <input name="unit[]" class="form-control unit text-center" value="{{ $units[$i] ?? '' }}">
+                                                <input name="unit[]" class="form-control unit text-center" value="{{ $units[$i] ?? '' }}" readonly>
                                             </td>
                                             <td>
                                                 <input name="rate[]" class="form-control rate" value="{{ $rates[$i] ?? 0 }}">
                                             </td>
                                             <td>
-                                                <input name="amount[]" class="form-control item-total" value="{{ $amounts[$i] ?? 0 }}">
+                                                <input name="amount[]" class="form-control item-total" value="{{ $amounts[$i] ?? 0 }}" readonly>
                                             </td>
                                             <td>
                                                 <button type="button" class="btn btn-success btn-sm add-row" title="Add row">
@@ -240,7 +240,7 @@
                                                 <button type="button" class="btn btn-outline-secondary mode-toggle px-2" title="Toggle Search/Manual" tabindex="-1">
                                                     <i class="fas fa-search mode-icon"></i>
                                                 </button>
-                                                <input name="item[]" class="form-control item-input" autocomplete="off" placeholder="Search Product" data-mode="search">
+                                                <input name="item_name[]" class="form-control item-input" autocomplete="off" placeholder="Search Product" data-mode="search">
                                             </div>
                                             <div class="autocomplete-list d-none"></div>
                                         </td>
@@ -252,13 +252,13 @@
                                             </div>
                                         </td>
                                         <td>
-                                            <input name="unit[]" class="form-control unit text-center" value="">
+                                            <input name="unit[]" class="form-control unit text-center" value="" readonly>
                                         </td>
                                         <td>
                                             <input name="rate[]" class="form-control rate" value="0">
                                         </td>
                                         <td>
-                                            <input name="amount[]" class="form-control item-total" value="0">
+                                            <input name="amount[]" class="form-control item-total" value="0" readonly>
                                         </td>
                                         <td>
                                             <button type="button" class="btn btn-success btn-sm add-row" title="Add row">
@@ -308,7 +308,7 @@
 
                             <div class="col-md-3" id="discountContainer">
                                 <label>Discount</label>
-                                <input name="discount_value" class="form-control"
+                                <input name="gross_discount" class="form-control"
                                     value="{{ $original->discount_value }}">
                             </div>
 
@@ -364,7 +364,7 @@
         $('.item-total').each(function () {
             total += parseFloat(this.value) || 0;
         });
-        let discount = parseFloat($('[name="discount_value"]').val()) || 0;
+        let discount = parseFloat($('[name="gross_discount"]').val()) || 0;
         let net = total - discount;
         $('#grandTotal').val(total.toFixed(2));
         $('#netAmount').val(net.toFixed(2));
@@ -376,7 +376,7 @@
         calcRow($(this).closest('tr'));
     });
 
-    $(document).on('input change', '.item-total, [name="discount_value"], #advance', function () {
+    $(document).on('input change', '.item-total, [name="gross_discount"], #advance', function () {
         calcGrand();
     });
 

@@ -566,7 +566,7 @@ class LocalSaleController extends Controller
             }
 
             // Now, if the new type is a Sale, we reduce stock
-            $items = $request->item ?? [];
+            $items = $request->item_name ?? [];
             $qtys = $request->qty ?? [];
             if ($newType === 'sale') {
                 foreach ($items as $index => $itemName) {
@@ -638,7 +638,7 @@ class LocalSaleController extends Controller
             }
 
             // Filter out empty items from request arrays
-            $rawItems = $request->item ?? [];
+            $rawItems = $request->item_name ?? [];
             $rawHeights = $request->height ?? [];
             $rawWidths = $request->width ?? [];
             $rawUnits = $request->unit ?? [];
@@ -678,8 +678,8 @@ class LocalSaleController extends Controller
                 'qty' => json_encode($finalQtys),
                 'rate' => json_encode($finalRates),
                 'amount' => json_encode($finalAmounts),
-                'grand_total' => $request->grand_total ?? 0,
-                'discount_value' => $request->discount_value ?? 0,
+                'grand_total' => array_sum($finalAmounts),
+                'discount_value' => $request->gross_discount ?? 0,
                 'advance_amount' => $advance,
                 'net_amount' => $netAmount,
                 'remaining_amount' => $remaining,
