@@ -40,7 +40,7 @@
                                     <tr>
                                         <td>{{ $ledger->contractor_id }}</td>
                                         <td>{{ $ledger->contractor ? $ledger->contractor->contractor_name : '-' }}</td>
-                                        <td>{{ $ledger->contractor ? $ledger->contractor->phone_number : '-' }}</td>
+                                        <td>{{ $ledger->contractor ? $ledger->contractor->phone : '-' }}</td>
                                         <td>{{ $ledger->contractor ? $ledger->contractor->address : '-' }}</td>
                                         <td>{{ number_format($ledger->opening_balance, 0) }}</td>
                                         <td>{{ number_format($ledger->previous_balance, 0) }}</td>

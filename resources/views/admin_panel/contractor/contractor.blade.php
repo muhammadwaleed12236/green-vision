@@ -45,7 +45,7 @@
                                     <td>{{ $contractor->id }}</td>
                                     <td>{{ $contractor->admin_or_user_id }}</td>
                                     <td>{{ $contractor->contractor_name }}</td>
-                                    <td>{{ $contractor->phone_number }}</td>
+                                    <td>{{ $contractor->phone }}</td>
                                     <td>{{ $contractor->address }}</td>
                                     <td>{{ number_format($contractor->opening_balance) }}</td>
                                     <td>{{ $contractor->created_at }}</td>

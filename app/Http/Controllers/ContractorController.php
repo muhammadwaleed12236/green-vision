@@ -66,7 +66,7 @@ class ContractorController extends Controller
         $response = [
             'id' => $contractor->id,
             'contractor_name' => $contractor->contractor_name,
-            'phone_number' => $contractor->phone_number,
+            'phone_number' => $contractor->phone,
             'address' => $contractor->address,
             'ledger' => $ledger,
         ];
@@ -81,7 +81,7 @@ class ContractorController extends Controller
 
         $contractor->update([
             'contractor_name' => $request->contractor_name,
-            'phone_number' => $request->phone_number,
+            'phone' => $request->phone_number,
             'address' => $request->address,
         ]);
 
