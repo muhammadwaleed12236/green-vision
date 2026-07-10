@@ -75,7 +75,7 @@
             background-color: #ffffff;
         }
 
-        .header-left {
+        .inv-header-left {
             display: flex;
             flex-direction: column;
             gap: 15px;
@@ -126,7 +126,7 @@
             color: var(--primary);
         }
 
-        .header-right {
+        .inv-header-right {
             display: flex;
             flex-direction: column;
             align-items: flex-end;
@@ -535,7 +535,7 @@
 
 <div class="invoice-container">
     <div class="invoice-header">
-        <div class="header-left">
+        <div class="inv-header-left">
             @if(!empty($appSettings['company_logo']))
                 <img src="{{ asset('storage/' . $appSettings['company_logo']) }}" alt="{{ $appSettings['company_name'] }}" class="main-logo">
             @else
@@ -564,7 +564,7 @@
             </div>
         </div>
         
-        <div class="header-right">
+        <div class="inv-header-right">
             <h2 class="document-title">
                 @if(strtolower($sale->sale_type) === 'estimate')
                     ESTIMATE
