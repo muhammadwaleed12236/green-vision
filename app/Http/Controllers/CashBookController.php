@@ -16,15 +16,16 @@ class CashBookController extends Controller
         $startDate = \Carbon\Carbon::parse($selectedMonth . '-01')->startOfMonth();
         $endDate   = $startDate->copy()->endOfMonth();
         // Get all entries for selected month grouped by day
-        $monthlyEntries = CashBook::selectRaw('DATE(date) as entry_date,
-                                               SUM(debit) as total_debit,
-                                               SUM(credit) as total_credit,
-                                               (SUM(debit) - SUM(credit)) as daily_balance')
+        $monthlyEntries = CashBook::selectRaw('date as entry_date,
+                                               description,
+                                               debit as total_debit,
+                                               credit as total_credit,
+                                               (debit - credit) as daily_balance')
                             ->where('admin_or_user_id', $user->id)
                             ->whereNull('deleted_at')
                             ->whereBetween('date', [$startDate, $endDate])
-                            ->groupBy('entry_date')
-                            ->orderBy('entry_date', 'asc')
+                            ->orderBy('date', 'asc')
+                            ->orderBy('id', 'asc')
                             ->get();
         // Calculate running balance across the month
         $runningBalance = 0;
@@ -65,10 +66,11 @@ class CashBookController extends Controller
         // Determine selected month (default: current month)
         $selectedMonth = $request->month ?? date('Y-m');
         // Build query – filter by month when a specific month is chosen
-        $query = CashBook::selectRaw('DATE(date) as entry_date,
-                                      SUM(debit) as total_debit,
-                                      SUM(credit) as total_credit,
-                                      (SUM(debit) - SUM(credit)) as closing_balance')
+        $query = CashBook::selectRaw('id, date as entry_date,
+                                      description,
+                                      debit as total_debit,
+                                      credit as total_credit,
+                                      (debit - credit) as closing_balance')
                          ->where('admin_or_user_id', $user->id)
                          ->whereNull('deleted_at');
         if ($selectedMonth) {
@@ -76,8 +78,8 @@ class CashBookController extends Controller
             $end   = $start->copy()->endOfMonth();
             $query->whereBetween('date', [$start, $end]);
         }
-        $dailyHistory = $query->groupBy('entry_date')
-                              ->orderBy('entry_date', 'desc')
+        $dailyHistory = $query->orderBy('date', 'desc')
+                              ->orderBy('id', 'desc')
                               ->paginate(30)
                               ->appends(['month' => $selectedMonth]);
         return view('admin_panel.cashbook.history', compact('dailyHistory', 'availableMonths', 'selectedMonth'));

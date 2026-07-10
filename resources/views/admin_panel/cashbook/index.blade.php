@@ -11,7 +11,7 @@
             <div class="page-header">
                 <div class="page-title">
                     <h4>Cash Book / Ledger - Monthly</h4>
-                    <h6>Entries summarised by day for the selected month</h6>
+                    <h6>All entries for the selected month</h6>
                 </div>
                 <div class="page-btn d-flex gap-2 align-items-center">
                     <a href="{{ route('cash-book.history') }}" class="btn btn-info">
@@ -45,9 +45,10 @@
                             <thead class="table-light">
                                 <tr>
                                     <th width="5%">#</th>
-                                    <th width="20%">Date</th>
-                                    <th width="20%">Debit / IN</th>
-                                    <th width="20%">Credit / OUT</th>
+                                    <th width="15%">Date</th>
+                                    <th width="30%">Description</th>
+                                    <th width="15%">Debit / IN</th>
+                                    <th width="15%">Credit / OUT</th>
                                     <th width="20%">Running Balance</th>
                                 </tr>
                             </thead>
@@ -56,6 +57,7 @@
                                     <tr>
                                         <td>{{ $k + 1 }}</td>
                                         <td>{{ \Carbon\Carbon::parse($row->entry_date)->format('d M Y, l') }}</td>
+                                        <td>{{ $row->description }}</td>
                                         <td class="text-success fw-bold">
                                             {{ $row->total_debit > 0 ? number_format($row->total_debit, 2) : '—' }}
                                         </td>
@@ -68,19 +70,19 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="5" class="text-center text-muted">No entries for this month</td>
+                                        <td colspan="6" class="text-center text-muted">No entries for this month</td>
                                     </tr>
                                 @endforelse
                             </tbody>
                             <tfoot>
                                 <tr class="table-secondary fw-bold">
-                                    <th colspan="2" class="text-end">Monthly Total:</th>
+                                    <th colspan="3" class="text-end">Monthly Total:</th>
                                     <th class="text-success">{{ number_format($totalDebit, 2) }}</th>
                                     <th class="text-danger">{{ number_format($totalCredit, 2) }}</th>
                                     <th></th>
                                 </tr>
                                 <tr class="table-success fw-bold fs-5">
-                                    <th colspan="3" class="text-end">Closing Balance:</th>
+                                    <th colspan="4" class="text-end">Closing Balance:</th>
                                     <th colspan="2" class="{{ $closingBalance >= 0 ? 'text-success' : 'text-danger' }}">
                                         {{ number_format($closingBalance, 2) }}
                                     </th>
