@@ -158,7 +158,7 @@
     </style>
     <div class="wrapper">
         <div style="width:100%; text-align:center;">
-            <h2> Green Vision Login</h2>
+            <h2> {{ \App\Models\Setting::get('company_name', 'Green Vision') }} Login</h2>
             {{-- <img src="logo.png" alt="image" style="width: 250px;"> --}}
 
         </div>

@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Welcome - Green Vision Software</title>
+    <title>Welcome - {{ \App\Models\Setting::get('company_name', 'Green Vision') }} Software</title>
     <!-- Google Fonts (Poppins) -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -281,7 +281,7 @@
 
             <!-- Title -->
             <h1 class="title">
-                Welcome to <span class="title-accent">Green Vision</span> Software
+                Welcome to <span class="title-accent">{{ \App\Models\Setting::get('company_name', 'Green Vision') }}</span> Software
             </h1>
 
             <!-- Divider -->
@@ -309,7 +309,7 @@
         </div>
 
         <!-- Footer -->
-        <p class="footer-text">© {{ date('Y') }} Green Vision Software. All rights reserved.</p>
+        <p class="footer-text">© {{ date('Y') }} {{ \App\Models\Setting::get('company_name', 'Green Vision') }} Software. All rights reserved.</p>
 
     </section>
 

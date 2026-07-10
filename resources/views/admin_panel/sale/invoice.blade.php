@@ -143,7 +143,7 @@
                     <!-- Footer Section -->
                     <div class="row">
                         <div class="col-md-12 text-start">
-                            <h5 class="fw-bold">For Green Vision Signature</h5>
+                            <h5 class="fw-bold">For {{ \App\Models\Setting::get('company_name', 'Green Vision') }} Signature</h5>
                             <p>Data Feeder Hyderabad</p>
                         </div>
                     </div>
