@@ -13,6 +13,7 @@ class CashBook extends Model
     protected $fillable = [
         'admin_or_user_id',
         'date',
+        'title',
         'description',
         'debit',
         'credit',

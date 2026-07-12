@@ -46,7 +46,8 @@
                                 <tr>
                                     <th width="5%">#</th>
                                     <th width="15%">Date</th>
-                                    <th width="30%">Description</th>
+                                    <th width="15%">Title</th>
+                                    <th width="20%">Description</th>
                                     <th width="15%">Debit / IN</th>
                                     <th width="15%">Credit / OUT</th>
                                     <th width="20%">Running Balance</th>
@@ -57,6 +58,7 @@
                                     <tr>
                                         <td>{{ $k + 1 }}</td>
                                         <td>{{ \Carbon\Carbon::parse($row->entry_date)->format('d M Y, l') }}</td>
+                                        <td>{{ $row->title }}</td>
                                         <td>{{ $row->description }}</td>
                                         <td class="text-success fw-bold">
                                             {{ $row->total_debit > 0 ? number_format($row->total_debit, 2) : '—' }}
@@ -70,19 +72,19 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="6" class="text-center text-muted">No entries for this month</td>
+                                        <td colspan="7" class="text-center text-muted">No entries for this month</td>
                                     </tr>
                                 @endforelse
                             </tbody>
                             <tfoot>
                                 <tr class="table-secondary fw-bold">
-                                    <th colspan="3" class="text-end">Monthly Total:</th>
+                                    <th colspan="4" class="text-end">Monthly Total:</th>
                                     <th class="text-success">{{ number_format($totalDebit, 2) }}</th>
                                     <th class="text-danger">{{ number_format($totalCredit, 2) }}</th>
                                     <th></th>
                                 </tr>
                                 <tr class="table-success fw-bold fs-5">
-                                    <th colspan="4" class="text-end">Closing Balance:</th>
+                                    <th colspan="5" class="text-end">Closing Balance:</th>
                                     <th colspan="2" class="{{ $closingBalance >= 0 ? 'text-success' : 'text-danger' }}">
                                         {{ number_format($closingBalance, 2) }}
                                     </th>
@@ -113,6 +115,11 @@
                     <div class="mb-3">
                         <label class="form-label">Date</label>
                         <input type="date" class="form-control" name="date" value="{{ $selectedMonth . '-' . date('d') }}" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Title</label>
+                        <input type="text" class="form-control" name="title" placeholder="e.g. Sale" required>
                     </div>
 
                     <div class="mb-3">

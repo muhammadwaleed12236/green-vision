@@ -17,6 +17,7 @@ class CashBookController extends Controller
         $endDate   = $startDate->copy()->endOfMonth();
         // Get all entries for selected month grouped by day
         $monthlyEntries = CashBook::selectRaw('date as entry_date,
+                                               title,
                                                description,
                                                debit as total_debit,
                                                credit as total_credit,
@@ -67,6 +68,7 @@ class CashBookController extends Controller
         $selectedMonth = $request->month ?? date('Y-m');
         // Build query – filter by month when a specific month is chosen
         $query = CashBook::selectRaw('id, date as entry_date,
+                                      title,
                                       description,
                                       debit as total_debit,
                                       credit as total_credit,
@@ -88,6 +90,7 @@ class CashBookController extends Controller
     {
         $request->validate([
             'date' => 'required|date',
+            'title' => 'required|string|max:255',
             'description' => 'required|string|max:255',
             'debit' => 'nullable|numeric|min:0',
             'credit' => 'nullable|numeric|min:0',
@@ -98,6 +101,7 @@ class CashBookController extends Controller
         CashBook::create([
             'admin_or_user_id' => $user->id,
             'date' => $request->date,
+            'title' => $request->title,
             'description' => $request->description,
             'debit' => $debit,
             'credit' => $credit,
@@ -110,6 +114,7 @@ class CashBookController extends Controller
         $request->validate([
             'entry_id' => 'required|exists:cash_books,id',
             'date' => 'required|date',
+            'title' => 'required|string|max:255',
             'description' => 'required|string|max:255',
             'debit' => 'nullable|numeric|min:0',
             'credit' => 'nullable|numeric|min:0',
@@ -118,6 +123,7 @@ class CashBookController extends Controller
         
         $entry->update([
             'date' => $request->date,
+            'title' => $request->title,
             'description' => $request->description,
             'debit' => $request->debit ?? 0,
             'credit' => $request->credit ?? 0,

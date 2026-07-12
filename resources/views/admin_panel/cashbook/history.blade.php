@@ -48,7 +48,8 @@
                                 <tr>
                                     <th width="5%">#</th>
                                     <th width="15%">Date</th>
-                                    <th width="25%">Description</th>
+                                    <th width="15%">Title</th>
+                                    <th width="20%">Description</th>
                                     <th width="15%">Total Debit (IN)</th>
                                     <th width="15%">Total Credit (OUT)</th>
                                     <th width="15%">Closing Balance</th>
@@ -63,6 +64,7 @@
                                             <strong>{{ \Carbon\Carbon::parse($day->entry_date)->format('d M Y') }}</strong><br>
                                             <small class="text-muted">{{ \Carbon\Carbon::parse($day->entry_date)->format('l') }}</small>
                                         </td>
+                                        <td>{{ $day->title }}</td>
                                         <td>{{ $day->description }}</td>
                                         <td class="text-success fw-bold">{{ number_format($day->total_debit, 2) }}</td>
                                         <td class="text-danger fw-bold">{{ number_format($day->total_credit, 2) }}</td>
@@ -71,14 +73,14 @@
                                         </td>
                                         <td>
                                             <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#editEntryModal"
-                                                    onclick="editEntry({{ $day->id }}, '{{ $day->entry_date }}', '{{ addslashes($day->description) }}', '{{ $day->total_debit }}', '{{ $day->total_credit }}')">
+                                                    onclick="editEntry({{ $day->id }}, '{{ $day->entry_date }}', '{{ addslashes($day->title) }}', '{{ addslashes($day->description) }}', '{{ $day->total_debit }}', '{{ $day->total_credit }}')">
                                                 <i class="fa fa-edit"></i> Edit
                                             </button>
                                         </td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="7" class="text-center text-muted py-4">
+                                        <td colspan="8" class="text-center text-muted py-4">
                                             No cash book history found
                                         </td>
                                     </tr>
@@ -87,7 +89,7 @@
                             @if($dailyHistory->count() > 0)
                                 <tfoot>
                                     <tr class="table-secondary fw-bold">
-                                        <th colspan="3" class="text-end">Grand Total:</th>
+                                        <th colspan="4" class="text-end">Grand Total:</th>
                                         <th class="text-success">{{ number_format($dailyHistory->sum('total_debit'), 2) }}</th>
                                         <th class="text-danger">{{ number_format($dailyHistory->sum('total_credit'), 2) }}</th>
                                         <th class="{{ ($dailyHistory->sum('total_debit') - $dailyHistory->sum('total_credit')) >= 0 ? 'text-success' : 'text-danger' }}">
@@ -132,6 +134,11 @@
                     </div>
 
                     <div class="mb-3">
+                        <label class="form-label">Title</label>
+                        <input type="text" class="form-control" name="title" id="edit_title" required>
+                    </div>
+
+                    <div class="mb-3">
                         <label class="form-label">Description</label>
                         <input type="text" class="form-control" name="description" id="edit_description" required>
                     </div>
@@ -157,9 +164,10 @@
 </div>
 
 <script>
-function editEntry(id, date, description, debit, credit) {
+function editEntry(id, date, title, description, debit, credit) {
     document.getElementById('edit_entry_id').value = id;
     document.getElementById('edit_date').value = date;
+    document.getElementById('edit_title').value = title;
     document.getElementById('edit_description').value = description;
     document.getElementById('edit_debit').value = debit > 0 ? debit : '';
     document.getElementById('edit_credit').value = credit > 0 ? credit : '';
