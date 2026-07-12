@@ -115,6 +115,7 @@
 </style>
 
 <div class="main-wrapper">
+    @include('admin_panel.include.navbar_include')
     @include('admin_panel.include.admin_sidebar_include')
     <div class="page-wrapper">
         <div class="content container-fluid">
