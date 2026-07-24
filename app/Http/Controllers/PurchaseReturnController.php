@@ -205,6 +205,15 @@ class PurchaseReturnController extends Controller
             $vendorLedger->save();
         }
 
+        // Step 4: Update product stock
+        foreach ($rows as $row) {
+            $product = Product::where('item_name', $row['item'])->first();
+            if ($product) {
+                $product->initial_stock = max(0, ($product->initial_stock ?? 0) - $row['return_qty']);
+                $product->save();
+            }
+        }
+
         return redirect()->route('all-purchase-return')->with('success', 'Purchase return processed successfully.');
     }
 
