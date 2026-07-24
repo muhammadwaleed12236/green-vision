@@ -180,7 +180,8 @@
                                 <thead class="table-light">
                                     <tr>
                                         <th style="width: 5%;">#</th>
-                                        <th style="width: 40%;">Product Name</th>
+                                        <th style="width: 30%;">Product Name</th>
+                                        <th style="width: 10%;">Avail. Stock</th>
                                         <th style="width: 15%;">Quantity</th>
                                         <th style="width: 10%;">Unit</th>
                                         <th style="width: 12%;">Price/unit</th>
@@ -204,6 +205,10 @@
                                                     <input name="item_name[]" class="form-control item-input" value="{{ $item }}" autocomplete="off" placeholder="Search Product" data-mode="search">
                                                 </div>
                                                 <div class="autocomplete-list d-none"></div>
+                                            </td>
+                                            <td>
+                                                @php $prod = \App\Models\Product::where('item_name', $item)->first(); $avail = $prod ? $prod->initial_stock : 0; @endphp
+                                                <input type="text" name="avail_stock[]" class="form-control avail-stock p-1 text-center readonly-box" value="{{ $avail }}" readonly tabindex="-1" placeholder="-">
                                             </td>
                                             <td>
                                                 <div class="qty-box">
@@ -243,6 +248,9 @@
                                                 <input name="item_name[]" class="form-control item-input" autocomplete="off" placeholder="Search Product" data-mode="search">
                                             </div>
                                             <div class="autocomplete-list d-none"></div>
+                                        </td>
+                                        <td>
+                                            <input type="text" name="avail_stock[]" class="form-control avail-stock p-1 text-center readonly-box" value="" readonly tabindex="-1" placeholder="-">
                                         </td>
                                         <td>
                                             <div class="qty-box">
@@ -340,6 +348,7 @@
 @include('admin_panel.include.footer_include')
 
 {{-- ================= JS ================= --}}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <!-- Add these two libraries -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jQuery-slimScroll/1.3.8/jquery.slimscroll.min.js"></script>
@@ -351,7 +360,20 @@
     function calcRow(row) {
         let rate = parseFloat(row.find('.rate').val()) || 0;
         let qty = parseFloat(row.find('.qty').val());
+        let avail = parseFloat(row.find('.avail-stock').val());
+
         if (isNaN(qty) || qty < 0) qty = 0;
+
+        let saleType = $('input[name="sale_type"]:checked').val();
+        if (saleType === 'sale' && !isNaN(avail)) {
+            if (qty > avail) {
+                row.find('.qty').addClass('border-danger text-danger');
+            } else {
+                row.find('.qty').removeClass('border-danger text-danger');
+            }
+        } else {
+            row.find('.qty').removeClass('border-danger text-danger');
+        }
 
         let total = rate * qty;
         row.find('.item-total').val(total.toFixed(2));
@@ -457,6 +479,7 @@
 
         let price = parseFloat(it.retail_price) || parseFloat(it.wholesale_price) || 0;
         row.find('.rate').val(price);
+        row.find('.avail-stock').val(it.initial_stock !== null && it.initial_stock !== undefined ? it.initial_stock : 0);
 
         $acList.addClass('d-none');
 
@@ -491,7 +514,9 @@
     }
 
     function createRowHtml() {
-        return $('#rowTemplate').clone().removeClass('d-none').removeAttr('id');
+        let r = $('#rowTemplate').clone().removeClass('d-none').removeAttr('id');
+        r.find('.qty').removeClass('border-danger text-danger');
+        return r;
     }
 
     // Add row (insert after current)
@@ -563,7 +588,57 @@
                 advanceLabel.text('Advance/Received');
             }
         }
+
+        $('.sale-row:not(#rowTemplate)').each(function() {
+            calcRow($(this));
+        });
     }
+
+    $('form').on('submit', function () {
+        calcGrand();
+        
+        let validItems = 0;
+        let errors = [];
+        $('.sale-row:not(#rowTemplate)').each(function() {
+            let row = $(this);
+            let input = row.find('.item-input');
+            let itemName = input.val().trim();
+            let qty = parseFloat(row.find('.qty').val()) || 0;
+
+            if(itemName) {
+                validItems++;
+                if (qty <= 0) {
+                    errors.push(`Row ${row.find('.row-index').text()}: Quantity for product "${itemName}" must be greater than 0.`);
+                }
+                
+                let saleType = $('input[name="sale_type"]:checked').val();
+                let avail = parseFloat(row.find('.avail-stock').val());
+                if (saleType === 'sale' && !isNaN(avail) && qty > avail) {
+                    errors.push(`Row ${row.find('.row-index').text()}: Quantity (${qty}) for product "${itemName}" exceeds Available Stock (${avail}).`);
+                }
+            }
+        });
+
+        if (validItems === 0) {
+            Swal.fire('Error', 'Please add at least one item', 'error');
+            return false;
+        }
+
+        if (errors.length > 0) {
+            let errorHtml = '<ul style="text-align:left; margin:0; padding-left:20px;">';
+            errors.forEach(function(msg) {
+                errorHtml += '<li>' + msg + '</li>';
+            });
+            errorHtml += '</ul>';
+
+            Swal.fire({
+                icon: 'error',
+                title: 'Validation Error',
+                html: errorHtml
+            });
+            return false;
+        }
+    });
 
     $(document).ready(function() {
         handleSaleTypeToggle();

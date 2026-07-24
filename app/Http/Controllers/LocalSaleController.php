@@ -147,6 +147,19 @@ class LocalSaleController extends Controller
 
             // Automatically reduce stock if it's a direct Sale
             if ($request->sale_type === 'sale') {
+                // Pre-validate stock
+                foreach ($items as $index => $itemName) {
+                    if (!empty($itemName)) {
+                        $productModel = Product::where('item_name', $itemName)->first();
+                        $avail = $productModel ? floatval($productModel->initial_stock) : 0;
+                        $qty = floatval($qtys[$index] ?? 0);
+                        
+                        if ($qty > $avail) {
+                            throw new \Exception("Quantity ({$qty}) for product \"{$itemName}\" exceeds Available Stock ({$avail}).");
+                        }
+                    }
+                }
+
                 foreach ($items as $index => $itemName) {
                     $productId = isset($itemIds[$index]) ? intval($itemIds[$index]) : null;
                     if ($productId) {
@@ -569,6 +582,19 @@ class LocalSaleController extends Controller
             $items = $request->item_name ?? [];
             $qtys = $request->qty ?? [];
             if ($newType === 'sale') {
+                // Pre-validate stock
+                foreach ($items as $index => $itemName) {
+                    if (!empty($itemName)) {
+                        $productModel = Product::where('item_name', $itemName)->first();
+                        $avail = $productModel ? floatval($productModel->initial_stock) : 0;
+                        $qty = floatval($qtys[$index] ?? 0);
+                        
+                        if ($qty > $avail) {
+                            throw new \Exception("Quantity ({$qty}) for product \"{$itemName}\" exceeds Available Stock ({$avail}).");
+                        }
+                    }
+                }
+
                 foreach ($items as $index => $itemName) {
                     if (!empty($itemName)) {
                         $productModel = Product::where('item_name', $itemName)->first();
@@ -769,6 +795,22 @@ class LocalSaleController extends Controller
 
             // 2. If target is sale (conversion: estimate -> sale, or booking -> sale)
             if ($targetType === 'sale') {
+                // Pre-validate stock
+                $convItems = json_decode($sale->item, true) ?? [];
+                $convQtys = json_decode($sale->qty, true) ?? [];
+                
+                foreach ($convItems as $index => $itemName) {
+                    if (!empty($itemName)) {
+                        $productModel = Product::where('item_name', $itemName)->first();
+                        $avail = $productModel ? floatval($productModel->initial_stock) : 0;
+                        $qty = floatval($convQtys[$index] ?? 0);
+                        
+                        if ($qty > $avail) {
+                            throw new \Exception("Quantity ({$qty}) for product \"{$itemName}\" exceeds Available Stock ({$avail}). Cannot convert to Sale.");
+                        }
+                    }
+                }
+
                 // If it was an Estimate, the ledger was not updated. Update it now!
                 if ($oldType === 'estimate') {
                     if ($remaining > 0) {

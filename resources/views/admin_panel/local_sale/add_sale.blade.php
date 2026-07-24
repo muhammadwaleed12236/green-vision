@@ -20,12 +20,13 @@
 
     /* Column Widths */
     .sale-table th:nth-child(1) { width: 5%; }  /* # */
-    .sale-table th:nth-child(2) { width: 45%; } /* Product Name */
-    .sale-table th:nth-child(3) { width: 15%; } /* Quantity */
-    .sale-table th:nth-child(4) { width: 10%; } /* Unit */
-    .sale-table th:nth-child(5) { width: 12%; } /* Price/unit */
-    .sale-table th:nth-child(6) { width: 12%; } /* amount */
-    .sale-table th:nth-child(7) { width: 5%; }  /* Action */
+    .sale-table th:nth-child(2) { width: 35%; } /* Product Name */
+    .sale-table th:nth-child(3) { width: 10%; } /* Avail Stock */
+    .sale-table th:nth-child(4) { width: 15%; } /* Quantity */
+    .sale-table th:nth-child(5) { width: 8%; }  /* Unit */
+    .sale-table th:nth-child(6) { width: 11%; } /* Price/unit */
+    .sale-table th:nth-child(7) { width: 11%; } /* amount */
+    .sale-table th:nth-child(8) { width: 5%; }  /* Action */
 
     /* Input & Select Styling */
     .sale-table .form-control {
@@ -244,6 +245,7 @@
                                     <tr class="bg-light">
                                         <th class="text-center">#</th>
                                         <th>Product Name</th>
+                                        <th class="text-center">Avail. Stock</th>
                                         <th class="text-center">Quantity</th>
                                         <th>Unit</th>
                                         <th class="text-end">Price/unit</th>
@@ -277,9 +279,12 @@
                                              <div class="autocomplete-list d-none"></div>
                                          </td>
                                          <td>
+                                             <input type="text" name="avail_stock[]" class="form-control avail-stock p-1 text-center readonly-box" value="" readonly tabindex="-1" placeholder="-">
+                                         </td>
+                                         <td>
                                              <div class="qty-box">
                                                  <button type="button" class="btn qty-minus">−</button>
-                                                 <input name="qty[]" class="form-control qty" value="{{ old('qty.' . $i) ?? ($cloneQtys[$i] ?? 0) }}" placeholder="0">
+                                                 <input name="qty[]" class="form-control qty text-center" value="{{ old('qty.' . $i) ?? ($cloneQtys[$i] ?? 0) }}" placeholder="0">
                                                  <button type="button" class="btn qty-plus">+</button>
                                              </div>
                                          </td>
@@ -437,8 +442,20 @@
     function calcRow(r) {
         let rate = parseFloat(r.find('.rate').val()) || 0;
         let qty = parseFloat(r.find('.qty').val());
+        let avail = parseFloat(r.find('.avail-stock').val());
 
         if (isNaN(qty) || qty < 0) qty = 0;
+
+        let saleType = $('input[name="sale_type"]:checked').val();
+        if (saleType === 'sale' && !isNaN(avail)) {
+            if (qty > avail) {
+                r.find('.qty').addClass('border-danger text-danger');
+            } else {
+                r.find('.qty').removeClass('border-danger text-danger');
+            }
+        } else {
+            r.find('.qty').removeClass('border-danger text-danger');
+        }
 
         let total = rate * qty;
         r.find('.item-total').val(total.toFixed(2));
@@ -476,7 +493,8 @@
     function addNewRow() {
         let r = $('.sale-row:first').clone();
         r.find('input').val('');
-        r.find('.qty').val(0);
+        r.find('.qty').val(0).removeClass('border-danger text-danger');
+        r.find('.avail-stock').val('');
         r.find('.rate').val('');
         r.find('.item-total').val('0.00');
         r.find('.unit').val('pcs');
@@ -554,6 +572,12 @@
                 if (qty <= 0) {
                     errors.push(`Row ${row.find('.row-index').text()}: Quantity for product "${itemName}" must be greater than 0.`);
                 }
+                
+                let saleType = $('input[name="sale_type"]:checked').val();
+                let avail = parseFloat(row.find('.avail-stock').val());
+                if (saleType === 'sale' && !isNaN(avail) && qty > avail) {
+                    errors.push(`Row ${row.find('.row-index').text()}: Quantity (${qty}) for product "${itemName}" exceeds Available Stock (${avail}).`);
+                }
             }
         });
 
@@ -621,6 +645,10 @@
                 }
                 $('.btn-save-order').text('Save Job Order');
             }
+
+            $('.sale-row').each(function() {
+                calcRow($(this));
+            });
         }
 
         $('input[name="sale_type"]').on('change', handleSaleTypeToggle);
@@ -710,6 +738,7 @@
             let price = parseFloat(it.retail_price) || parseFloat(it.wholesale_price) || 0;
             row.find('.rate').val(price);
             row.find('.unit').val(it.unit || 'pcs');
+            row.find('.avail-stock').val(it.initial_stock !== null && it.initial_stock !== undefined ? it.initial_stock : 0);
 
             $acList.addClass('d-none');
 
