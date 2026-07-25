@@ -110,6 +110,27 @@
                                 {{-- Salary Summary --}}
                                 <div id="summaryBox" style="display: none;">
 
+                                    {{-- Ledger Summary Block --}}
+                                    <div class="mb-3 p-3 rounded" style="background: #f8fafc; border: 1px solid #e2e8f0;">
+                                        <h6 class="fw-bold mb-3 border-bottom pb-2"><i class="fa fa-book text-primary me-2"></i>Account Ledger Summary</h6>
+                                        <div class="row">
+                                            <div class="col-6 mb-2">
+                                                <small class="text-muted d-block">Total Earned to Date</small>
+                                                <strong class="text-success" id="ledgerTotalEarned">PKR 0</strong>
+                                            </div>
+                                            <div class="col-6 mb-2">
+                                                <small class="text-muted d-block">Total Paid to Date</small>
+                                                <strong class="text-primary" id="ledgerTotalPaid">PKR 0</strong>
+                                            </div>
+                                            <div class="col-12 mt-2 pt-2 border-top">
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <small class="text-muted fw-bold">Remaining Balance:</small>
+                                                    <span id="ledgerBalance" class="fs-5 fw-bold">PKR 0</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
                                     {{-- Attendance History Grid --}}
                                     <div class="mb-3">
                                         <label class="form-label fw-semibold mb-2">Attendance History</label>
@@ -578,6 +599,22 @@ $(document).ready(function() {
             $('#absentDays').text(data.days_absent);
             $('#absentDeduction').text('- PKR ' + data.absent_deduction.toLocaleString());
             $('#grossSalary').text('PKR ' + data.gross_salary.toLocaleString());
+
+            // Update ledger summary
+            if(data.ledger_summary) {
+                $('#ledgerTotalEarned').text('PKR ' + data.ledger_summary.total_earned.toLocaleString());
+                $('#ledgerTotalPaid').text('PKR ' + data.ledger_summary.total_paid.toLocaleString());
+                
+                let bal = data.ledger_summary.balance;
+                let balEl = $('#ledgerBalance');
+                if(bal > 0) {
+                    balEl.text('PKR ' + bal.toLocaleString()).removeClass('text-success text-muted').addClass('text-danger');
+                } else if(bal < 0) {
+                    balEl.text('Adv: PKR ' + Math.abs(bal).toLocaleString()).removeClass('text-danger text-muted').addClass('text-success');
+                } else {
+                    balEl.text('PKR 0').removeClass('text-danger text-success').addClass('text-muted');
+                }
+            }
 
             // Update payment options
             $('#deductedAmount').text('PKR ' + data.gross_salary.toLocaleString());

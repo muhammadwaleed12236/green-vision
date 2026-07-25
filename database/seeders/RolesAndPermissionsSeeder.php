@@ -36,8 +36,13 @@ class RolesAndPermissionsSeeder extends Seeder
         $registrar->syncPermissions();
 
         $allPermissionIds = Permission::pluck('id');
-        $superAdmin->permissions()->sync($allPermissionIds);
-        $admin->permissions()->sync($allPermissionIds);
+        
+        $adminPermissionIds = Permission::where('slug', 'not like', 'staff-report%')
+            ->where('slug', 'not like', 'staff-recovery%')
+            ->pluck('id');
+        
+        $superAdmin->permissions()->sync($adminPermissionIds);
+        $admin->permissions()->sync($adminPermissionIds);
 
         $nonRbacPermissionIds = Permission::where('slug', 'not like', 'user-management-%')->pluck('id');
         $distributor->permissions()->sync($nonRbacPermissionIds);

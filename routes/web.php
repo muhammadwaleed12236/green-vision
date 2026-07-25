@@ -195,7 +195,8 @@ Route::post('/salesman/update', [SalesmanController::class, 'update_salesman'])-
 Route::get('/fetch-cities', [SalesmanController::class, 'fetchCities'])->name('fetch-cities');
 Route::delete('/salesman/delete/{id}', [SalesmanController::class, 'delete'])->name('delete-salesman');
 
-Route::get('/staff-ledger', [SalesmanController::class, 'staff_ledger'])->name('staff-ledger');
+    Route::get('/staff-salary-ledger/{id}', [SalesmanController::class, 'staff_salary_ledger'])->name('staff-salary-ledger');
+    Route::get('/staff-ledger', [SalesmanController::class, 'staff_ledger'])->name('staff-ledger');
 Route::post('/staff-recovery-store', [SalesmanController::class, 'staff_recovery_store'])->name('staff-recovery-store');
 Route::get('/staff-recovery', [SalesmanController::class, 'staff_recovery'])->name('staff-recovery');
 Route::put('/staff-recovery/{id}', [SalesmanController::class, 'updateStaffRecovery'])->name('staff-recovery.update');

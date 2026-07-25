@@ -39,9 +39,7 @@ class User extends Authenticatable
             return $this->usertype === 'admin';
         }
 
-        if ($role->slug === 'super-admin') {
-            return true;
-        }
+
 
         return $role->permissions()
             ->where(function($q) use ($slug) {

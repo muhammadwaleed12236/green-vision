@@ -90,13 +90,15 @@ class StaffSalaryController extends Controller
             ->where('status', '!=', 'cleared')
             ->sum('remaining_amount');
 
-        // Staff's set salary (could be weekly 7000, monthly 30000, etc.)
+        // Staff's set salary
         $setSalary = $staff->salary ?? 0;
+        $payBasis = $staff->salary_type ?? 'monthly';
 
-        // Per day = Set Salary / Selected Days
-        // Example: 5000 salary, 1-7 selected = 5000/7 = 714 per day
-        // Example: 1000 salary, 1-30 selected = 1000/30 = 33 per day
-        $perDaySalary = $totalDays > 0 ? ($setSalary / $totalDays) : 0;
+        if (strtolower($payBasis) === 'weekly') {
+            $perDaySalary = $setSalary / 7;
+        } else {
+            $perDaySalary = $setSalary / 30;
+        }
 
         // Calculate worked days (present + half days count as 0.5)
         $workedDays = $daysPresent + ($daysHalfDay * 0.5);
@@ -104,14 +106,17 @@ class StaffSalaryController extends Controller
         // Gross salary = Per Day × Worked Days
         $grossSalary = round($perDaySalary * $workedDays, 0);
 
-        // Full salary for the period (the set salary without any deduction)
-        $fullPeriodSalary = $setSalary;
+        // Full salary for the period (no deductions)
+        $fullPeriodSalary = round($perDaySalary * $totalDays, 0);
 
         // Absent deduction = Per Day × Absent Days
         $absentDeduction = round($perDaySalary * $daysAbsent, 0);
 
         // Half day deduction (0.5 per half day)
         $halfDayDeduction = round($perDaySalary * $daysHalfDay * 0.5, 0);
+
+        // Fetch ledger summary
+        $ledgerSummary = $staff->getSalaryLedgerSummary();
 
         return response()->json([
             'staff_name' => $staff->name,
@@ -133,6 +138,7 @@ class StaffSalaryController extends Controller
             'last_paid_formatted' => $lastPayment ? Carbon::parse($lastPayment->to_date)->format('d M Y') : 'No previous payment',
             'overlap' => $overlapCheck,
             'attendance_history' => $attendanceHistory,
+            'ledger_summary' => $ledgerSummary,
         ]);
     }
 
@@ -268,6 +274,13 @@ class StaffSalaryController extends Controller
         // Create salary payment record
         $paymentMonth = Carbon::parse($fromDate)->format('Y-m');
 
+        // Determine the daily rate based on pay basis (from earlier logic)
+        $setSalary = $staff->salary ?? 0;
+        $payBasis = $staff->salary_type ?? 'monthly';
+        $dailyRate = strtolower($payBasis) === 'weekly' ? ($setSalary / 7) : ($setSalary / 30);
+        
+        $workedDaysForPayment = $daysPresent + ($daysHalfDay * 0.5); // Can be recorded as days_paid
+
         $salaryPayment = StaffSalaryPayment::create([
             'admin_or_user_id' => Auth::id(),
             'staff_id' => $staffId,
@@ -275,6 +288,9 @@ class StaffSalaryController extends Controller
             'from_date' => $fromDate,
             'to_date' => $toDate,
             'basic_salary' => $staff->salary ?? 0,
+            'pay_basis' => $payBasis,
+            'daily_rate' => $dailyRate,
+            'days_paid' => $workedDaysForPayment,
             'advance_deducted' => $salaryAdvanceDeducted,
             'additional_advance_deducted' => $additionalAdvanceDeducted,
             'amount_paid' => $request->amount,

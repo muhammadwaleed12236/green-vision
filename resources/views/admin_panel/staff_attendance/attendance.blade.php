@@ -84,7 +84,7 @@
             <div class="card mb-4">
                 <div class="card-header bg-white d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">Mark Attendance</h5>
-                    <input type="date" id="attendanceDate" class="form-control" style="width: 200px;" value="{{ date('Y-m-d') }}">
+                    <input type="date" id="attendanceDate" class="form-control" style="width: 200px;" value="{{ $selectedDate }}">
                 </div>
                 <div class="card-body">
                     <form id="bulkAttendanceForm">
@@ -411,6 +411,14 @@ $(document).ready(function() {
                 Swal.fire('Error', 'Failed to save attendance', 'error');
             }
         });
+    });
+
+    // Change Attendance Date
+    $('#attendanceDate').on('change', function() {
+        let selectedDate = $(this).val();
+        let url = new URL(window.location.href);
+        url.searchParams.set('date', selectedDate);
+        window.location.href = url.toString();
     });
 
     // Edit Button

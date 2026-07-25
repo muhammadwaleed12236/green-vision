@@ -34,6 +34,7 @@
                                     <th>Phone</th>
                                     <th>Address</th>
                                     <th>Salary</th>
+                                    <th>Balance Due</th>
                                     <th>Status</th>
                                     <th>Action</th>
                                 </tr>
@@ -46,7 +47,17 @@
                                         <td>{{ $salesman->name }}</td>
                                         <td>{{ $salesman->phone }}</td>
                                         <td>{{ $salesman->address }}</td>
-                                        <td>{{ number_format($salesman->salary) }}</td>
+                                        <td>{{ number_format($salesman->salary) }} {{ $salesman->salary_type ? '(' . ucfirst($salesman->salary_type) . ')' : '' }}</td>
+                                        <td>
+                                            @php $bal = $salesman->getSalaryLedgerSummary()['balance']; @endphp
+                                            @if($bal > 0)
+                                                <span class="text-danger fw-bold">PKR {{ number_format($bal) }}</span>
+                                            @elseif($bal < 0)
+                                                <span class="text-success">Adv: PKR {{ number_format(abs($bal)) }}</span>
+                                            @else
+                                                <span class="text-muted">0</span>
+                                            @endif
+                                        </td>
                                         <td>
                                             <button class="btn btn-sm toggle-status" data-id="{{ $salesman->id }}"
                                                 data-status="{{ $salesman->status }}">
@@ -57,12 +68,18 @@
                                             <button class="btn btn-sm btn-primary editSalesmanBtn"
                                                 data-id="{{ $salesman->id }}" data-name="{{ $salesman->name }}"
                                                 data-phone="{{ $salesman->phone }}" data-city="{{ $salesman->city }}"
-                                                data-area="{{ $salesman->area }}" data-address="{{ $salesman->address }}"
-                                                data-salary="{{ $salesman->salary }}" data-status="{{ $salesman->status }}"
+                                                data-address="{{ $salesman->address }}"
+                                                data-salary="{{ $salesman->salary }}"
+                                                data-salary_type="{{ $salesman->salary_type }}"
+                                                data-joining_date="{{ $salesman->joining_date }}"
+                                                data-end_date="{{ $salesman->end_date }}"
+                                                data-status="{{ $salesman->status }}"
                                                 data-designation="{{ $salesman->designation }}" data-bs-toggle="modal"
                                                 data-bs-target="#editSalesmanModal">
                                                 Edit
                                             </button>
+
+                                            <a href="{{ route('staff-salary-ledger', $salesman->id) }}" class="btn btn-sm btn-info">Ledger</a>
 
                                             <button class="btn btn-sm btn-danger deleteSalesmanBtn"
                                                 data-id="{{ $salesman->id }}">
@@ -106,16 +123,30 @@
                     </div>
 
                     <div class="row">
-                        <!-- Address - Dynamic Width -->
-                        <div class="mb-3" id="addressWrapper">
+                        <!-- Address -->
+                        <div class="col-md-12 mb-3" id="addressWrapper">
                             <label for="address" class="form-label">Address</label>
                             <input type="text" class="form-control" name="address" required>
                         </div>
+                    </div>
 
-                        <!-- Salary - Hidden by default -->
-                        <div class="col-md-6 mb-3 d-none" id="salaryWrapper">
+                    <div class="row">
+                        <!-- Salary -->
+                        <div class="col-md-6 mb-3" id="salaryWrapper">
                             <label for="salary" class="form-label">Salary</label>
-                            <input type="number" class="form-control" name="salary" id="salaryField">
+                            <div class="input-group">
+                                <input type="number" class="form-control" name="salary" id="salaryField" placeholder="Enter Salary">
+                                <button class="btn btn-outline-secondary toggleSalaryTypeBtn" type="button">Monthly</button>
+                                <input type="hidden" name="salary_type" class="salaryTypeHidden" value="monthly">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <!-- Joining Date -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Joining Date</label>
+                            <input type="date" class="form-control" name="joining_date" value="{{ date('Y-m-d') }}" required>
                         </div>
                     </div>
 
@@ -198,16 +229,36 @@
                     </div>
 
                     <div class="row">
-                        <!-- Address - Dynamic Width -->
-                        <div class="mb-3" id="editAddressWrapper">
+                        <!-- Address -->
+                        <div class="col-md-12 mb-3" id="editAddressWrapper">
                             <label for="edit_address" class="form-label">Address</label>
                             <input type="text" class="form-control" id="edit_address" name="address" required>
                         </div>
+                    </div>
 
-                        <!-- Salary - Hidden by default -->
-                        <div class="col-md-6 mb-3 d-none" id="editSalaryWrapper">
-                            <label for="edit_salary" class="form-label">Opening Balance</label>
-                            <input type="number" class="form-control" id="edit_salary" name="salary">
+                    <div class="row">
+                        <!-- Salary -->
+                        <div class="col-md-6 mb-3" id="editSalaryWrapper">
+                            <label for="edit_salary" class="form-label">Salary</label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="edit_salary" name="salary" placeholder="Enter Salary">
+                                <button class="btn btn-outline-secondary toggleSalaryTypeBtn" type="button" id="edit_salary_type_btn">Monthly</button>
+                                <input type="hidden" name="salary_type" id="edit_salary_type" class="salaryTypeHidden" value="monthly">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <!-- Joining Date -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Joining Date</label>
+                            <input type="date" class="form-control" id="edit_joining_date" name="joining_date" required>
+                        </div>
+                        
+                        <!-- End Date -->
+                        <div class="col-md-6 mb-3 d-none" id="editEndDateWrapper">
+                            <label class="form-label">End Date (If Inactive)</label>
+                            <input type="date" class="form-control" id="edit_end_date" name="end_date">
                         </div>
                     </div>
 
@@ -274,20 +325,7 @@
         }
 
         function toggleSalaryField() {
-            if (designationSelect.value === "labour") {
-                // Show salary field and make address 50% width
-                salaryWrapper.classList.remove("d-none");
-                salaryField.setAttribute("required", "required");
-                addressWrapper.classList.remove("col-md-12");
-                addressWrapper.classList.add("col-md-6");
-            } else {
-                // Hide salary field and make address full width
-                salaryWrapper.classList.add("d-none");
-                salaryField.removeAttribute("required");
-                salaryField.value = "";
-                addressWrapper.classList.remove("col-md-6");
-                addressWrapper.classList.add("col-md-12");
-            }
+            // Salary is now always visible
         }
 
         designationSelect.addEventListener("change", function () {
@@ -298,6 +336,18 @@
         // Initial call
         toggleLoginFields();
         toggleSalaryField();
+
+        // Toggle Salary Type Button
+        $(document).on("click", ".toggleSalaryTypeBtn", function () {
+            let hiddenInput = $(this).siblings(".salaryTypeHidden");
+            if (hiddenInput.val() === "monthly") {
+                hiddenInput.val("weekly");
+                $(this).text("Weekly");
+            } else {
+                hiddenInput.val("monthly");
+                $(this).text("Monthly");
+            }
+        });
 
         // Fetch areas on City Change
         $('#citySelect').change(function () {
@@ -333,11 +383,16 @@
             $("#edit_area").val($(this).data("area"));
             $("#edit_address").val($(this).data("address"));
             $("#edit_status").val($(this).data("status"));
+            $("#edit_joining_date").val($(this).data("joining_date"));
+            $("#edit_end_date").val($(this).data("end_date"));
 
             let designation = $(this).data("designation");
             $("#edit_designation").val(designation);
 
             $("#edit_salary").val($(this).data("salary"));
+            let salaryType = $(this).data("salary_type") || "monthly";
+            $("#edit_salary_type").val(salaryType);
+            $("#edit_salary_type_btn").text(salaryType.charAt(0).toUpperCase() + salaryType.slice(1));
 
             // Trigger designation change to show/hide salary field
             toggleEditSalary();
@@ -347,7 +402,21 @@
             if (cityName) {
                 fetchEditAreas(cityName, $(this).data("area"));
             }
+
+            toggleEditEndDate();
         });
+
+        $('#edit_status').change(function() {
+            toggleEditEndDate();
+        });
+
+        function toggleEditEndDate() {
+            if ($('#edit_status').val() == '0') {
+                $('#editEndDateWrapper').removeClass('d-none');
+            } else {
+                $('#editEndDateWrapper').addClass('d-none');
+            }
+        }
 
         // City change handler for Edit Modal
         $('#edit_city').change(function () {
@@ -381,18 +450,7 @@
         const editAddressWrapper = document.getElementById("editAddressWrapper");
 
         function toggleEditSalary() {
-            if (editDesignation.value === "labour") {
-                editSalaryWrapper.classList.remove("d-none");
-                editSalaryField.setAttribute("required", "required");
-                editAddressWrapper.classList.remove("col-md-12");
-                editAddressWrapper.classList.add("col-md-6");
-            } else {
-                editSalaryWrapper.classList.add("d-none");
-                editSalaryField.removeAttribute("required");
-                editSalaryField.value = "";
-                editAddressWrapper.classList.remove("col-md-6");
-                editAddressWrapper.classList.add("col-md-12");
-            }
+            // Salary is now always visible
         }
 
         editDesignation.addEventListener("change", toggleEditSalary);

@@ -43,8 +43,10 @@ class SalesmanController extends Controller
                 'phone' => $request->phone,
                 'designation' => $request->designation,
                 'address' => $request->address,
-                'salary' => $request->designation === 'labour' ? $request->salary : null,
+                'salary' => $request->salary,
+                'salary_type' => $request->salary_type,
                 'status' => $request->status,
+                'joining_date' => $request->joining_date,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
@@ -91,8 +93,11 @@ class SalesmanController extends Controller
             'phone' => $request->phone,
             'designation' => $request->designation,
             'address' => $request->address,
-            'salary' => $request->designation === 'labour' ? $request->salary : null,
+            'salary' => $request->salary,
+            'salary_type' => $request->salary_type,
             'status' => $request->status,
+            'joining_date' => $request->joining_date,
+            'end_date' => ($request->status == 0) ? ($request->end_date ?? now()) : null,
             'updated_at' => now(),
         ]);
 
@@ -199,6 +204,19 @@ class SalesmanController extends Controller
         $designation->delete();
 
         return response()->json(['status' => 'success', 'message' => 'Designation deleted successfully!']);
+    }
+
+    // New Staff Salary Ledger
+    public function staff_salary_ledger($id)
+    {
+        if (! Auth::check()) {
+            return redirect()->back();
+        }
+
+        $salesman = Salesman::with('salaryPayments')->where('admin_or_user_id', Auth::id())->findOrFail($id);
+        $ledgerSummary = $salesman->getSalaryLedgerSummary();
+        
+        return view('admin_panel.salesmen.staff_salary_ledger', compact('salesman', 'ledgerSummary'));
     }
 
     // Staff Ledger Page

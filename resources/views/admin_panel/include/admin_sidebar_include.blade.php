@@ -169,7 +169,7 @@
                     @endhaspermission
 
                     <!-- Staff -->
-                    @if(auth()->user()->hasPermission('designation.view') || auth()->user()->hasPermission('salesman.view') || auth()->user()->hasPermission('staff-report.view'))
+                    @if(auth()->user()->hasPermission('designation.view') || auth()->user()->hasPermission('salesman.view') || auth()->user()->hasPermission('staff-report.view') || auth()->user()->hasPermission('staff-recovery.recovery'))
                     <li class="submenu">
                         <a href="javascript:void(0);"><i class="fas fa-user-tie"></i><span> Staff</span> <span
                                 class="menu-arrow"></span></a>
@@ -183,7 +183,7 @@
                             @haspermission('staff-report.view')
                             <li><a href="{{ route('staff-wise-report') }}"><i class="fas fa-money-check-alt"></i> Weekly Staff Payment</a></li>
                             @endhaspermission
-                            @haspermission('salesman.view')
+                            @haspermission('staff-recovery.recovery')
                             <li><a href="{{ route('staff-recovery') }}">Staff Given Payments</a></li>
                             @endhaspermission
                         </ul>

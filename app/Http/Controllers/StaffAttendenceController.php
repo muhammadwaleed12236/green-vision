@@ -53,9 +53,11 @@ public function index(Request $request)
         ->where('status', 1)
         ->get();
 
-    // Today's attendance records
+    $selectedDate = $request->date ? $request->date : date('Y-m-d');
+
+    // Selected date's attendance records
     $todayAttendance = StaffAttendence::where('admin_or_user_id', Auth::id())
-        ->where('attendence_date', date('Y-m-d'))
+        ->where('attendence_date', $selectedDate)
         ->get();
 
     // Today's Summary
@@ -66,7 +68,7 @@ public function index(Request $request)
         'half_day' => $todayAttendance->where('status', 'half_day')->count(),
     ];
 
-    return view('admin_panel.staff_attendance.attendance', compact('records', 'staffs', 'todayAttendance', 'todaySummary'));
+    return view('admin_panel.staff_attendance.attendance', compact('records', 'staffs', 'todayAttendance', 'todaySummary', 'selectedDate'));
 }
 
     public function store(Request $request)
