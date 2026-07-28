@@ -186,52 +186,123 @@
                 </div>
             </div>
 
-            <!-- Stats Cards Row 1 -->
+            <!-- Stats Cards Row 1: Payments -->
             <div class="row">
-                <div class="col-lg-3 col-sm-6 col-12">
-                    <div class="dash-widget bg-rose" onclick="window.location='{{ route('vendors-ledger') }}'" title="View Vendor Ledger">
-                        <div class="dash-widget-icon">
-                            <i data-feather="shopping-bag"></i>
-                        </div>
-                        <div class="dash-widget-info">
-                            <h5>Total Purchase Due</h5>
-                            <h2><span class="amount-text" data-amount="{{ $stats['totalPurchaseDue'] }}">{{ number_format($stats['totalPurchaseDue'], 0) }}</span></h2>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-lg-3 col-sm-6 col-12">
-                    <div class="dash-widget bg-amber" onclick="window.location='{{ route('customer-ledger') }}'" title="View Customer Ledger">
-                        <div class="dash-widget-icon">
-                            <i data-feather="arrow-down-circle"></i>
-                        </div>
-                        <div class="dash-widget-info">
-                            <h5>Total Sales Due</h5>
-                            <h2><span class="amount-text" data-amount="{{ $stats['totalSalesDue'] }}">{{ number_format($stats['totalSalesDue'], 0) }}</span></h2>
+                <!-- Payment In -->
+                <div class="col-lg-6 col-md-6 col-12 mb-4">
+                    <div class="card h-100 border-0 shadow-sm" style="border-radius: 12px; border-top: 4px solid #0ea5e9 !important; background: #fff;">
+                        <div class="card-body p-4 d-flex flex-column">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div style="background: #e0f2fe; color: #0ea5e9; width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
+                                    <i class="fas fa-arrow-down"></i>
+                                </div>
+                                <span class="badge rounded-pill fw-semibold" style="background: #e0f2fe; color: #0ea5e9; font-size: 0.7rem; padding: 6px 12px; letter-spacing: 0.5px;">
+                                    RECEIPTS
+                                </span>
+                            </div>
+                            <h3 class="fw-bold mb-1 text-dark" style="font-size: 2rem;">Rs {{ number_format($stats['todayPaymentIn'], 0) }}</h3>
+                            <p class="text-muted mb-4" style="font-size: 0.9rem;">Payment In (Today)</p>
+                            
+                            <div class="mt-auto pt-3 border-top">
+                                <span class="text-muted" style="font-size: 0.8rem;">Overall Received: <strong>Rs {{ number_format($stats['overallReceived'], 0) }}</strong></span>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="col-lg-3 col-sm-6 col-12">
-                    <div class="dash-widget bg-emerald" onclick="window.location='{{ route('all-local-sale') }}'" title="View All Sales">
-                        <div class="dash-widget-icon">
-                            <i data-feather="trending-up"></i>
+                <!-- Payment Out -->
+                <div class="col-lg-6 col-md-6 col-12 mb-4">
+                    <div class="card h-100 border-0 shadow-sm" style="border-radius: 12px; border-top: 4px solid #f43f5e !important; background: #fff;">
+                        <div class="card-body p-4 d-flex flex-column">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div style="background: #ffe4e6; color: #f43f5e; width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
+                                    <i class="fas fa-arrow-up"></i>
+                                </div>
+                                <span class="badge rounded-pill fw-semibold" style="background: #ffe4e6; color: #f43f5e; font-size: 0.7rem; padding: 6px 12px; letter-spacing: 0.5px;">
+                                    PAYMENTS
+                                </span>
+                            </div>
+                            <h3 class="fw-bold mb-1 text-dark" style="font-size: 2rem;">Rs {{ number_format($stats['todayPaymentOut'], 0) }}</h3>
+                            <p class="text-muted mb-4" style="font-size: 0.9rem;">Payment Out (Today)</p>
+                            
+                            <div class="mt-auto pt-3 border-top">
+                                <span class="text-muted" style="font-size: 0.8rem;">Overall Settled: <strong>Rs {{ number_format($stats['overallSettled'], 0) }}</strong></span>
+                            </div>
                         </div>
-                        <div class="dash-widget-info">
-                            <h5>Gross Sales (Revenue)</h5>
-                            <h2><span class="amount-text" data-amount="{{ $stats['totalSaleAmount'] }}">{{ number_format($stats['totalSaleAmount'], 0) }}</span></h2>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Cards Row 2: Operations & Liabilities -->
+            <div class="row">
+                <!-- Sales -->
+                <div class="col-lg-3 col-md-6 col-sm-6 col-12 mb-4">
+                    <div class="card h-100 border-0 shadow-sm" style="border-radius: 12px; border-top: 4px solid #10b981 !important; background: #fff;">
+                        <div class="card-body p-4 d-flex flex-column">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div style="background: #d1fae5; color: #10b981; width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem;">
+                                    <i class="fas fa-shopping-cart"></i>
+                                </div>
+                                <span class="badge rounded-pill fw-semibold" style="background: #d1fae5; color: #10b981; font-size: 0.65rem; padding: 5px 10px;">
+                                    SALES
+                                </span>
+                            </div>
+                            <h3 class="fw-bold mb-1 text-dark" style="font-size: 1.6rem;">Rs {{ number_format($stats['todaySales'], 0) }}</h3>
+                            <p class="text-muted mb-0" style="font-size: 0.8rem;">Today's Sales</p>
                         </div>
                     </div>
                 </div>
 
-                <div class="col-lg-3 col-sm-6 col-12">
-                    <div class="dash-widget bg-indigo" onclick="window.location='{{ route('all-Purchases') }}'" title="View All Purchases">
-                        <div class="dash-widget-icon">
-                            <i data-feather="database"></i>
+                <!-- Purchases -->
+                <div class="col-lg-3 col-md-6 col-sm-6 col-12 mb-4">
+                    <div class="card h-100 border-0 shadow-sm" style="border-radius: 12px; border-top: 4px solid #f43f5e !important; background: #fff;">
+                        <div class="card-body p-4 d-flex flex-column">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div style="background: #ffe4e6; color: #f43f5e; width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem;">
+                                    <i class="fas fa-money-bill-wave"></i>
+                                </div>
+                                <span class="badge rounded-pill fw-semibold" style="background: #ffe4e6; color: #f43f5e; font-size: 0.65rem; padding: 5px 10px;">
+                                    OPERATIONS
+                                </span>
+                            </div>
+                            <h3 class="fw-bold mb-1 text-dark" style="font-size: 1.6rem;">Rs {{ number_format($stats['todayPurchases'], 0) }}</h3>
+                            <p class="text-muted mb-0" style="font-size: 0.8rem;">Today's Purchase</p>
                         </div>
-                        <div class="dash-widget-info">
-                            <h5>Stock Investment</h5>
-                            <h2><span class="amount-text" data-amount="{{ $stats['totalStockInvestment'] }}">{{ number_format($stats['totalStockInvestment'], 0) }}</span></h2>
+                    </div>
+                </div>
+
+                <!-- Payables -->
+                <div class="col-lg-3 col-md-6 col-sm-6 col-12 mb-4">
+                    <div class="card h-100 border-0 shadow-sm" style="border-radius: 12px; border-top: 4px solid #f59e0b !important; background: #fff;">
+                        <div class="card-body p-4 d-flex flex-column">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div style="background: #fef3c7; color: #f59e0b; width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem;">
+                                    <i class="fas fa-file-invoice"></i>
+                                </div>
+                                <span class="badge rounded-pill fw-semibold" style="background: #fef3c7; color: #f59e0b; font-size: 0.65rem; padding: 5px 10px;">
+                                    LIABILITIES
+                                </span>
+                            </div>
+                            <h3 class="fw-bold mb-1 text-dark" style="font-size: 1.6rem;">Rs {{ number_format($stats['totalPurchaseDue'], 0) }}</h3>
+                            <p class="text-muted mb-0" style="font-size: 0.8rem;">Total Payables</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Receivables -->
+                <div class="col-lg-3 col-md-6 col-sm-6 col-12 mb-4">
+                    <div class="card h-100 border-0 shadow-sm" style="border-radius: 12px; border-top: 4px solid #8b5cf6 !important; background: #fff;">
+                        <div class="card-body p-4 d-flex flex-column">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div style="background: #ede9fe; color: #8b5cf6; width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem;">
+                                    <i class="fas fa-file-invoice-dollar"></i>
+                                </div>
+                                <span class="badge rounded-pill fw-semibold" style="background: #ede9fe; color: #8b5cf6; font-size: 0.65rem; padding: 5px 10px;">
+                                    LIABILITIES
+                                </span>
+                            </div>
+                            <h3 class="fw-bold mb-1 text-dark" style="font-size: 1.6rem;">Rs {{ number_format($stats['totalSalesDue'], 0) }}</h3>
+                            <p class="text-muted mb-0" style="font-size: 0.8rem;">Total Receivables (Customer Credit)</p>
                         </div>
                     </div>
                 </div>

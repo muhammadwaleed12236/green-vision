@@ -6,6 +6,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Models\LocalSale;
 use App\Models\Account;
+use App\Models\JournalVoucher;
+use App\Models\CashBook;
 
 class HomeController extends Controller
 {
@@ -62,6 +64,23 @@ class HomeController extends Controller
             })
             ->sum('amount');
 
+
+        // Payment In & Out
+        $todayPaymentIn = JournalVoucher::where('voucher_type', 'receipt')->whereDate('voucher_date', now()->toDateString())->sum('credit_amount') 
+            + CashBook::whereDate('date', now()->toDateString())->sum('debit');
+        
+        $overallReceived = JournalVoucher::where('voucher_type', 'receipt')->sum('credit_amount') 
+            + CashBook::sum('debit');
+
+        $todayPaymentOut = JournalVoucher::where('voucher_type', 'payment')->whereDate('voucher_date', now()->toDateString())->sum('debit_amount') 
+            + CashBook::whereDate('date', now()->toDateString())->sum('credit');
+
+        $overallSettled = JournalVoucher::where('voucher_type', 'payment')->sum('debit_amount') 
+            + CashBook::sum('credit');
+
+        // Today's Sales & Purchases
+        $todaySales = LocalSale::whereDate('created_at', now()->toDateString())->sum('net_amount');
+        $todayPurchases = \App\Models\Purchase::whereDate('created_at', now()->toDateString())->sum('grand_total');
 
         // Counts
         $customersCount = \App\Models\Customer::count();
@@ -220,6 +239,13 @@ class HomeController extends Controller
             'totalContractorCosts' => $totalContractorCosts,
             'totalExpenses' => $totalExpenses,
             'netProfit' => $netProfit,
+            
+            'todayPaymentIn' => $todayPaymentIn,
+            'overallReceived' => $overallReceived,
+            'todayPaymentOut' => $todayPaymentOut,
+            'overallSettled' => $overallSettled,
+            'todaySales' => $todaySales,
+            'todayPurchases' => $todayPurchases,
 
             'customersCount' => $customersCount,
             'vendorsCount' => $vendorsCount,
