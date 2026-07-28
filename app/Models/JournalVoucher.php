@@ -13,6 +13,7 @@ class JournalVoucher extends Model
 
     protected $fillable = [
         'admin_or_user_id',
+        'account_id',
         'voucher_no',
         'voucher_date',
         'voucher_type',
@@ -39,6 +40,11 @@ class JournalVoucher extends Model
         'debit_amount' => 'decimal:2',
         'credit_amount' => 'decimal:2',
     ];
+
+    public function account()
+    {
+        return $this->belongsTo(Account::class, 'account_id');
+    }
 
     // Generate unique voucher number
     public static function generateVoucherNo($type = 'JV')

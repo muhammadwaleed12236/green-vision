@@ -233,6 +233,16 @@
                     </div>
 
                     <div class="mb-3">
+                        <label>Account / Bank <span class="text-danger">*</span></label>
+                        <select class="form-select" name="account_id" required>
+                            <option value="">Select Account</option>
+                            @foreach($accounts as $account)
+                                <option value="{{ $account->id }}">{{ $account->name }} ({{ $account->category->name ?? '' }})</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
                         <label>Description</label>
                         <textarea name="narration" class="form-control" rows="3" placeholder="Payment details..."></textarea>
                     </div>
@@ -290,6 +300,16 @@
                             <label>Date <span class="text-danger">*</span></label>
                             <input type="date" name="voucher_date" class="form-control" value="{{ date('Y-m-d') }}" required>
                         </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label>Account / Bank <span class="text-danger">*</span></label>
+                        <select class="form-select" name="account_id" required>
+                            <option value="">Select Account</option>
+                            @foreach($accounts as $account)
+                                <option value="{{ $account->id }}">{{ $account->name }} ({{ $account->category->name ?? '' }})</option>
+                            @endforeach
+                        </select>
                     </div>
 
                     <div class="mb-3">

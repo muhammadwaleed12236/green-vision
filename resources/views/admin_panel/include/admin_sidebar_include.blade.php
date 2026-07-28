@@ -211,6 +211,13 @@
                     </li>
                     @endif
 
+                    <!-- Chart of Accounts -->
+                    <li>
+                        <a href="{{ route('chart-of-accounts.index') }}" class="{{ request()->routeIs('chart-of-accounts.*') ? 'active' : '' }}">
+                            <i class="fas fa-sitemap"></i><span> Chart of Accounts</span>
+                        </a>
+                    </li>
+
                     <!-- Cash Book / Ledger -->
                     @haspermission('cash-book.view')
                     <li>

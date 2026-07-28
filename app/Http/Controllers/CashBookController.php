@@ -1,6 +1,7 @@
 <?php
 namespace App\Http\Controllers;
 use App\Models\CashBook;
+use App\Models\Account;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 class CashBookController extends Controller
@@ -38,8 +39,11 @@ class CashBookController extends Controller
         $closingBalance = $runningBalance;
         $totalDebit     = $monthlyEntries->sum('total_debit');
         $totalCredit    = $monthlyEntries->sum('total_credit');
+        
+        $accounts = Account::with('category')->where('status', true)->orderBy('name')->get();
+        
         return view('admin_panel.cashbook.index', compact(
-            'monthlyEntries', 'selectedMonth', 'openingBalance', 'closingBalance', 'totalDebit', 'totalCredit'
+            'monthlyEntries', 'selectedMonth', 'openingBalance', 'closingBalance', 'totalDebit', 'totalCredit', 'accounts'
         ));
     }
     // public function history()
@@ -84,13 +88,17 @@ class CashBookController extends Controller
                               ->orderBy('id', 'desc')
                               ->paginate(30)
                               ->appends(['month' => $selectedMonth]);
-        return view('admin_panel.cashbook.history', compact('dailyHistory', 'availableMonths', 'selectedMonth'));
+                              
+        $accounts = Account::with('category')->where('status', true)->orderBy('name')->get();
+                              
+        return view('admin_panel.cashbook.history', compact('dailyHistory', 'availableMonths', 'selectedMonth', 'accounts'));
     }
     public function store(Request $request)
     {
         $request->validate([
             'date' => 'required|date',
-            'title' => 'required|string|max:255',
+            'account_id' => 'required|exists:accounts,id',
+            'title' => 'nullable|string|max:255',
             'description' => 'required|string|max:255',
             'debit' => 'nullable|numeric|min:0',
             'credit' => 'nullable|numeric|min:0',
@@ -100,8 +108,9 @@ class CashBookController extends Controller
         $credit = $request->credit ?? 0;
         CashBook::create([
             'admin_or_user_id' => $user->id,
+            'account_id' => $request->account_id,
             'date' => $request->date,
-            'title' => $request->title,
+            'title' => clone $request->title ?: '',
             'description' => $request->description,
             'debit' => $debit,
             'credit' => $credit,
@@ -113,8 +122,9 @@ class CashBookController extends Controller
     {
         $request->validate([
             'entry_id' => 'required|exists:cash_books,id',
+            'account_id' => 'required|exists:accounts,id',
             'date' => 'required|date',
-            'title' => 'required|string|max:255',
+            'title' => 'nullable|string|max:255',
             'description' => 'required|string|max:255',
             'debit' => 'nullable|numeric|min:0',
             'credit' => 'nullable|numeric|min:0',
@@ -122,8 +132,9 @@ class CashBookController extends Controller
         $entry = CashBook::findOrFail($request->entry_id);
         
         $entry->update([
+            'account_id' => $request->account_id,
             'date' => $request->date,
-            'title' => $request->title,
+            'title' => $request->title ?: '',
             'description' => $request->description,
             'debit' => $request->debit ?? 0,
             'credit' => $request->credit ?? 0,

@@ -12,6 +12,7 @@ class CashBook extends Model
 
     protected $fillable = [
         'admin_or_user_id',
+        'account_id',
         'date',
         'title',
         'description',
@@ -26,4 +27,9 @@ class CashBook extends Model
         'credit' => 'decimal:2',
         'balance' => 'decimal:2',
     ];
+
+    public function account()
+    {
+        return $this->belongsTo(Account::class, 'account_id');
+    }
 }

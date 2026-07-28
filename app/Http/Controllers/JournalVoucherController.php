@@ -15,6 +15,7 @@ use App\Models\CustomerLedger;
 use App\Models\ContractorLedger;
 use App\Models\StaffAdvance;
 use App\Models\AddExpense;
+use App\Models\Account;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -86,9 +87,10 @@ class JournalVoucherController extends Controller
         $contractors = Contractor::where('admin_or_user_id', Auth::id())->get();
         $staffs = Salesman::where('admin_or_user_id', Auth::id())->where('status', 1)->get();
         $expenseHeads = Expense::where('admin_or_user_id', Auth::id())->get();
+        $accounts = Account::with('category')->where('status', true)->orderBy('name')->get();
 
         return view('admin_panel.journal_voucher.index', compact(
-            'vouchers', 'stats', 'filteredTotals', 'vendors', 'customers', 'contractors', 'staffs', 'expenseHeads'
+            'vouchers', 'stats', 'fromDate', 'toDate', 'vendors', 'customers', 'contractors', 'staffs', 'expenseHeads', 'filteredTotals', 'accounts'
         ));
     }
 
@@ -189,6 +191,7 @@ class JournalVoucherController extends Controller
                 'party_type' => $request->party_type,
                 'party_id' => $request->party_id,
                 'party_name' => $partyName,
+                'account_id' => $request->account_id,
                 'account_head' => $request->account_head ?? 'Payment',
                 'debit_amount' => $request->amount,
                 'credit_amount' => 0,
@@ -251,6 +254,7 @@ class JournalVoucherController extends Controller
                 'party_type' => $request->party_type,
                 'party_id' => $request->party_id,
                 'party_name' => $partyName,
+                'account_id' => $request->account_id,
                 'account_head' => $request->account_head ?? 'Receipt',
                 'debit_amount' => 0,
                 'credit_amount' => $request->amount,

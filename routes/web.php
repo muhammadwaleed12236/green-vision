@@ -10,6 +10,7 @@ use App\Http\Controllers\DistributorController;
 use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\GeneralReportController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\ChartOfAccountController;
 use App\Http\Controllers\JobOrderController;
 use App\Http\Controllers\LocalSaleController;
 use App\Http\Controllers\NotificationController;
@@ -414,6 +415,14 @@ Route::middleware('auth')->group(function () {
     Route::get('/settings/company', [SettingsController::class, 'edit'])->name('settings.company.edit');
     Route::post('/settings/company', [SettingsController::class, 'update'])->name('settings.company.update');
 });
+
+// ========================= CHART OF ACCOUNTS ROUTES =========================
+    Route::get('/chart-of-accounts', [ChartOfAccountController::class, 'index'])->name('chart-of-accounts.index');
+    Route::post('/chart-of-accounts/category/store', [ChartOfAccountController::class, 'storeCategory'])->name('chart-of-accounts.category.store');
+    Route::put('/chart-of-accounts/category/update/{id}', [ChartOfAccountController::class, 'updateCategory'])->name('chart-of-accounts.category.update');
+    Route::post('/chart-of-accounts/account/store', [ChartOfAccountController::class, 'storeAccount'])->name('chart-of-accounts.account.store');
+    Route::put('/chart-of-accounts/account/update/{id}', [ChartOfAccountController::class, 'updateAccount'])->name('chart-of-accounts.account.update');
+    Route::post('/chart-of-accounts/account/toggle/{id}', [ChartOfAccountController::class, 'toggleAccountStatus'])->name('chart-of-accounts.account.toggle');
 
 });
 

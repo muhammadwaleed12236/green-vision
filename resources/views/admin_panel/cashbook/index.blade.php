@@ -118,8 +118,18 @@
                     </div>
 
                     <div class="mb-3">
+                        <label class="form-label">Account <span class="text-danger">*</span></label>
+                        <select class="form-select" name="account_id" required>
+                            <option value="">Select Account</option>
+                            @foreach($accounts as $account)
+                                <option value="{{ $account->id }}">{{ $account->name }} ({{ $account->category->name ?? '' }})</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
                         <label class="form-label">Title</label>
-                        <input type="text" class="form-control" name="title" placeholder="e.g. Sale" required>
+                        <input type="text" class="form-control" name="title" placeholder="e.g. Sale (Optional)">
                     </div>
 
                     <div class="mb-3">
