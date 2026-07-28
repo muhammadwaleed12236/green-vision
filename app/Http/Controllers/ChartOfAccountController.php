@@ -5,6 +5,10 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\AccountCategory;
 use App\Models\Account;
+use App\Models\CashBook;
+use App\Models\JournalVoucher;
+use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class ChartOfAccountController extends Controller
 {
@@ -95,5 +99,57 @@ class ChartOfAccountController extends Controller
         $account->save();
 
         return redirect()->back()->with('success', 'Account status updated successfully!');
+    }
+
+    public function ledger(Request $request, $id)
+    {
+        $account = Account::findOrFail($id);
+
+        $fromDate = $request->from_date;
+        $toDate = $request->to_date;
+
+        // Fetch CashBook Entries
+        $cashBookQuery = CashBook::where('account_id', $id)
+            ->whereNull('deleted_at');
+            
+        if ($fromDate) $cashBookQuery->whereDate('date', '>=', $fromDate);
+        if ($toDate) $cashBookQuery->whereDate('date', '<=', $toDate);
+
+        $cashBooks = $cashBookQuery->get()->map(function ($cb) {
+            return [
+                'date' => $cb->date->format('Y-m-d'),
+                'voucher_no' => $cb->title ?: '-', // Use title as voucher no equivalent
+                'description' => $cb->description,
+                'party' => '-', // No party in cashbook
+                'debit' => $cb->debit,
+                'credit' => $cb->credit,
+                'type' => 'CashBook'
+            ];
+        });
+
+        // Fetch Journal Voucher Entries
+        $jvQuery = JournalVoucher::where('account_id', $id)
+            ->whereNull('deleted_at');
+            
+        if ($fromDate) $jvQuery->whereDate('voucher_date', '>=', $fromDate);
+        if ($toDate) $jvQuery->whereDate('voucher_date', '<=', $toDate);
+
+        $jvs = $jvQuery->get()->map(function ($jv) {
+            return [
+                'date' => $jv->voucher_date->format('Y-m-d'),
+                'voucher_no' => $jv->voucher_no,
+                'description' => $jv->narration ?: $jv->remarks,
+                'party' => $jv->party_name ?: '-',
+                // Swap debit and credit from the Bank's perspective
+                'debit' => $jv->credit_amount,
+                'credit' => $jv->debit_amount,
+                'type' => 'JournalVoucher'
+            ];
+        });
+
+        // Merge and Sort by Date
+        $transactions = $cashBooks->concat($jvs)->sortBy('date')->values();
+
+        return view('admin_panel.chart_of_accounts.ledger', compact('account', 'transactions', 'fromDate', 'toDate'));
     }
 }

@@ -418,6 +418,7 @@ Route::middleware('auth')->group(function () {
 
 // ========================= CHART OF ACCOUNTS ROUTES =========================
     Route::get('/chart-of-accounts', [ChartOfAccountController::class, 'index'])->name('chart-of-accounts.index');
+    Route::get('/chart-of-accounts/ledger/{id}', [ChartOfAccountController::class, 'ledger'])->name('chart-of-accounts.ledger');
     Route::post('/chart-of-accounts/category/store', [ChartOfAccountController::class, 'storeCategory'])->name('chart-of-accounts.category.store');
     Route::put('/chart-of-accounts/category/update/{id}', [ChartOfAccountController::class, 'updateCategory'])->name('chart-of-accounts.category.update');
     Route::post('/chart-of-accounts/account/store', [ChartOfAccountController::class, 'storeAccount'])->name('chart-of-accounts.account.store');

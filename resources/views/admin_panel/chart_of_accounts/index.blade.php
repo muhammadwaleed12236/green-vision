@@ -111,6 +111,9 @@
                                         </span>
                                     </td>
                                     <td class="text-end">
+                                        <a class="me-3" href="{{ route('chart-of-accounts.ledger', $account->id) }}" title="View Ledger">
+                                            <i class="fas fa-book text-info" style="font-size: 1.2rem;"></i>
+                                        </a>
                                         <a class="me-3" href="javascript:void(0);" data-bs-toggle="modal" data-bs-target="#editAccountModal{{ $account->id }}">
                                             <img src="{{ asset('assets/img/icons/edit.svg') }}" alt="img">
                                         </a>

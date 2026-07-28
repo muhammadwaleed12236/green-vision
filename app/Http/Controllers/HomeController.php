@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Models\LocalSale;
+use App\Models\Account;
 
 class HomeController extends Controller
 {
@@ -25,8 +26,10 @@ class HomeController extends Controller
             } else {
                 // Default to admin dashboard for 'admin', 'user' and other administrative roles
                 $stats = $this->getAdminStats();
+                
+                $accounts = Account::with('category')->where('status', true)->orderBy('name')->get();
 
-                return view('admin_panel.dashboard', compact('stats', 'userId'));
+                return view('admin_panel.dashboard', compact('stats', 'userId', 'accounts'));
             }
         }
     }

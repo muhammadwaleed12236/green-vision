@@ -39,8 +39,12 @@ class Account extends Model
         $cashBookDebits = $this->cashBooks()->sum('debit');
         $cashBookCredits = $this->cashBooks()->sum('credit');
         
-        $jvDebits = $this->journalVouchers()->sum('debit_amount');
-        $jvCredits = $this->journalVouchers()->sum('credit_amount');
+        // Note: For Journal Vouchers, the stored debit_amount/credit_amount represents the PARTY's ledger side.
+        // Therefore, for the Cash/Bank account, they are inverted.
+        // Payment Voucher (debit_amount > 0) -> Party is debited, so Cash is credited.
+        // Receipt Voucher (credit_amount > 0) -> Party is credited, so Cash is debited.
+        $jvDebits = $this->journalVouchers()->sum('credit_amount');
+        $jvCredits = $this->journalVouchers()->sum('debit_amount');
         
         $totalDebits = $cashBookDebits + $jvDebits;
         $totalCredits = $cashBookCredits + $jvCredits;

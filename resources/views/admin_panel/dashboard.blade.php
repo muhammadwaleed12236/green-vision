@@ -346,6 +346,70 @@
                     </div>
                 </div>
             </div>
+
+
+            <!-- BANK & LEDGER LIQUIDITY -->
+            @if(isset($accounts) && $accounts->count() > 0)
+            <div class="mb-2 mt-4">
+                <h6 class="text-uppercase fw-bold text-secondary" style="letter-spacing: 1px; font-size: 0.8rem;">
+                    <i class="fas fa-university me-2"></i> BANK & LEDGER LIQUIDITY
+                </h6>
+            </div>
+            <div class="row flex-nowrap overflow-auto pb-3" style="scrollbar-width: thin;">
+                @php $totalLiquid = 0; @endphp
+                @foreach($accounts as $account)
+                    @php $totalLiquid += $account->calculated_balance; @endphp
+                    <div class="col-lg-3 col-md-4 col-sm-6" style="min-width: 280px;">
+                        <div class="card h-100 border-0 shadow-sm" style="border-radius: 16px; border-top: 4px solid #8b5cf6 !important; background: #fff;">
+                            <div class="card-body p-4 d-flex flex-column">
+                                <div class="d-flex justify-content-between align-items-start mb-4">
+                                    <div style="background: #f3e8ff; color: #8b5cf6; width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
+                                        @if(stripos($account->name, 'cash') !== false)
+                                            <i class="fas fa-wallet"></i>
+                                        @else
+                                            <i class="fas fa-university"></i>
+                                        @endif
+                                    </div>
+                                    <span class="badge bg-light text-dark rounded-pill px-3 py-2 fw-semibold" style="font-size: 0.7rem; letter-spacing: 0.5px;">
+                                        {{ strtoupper($account->category->name ?? 'BANK') }}
+                                    </span>
+                                </div>
+                                <h3 class="fw-bold mb-1 text-dark" style="font-size: 1.8rem;">Rs {{ number_format($account->calculated_balance, 2) }}</h3>
+                                <p class="text-muted text-uppercase mb-4" style="font-size: 0.8rem; font-weight: 500;">{{ $account->name }}</p>
+                                
+                                <div class="mt-auto pt-3 border-top d-flex justify-content-between align-items-center">
+                                    <span class="text-muted" style="font-size: 0.85rem;">Account Balance</span>
+                                    <a href="{{ route('chart-of-accounts.ledger', $account->id) }}" class="text-primary text-decoration-none fw-bold" style="font-size: 0.85rem;">Ledger &rarr;</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
+
+                <!-- Total Card -->
+                <div class="col-lg-3 col-md-4 col-sm-6" style="min-width: 280px;">
+                    <div class="card h-100 border-0 shadow-sm" style="border-radius: 16px; background: #10b981; color: white;">
+                        <div class="card-body p-4 d-flex flex-column">
+                            <div class="d-flex justify-content-between align-items-start mb-4">
+                                <div style="background: rgba(255,255,255,0.2); color: white; width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
+                                    <i class="fas fa-coins"></i>
+                                </div>
+                                <span class="badge bg-white text-success rounded-pill px-3 py-2 fw-bold" style="font-size: 0.7rem; letter-spacing: 0.5px;">
+                                    TOTAL CASH
+                                </span>
+                            </div>
+                            <h3 class="fw-bold mb-1 text-white" style="font-size: 1.8rem;">Rs {{ number_format($totalLiquid, 2) }}</h3>
+                            <p class="mb-4" style="font-size: 0.85rem; opacity: 0.9;">Combined Cash & Bank Assets</p>
+                            
+                            <div class="mt-auto pt-3 d-flex justify-content-between align-items-center" style="border-top: 1px solid rgba(255,255,255,0.2);">
+                                <span style="font-size: 0.85rem; font-weight: 500;">Active Liquid Funds</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            @endif
+
             <div class="row">
                 <!-- Sales & Purchase Chart -->
                 <div class="col-lg-7 col-sm-12 col-12 d-flex">
