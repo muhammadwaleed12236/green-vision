@@ -351,11 +351,11 @@
                 <div class="col-lg-7 col-sm-12 col-12 d-flex">
                     <div class="card flex-fill">
                         <div class="card-header pb-0 d-flex justify-content-between align-items-center">
-                            <h5 class="card-title mb-0">Sales & Purchase Trend</h5>
+                            <h5 class="card-title mb-0" style="border-left: 4px solid #0ea5e9; padding-left: 8px;">Revenue vs Expenses by Month</h5>
                             <div class="graph-sets">
                                 <ul>
-                                    <li><span>Sales</span></li>
-                                    <li><span>Purchase</span></li>
+                                    <li><span>Revenue ($K)</span></li>
+                                    <li><span>Expenses ($K)</span></li>
                                 </ul>
                             </div>
                         </div>
@@ -365,14 +365,80 @@
                     </div>
                 </div>
 
-                <!-- Payment Status Donut Chart -->
+                <!-- For Every Dollar Made Donut Chart -->
                 <div class="col-lg-5 col-sm-12 col-12 d-flex">
                     <div class="card flex-fill">
-                        <div class="card-header pb-0">
-                            <h5 class="card-title mb-0">Payment Status</h5>
+                        <div class="card-header pb-0 text-center" style="background-color: #4a6b82 !important; border-top-left-radius: 24px; border-top-right-radius: 24px; padding: 16px !important; margin: 0; border-bottom: none;">
+                            <h5 class="card-title mb-0 text-white" style="font-size: 1.1rem; font-weight: 600;">For Every Dollar Made</h5>
+                        </div>
+                        <div class="card-body d-flex justify-content-center align-items-center">
+                            <canvas id="everyDollarChart" height="250" style="max-height: 250px;"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profit Breakdown & Chart Row -->
+            <div class="row">
+                <!-- Net Profit Breakdown -->
+                <div class="col-lg-5 col-sm-12 col-12 d-flex">
+                    <div class="card flex-fill">
+                        <div class="card-header pb-0 border-0 pt-4">
+                            <h5 class="card-title mb-0 d-flex align-items-center">
+                                <i data-feather="briefcase" class="text-success me-2"></i> Net Profit Breakdown
+                            </h5>
                         </div>
                         <div class="card-body">
-                            <canvas id="paymentStatusChart" height="300"></canvas>
+                            <div class="text-center mb-4 mt-2">
+                                <p class="text-muted text-uppercase fw-bold mb-1" style="letter-spacing: 1px; font-size: 12px;">NET PROFIT</p>
+                                <h1 class="display-5 fw-bold {{ $stats['netProfit'] < 0 ? 'text-danger' : 'text-success' }} mb-2" style="font-size: 2.5rem;">
+                                    Rs <span class="amount-text" data-amount="{{ $stats['netProfit'] }}">{{ number_format($stats['netProfit'], 0) }}</span>
+                                </h1>
+                                <p class="text-muted small">Net Revenue minus Cost of Goods Sold</p>
+                            </div>
+                            
+                            @php
+                                $totalCost = $stats['totalStockInvestment'] + $stats['totalJobCosts'] + $stats['totalExpenses'];
+                                $revenue = $stats['totalSaleAmount'];
+                                $maxVal = max($revenue, $totalCost);
+                                $revenuePercent = $maxVal > 0 ? ($revenue / $maxVal) * 100 : 0;
+                                $costPercent = $maxVal > 0 ? ($totalCost / $maxVal) * 100 : 0;
+                            @endphp
+
+                            <div class="mb-4">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span class="text-muted fw-bold" style="font-size: 13px;">Net Revenue</span>
+                                    <span class="fw-bold" style="font-size: 13px;">Rs <span class="amount-text" data-amount="{{ $revenue }}">{{ number_format($revenue, 0) }}</span></span>
+                                </div>
+                                <div class="progress" style="height: 6px; border-radius: 10px;">
+                                    <div class="progress-bar bg-success" role="progressbar" style="width: {{ $revenuePercent }}%;" aria-valuenow="{{ $revenuePercent }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span class="text-muted fw-bold" style="font-size: 13px;">Cost of Goods Sold (COGS)</span>
+                                    <span class="fw-bold" style="font-size: 13px;">Rs <span class="amount-text" data-amount="{{ $totalCost }}">{{ number_format($totalCost, 0) }}</span></span>
+                                </div>
+                                <div class="progress" style="height: 6px; border-radius: 10px;">
+                                    <div class="progress-bar bg-danger" role="progressbar" style="width: {{ $costPercent }}%;" aria-valuenow="{{ $costPercent }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Profit Chart -->
+                <div class="col-lg-7 col-sm-12 col-12 d-flex">
+                    <div class="card flex-fill">
+                        <div class="card-header pb-0 border-0 pt-4">
+                            <h5 class="card-title mb-0 d-flex align-items-center">
+                                <i data-feather="bar-chart-2" class="text-primary me-2"></i> Revenue vs Cost vs Net Profit
+                            </h5>
+                            <p class="text-muted small mb-0 mt-1">Financial performance overview</p>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="profitBarChart" height="300"></canvas>
                         </div>
                     </div>
                 </div>
@@ -494,23 +560,23 @@ new Chart(salesPurchaseCtx, {
     data: {
         labels: labels,
         datasets: [{
-            label: 'Sales',
+            label: 'Revenue',
             data: salesData,
-            borderColor: '#1c9262',
-            backgroundColor: 'rgba(28, 146, 98, 0.1)',
+            borderColor: '#0ea5e9', // Blue
+            backgroundColor: 'rgba(14, 165, 233, 0.15)',
             tension: 0.4,
             fill: true,
-            pointBackgroundColor: '#1c9262',
+            pointBackgroundColor: '#0ea5e9',
             pointBorderColor: '#fff',
             pointHoverRadius: 6
         }, {
-            label: 'Purchase',
+            label: 'Expenses',
             data: purchasesData,
-            borderColor: '#f59e0b',
-            backgroundColor: 'rgba(245, 158, 11, 0.1)',
+            borderColor: '#ef4444', // Red
+            backgroundColor: 'rgba(239, 68, 68, 0.15)',
             tension: 0.4,
             fill: true,
-            pointBackgroundColor: '#f59e0b',
+            pointBackgroundColor: '#ef4444',
             pointBorderColor: '#fff',
             pointHoverRadius: 6
         }]
@@ -556,47 +622,54 @@ new Chart(salesPurchaseCtx, {
     }
 });
 
-// Payment Status Donut Chart
-const paymentStatusCtx = document.getElementById('paymentStatusChart').getContext('2d');
-const paymentStatus = @json($stats['paymentStatus']);
+// For Every Dollar Made Donut Chart
+const everyDollarCtx = document.getElementById('everyDollarChart').getContext('2d');
 
-new Chart(paymentStatusCtx, {
+let donutRev = {{ $stats['totalSaleAmount'] }};
+let donutCost = {{ $stats['totalStockInvestment'] + $stats['totalJobCosts'] + $stats['totalExpenses'] }};
+let donutNp = {{ $stats['netProfit'] }};
+
+// Normalize to "For Every Dollar" (per 100 or actual)
+// If NP is negative, it breaks the pie chart logic, so clamp to 0 for visual purposes.
+let displayNp = donutNp > 0 ? donutNp : 0;
+let displayCost = donutCost;
+
+new Chart(everyDollarCtx, {
     type: 'doughnut',
     data: {
-        labels: ['Paid', 'Unpaid', 'Pending'],
+        labels: ['Cost', 'Net Profit (NP)'],
         datasets: [{
-            data: [
-                paymentStatus.paid,
-                paymentStatus.unpaid,
-                paymentStatus.pending
-            ],
+            data: [displayCost, displayNp],
             backgroundColor: [
-                '#10b981',  // Emerald for Paid
-                '#ef4444',  // Rose for Unpaid
-                '#64748b'   // Slate for Pending
+                '#20b2aa',  // Teal for Cost
+                '#d9534f'   // Red for NP
             ],
-            borderWidth: 0,
-            hoverOffset: 10
+            borderWidth: 2,
+            borderColor: '#ffffff',
+            hoverOffset: 4
         }]
     },
     options: {
         responsive: true,
         maintainAspectRatio: false,
-        onClick: function() {
-            window.location.href = "{{ route('all-local-sale') }}";
-        },
+        cutout: '60%',
         plugins: {
             legend: {
-                position: 'bottom'
+                position: 'bottom',
+                labels: {
+                    usePointStyle: true,
+                    padding: 20,
+                    font: {
+                        family: 'Inter, sans-serif'
+                    }
+                }
             },
             tooltip: {
                 callbacks: {
                     label: function(context) {
                         const label = context.label || '';
-                        const value = context.parsed || 0;
-                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                        const percentage = ((value / total) * 100).toFixed(1);
-                        return label + ': ' + value + ' (' + percentage + '%)';
+                        const value = context.raw || 0;
+                        return label + ': Rs ' + formatAmount(value);
                     }
                 }
             }
@@ -653,6 +726,135 @@ if (topSellingItems && topSellingItems.length > 0) {
     document.getElementById('categorySalesChart').parentElement.innerHTML =
         '<p class="text-center text-muted mt-5">No sales data yet</p>';
 }
+
+// Profit Bar Chart
+const profitBarCtx = document.getElementById('profitBarChart').getContext('2d');
+
+const rev = {{ $stats['totalSaleAmount'] }};
+const cost = {{ $stats['totalStockInvestment'] + $stats['totalJobCosts'] + $stats['totalExpenses'] }};
+const netProfit = {{ $stats['netProfit'] }};
+
+const values = [rev, cost, netProfit];
+const maxVal = Math.max(...values, 0);
+const minVal = Math.min(...values, 0);
+const yMax = maxVal > 0 ? maxVal + (maxVal * 0.15) : 1000;
+const yMin = minVal < 0 ? minVal - (Math.abs(minVal) * 0.15) : 0;
+
+const profitDataLabelsPlugin = {
+    id: 'profitDataLabels',
+    afterDatasetsDraw(chart, args, options) {
+        const { ctx } = chart;
+        ctx.save();
+        chart.data.datasets.forEach((dataset, i) => {
+            const meta = chart.getDatasetMeta(i);
+            meta.data.forEach((bar, index) => {
+                const data = dataset.data[index];
+                const valueText = 'Rs ' + formatAmount(data);
+                
+                ctx.fillStyle = '#334155';
+                ctx.font = 'bold 13px Inter, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                
+                // Position above positive bars, below negative bars
+                const yPos = data >= 0 ? bar.y - 12 : bar.y + 12;
+                ctx.fillText(valueText, bar.x, yPos);
+            });
+        });
+        ctx.restore();
+    }
+};
+
+new Chart(profitBarCtx, {
+    type: 'bar',
+    data: {
+        labels: ['Revenue', 'Cost', 'Net Profit'],
+        datasets: [{
+            label: 'Amount (Rs)',
+            data: [rev, cost, netProfit],
+            backgroundColor: [
+                '#10b981', // green for Revenue
+                '#ef4444', // red/orange for Cost
+                netProfit < 0 ? '#ef4444' : '#10b981' // red if negative, green if positive
+            ],
+            borderRadius: 6,
+            barPercentage: 0.6,
+            categoryPercentage: 0.7
+        }]
+    },
+    plugins: [profitDataLabelsPlugin],
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        layout: {
+            padding: {
+                top: 20,
+                bottom: 20
+            }
+        },
+        plugins: {
+            legend: {
+                display: false
+            },
+            tooltip: {
+                displayColors: false,
+                callbacks: {
+                    label: function(context) {
+                        return 'Rs ' + formatAmount(context.parsed.y);
+                    }
+                }
+            }
+        },
+        scales: {
+            y: {
+                suggestedMax: yMax,
+                suggestedMin: yMin,
+                beginAtZero: true,
+                border: {
+                    display: false
+                },
+                grid: {
+                    color: function(context) {
+                        if (context.tick.value === 0) {
+                            return '#94a3b8'; // stronger zero line
+                        }
+                        return 'rgba(226, 232, 240, 0.4)'; // very subtle gray
+                    },
+                    lineWidth: function(context) {
+                        if (context.tick.value === 0) {
+                            return 2;
+                        }
+                        return 1;
+                    }
+                },
+                ticks: {
+                    color: '#64748b',
+                    font: {
+                        family: 'Inter, sans-serif'
+                    },
+                    callback: function(value) {
+                        return formatAmount(value);
+                    }
+                }
+            },
+            x: {
+                border: {
+                    display: false
+                },
+                grid: {
+                    display: false
+                },
+                ticks: {
+                    color: '#334155',
+                    font: {
+                        family: 'Inter, sans-serif',
+                        weight: '600'
+                    }
+                }
+            }
+        }
+    }
+});
 
 // Top Products Bar Chart
 const topProductsCtx = document.getElementById('topProductsChart').getContext('2d');

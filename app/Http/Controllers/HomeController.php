@@ -206,7 +206,7 @@ class HomeController extends Controller
         // =========================
         // Net Profit
         // =========================
-        $netProfit = $totalSaleAmount - $totalJobCosts - $totalExpenses;
+        $netProfit = $totalSaleAmount - $totalStockInvestment - $totalJobCosts - $totalExpenses;
 
         return [
             'totalPurchaseDue' => $totalPurchaseDue,
