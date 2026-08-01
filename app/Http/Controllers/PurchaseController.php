@@ -9,6 +9,7 @@ use App\Models\Stock;
 use App\Models\SubCategory;
 use App\Models\Vendor;
 use App\Models\VendorLedger;
+use App\Models\Account;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -20,8 +21,9 @@ class PurchaseController extends Controller
             $userId = Auth::id();
             $categories = Category::where('admin_or_user_id', $userId)->get();
             $Vendors = Vendor::where('admin_or_user_id', $userId)->get();
+            $Accounts = Account::all();
 
-            return view('admin_panel.purchase.add_purchase', compact('categories', 'Vendors'));
+            return view('admin_panel.purchase.add_purchase', compact('categories', 'Vendors', 'Accounts'));
         } else {
             return redirect()->back();
         }
@@ -147,6 +149,7 @@ class PurchaseController extends Controller
                 'pcs' => json_encode(array_column($rows, 'pcs')),
                 'discount' => json_encode(array_column($rows, 'discount')),
                 'amount' => json_encode(array_column($rows, 'amount')),
+                'account_id' => $request->account_id,
                 'pcs_carton' => json_encode(array_column($rows, 'pcs_carton')),
                 'grand_total' => (float) $request->grand_total,
             ]);
@@ -158,6 +161,15 @@ class PurchaseController extends Controller
                     $product->wholesale_price = $row['rate'];
                     $product->initial_stock = ($product->initial_stock ?? 0) + $row['pcs'];
                     $product->save();
+                }
+            }
+
+            // ================= UPDATE ACCOUNT BALANCE =================
+            if ($request->filled('account_id')) {
+                $account = Account::find($request->account_id);
+                if ($account) {
+                    $account->opening_balance -= (float) $request->grand_total;
+                    $account->save();
                 }
             }
 

@@ -346,6 +346,16 @@
                                  <label>Remaining</label>
                                  <input id="remaining" class="form-control readonly-box" value="{{ $cloneEstimate?->remaining_amount ?? '' }}" readonly>
                              </div>
+
+                             <div class="col-md-3" id="accountContainer">
+                                 <label>Payment Account</label>
+                                 <select name="account_id" class="form-control">
+                                     <option value="">Select Account</option>
+                                     @foreach($Accounts as $account)
+                                         <option value="{{ $account->id }}" {{ old('account_id') == $account->id ? 'selected' : '' }}>{{ $account->name }}</option>
+                                     @endforeach
+                                 </select>
+                             </div>
                          </div>
                      </div>
                  </div>

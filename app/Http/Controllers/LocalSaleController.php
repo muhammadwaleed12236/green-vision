@@ -8,6 +8,7 @@ use App\Models\LocalSale;
 use App\Models\Product;
 use App\Models\Vendor;
 use App\Models\VendorLedger;
+use App\Models\Account;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -28,6 +29,7 @@ class LocalSaleController extends Controller
         return view('admin_panel.local_sale.add_sale', [
             'Customers' => Customer::where('admin_or_user_id', $userId)->get(),
             'Vendors' => Vendor::where('admin_or_user_id', $userId)->get(),
+            'Accounts' => Account::all(),
             'cloneEstimate' => $cloneEstimate,
         ]);
     }
@@ -140,6 +142,7 @@ class LocalSaleController extends Controller
                 'net_amount' => $netAmount,
                 'advance_amount' => $advance,
                 'remaining_amount' => $remaining,
+                'account_id' => $request->account_id,
                 'job_status' => ($request->sale_type === 'sale') ? 'completed' : 'pending',
                 'delivery_date' => ($request->sale_type === 'sale') ? null : $request->delivery_date,
                 'notify_days_before' => ($request->sale_type === 'sale') ? 0 : ($request->notify_days_before ?? 2),
@@ -187,6 +190,15 @@ class LocalSaleController extends Controller
                             $productModel->save();
                         }
                     }
+                }
+            }
+
+            // Update Account Balance
+            if ($request->filled('account_id') && $advance > 0) {
+                $account = Account::find($request->account_id);
+                if ($account) {
+                    $account->opening_balance += $advance;
+                    $account->save();
                 }
             }
 

@@ -23,12 +23,12 @@
                     <form action="{{ route('store-Purchase') }}" method="POST" id="purchaseForm">
                         @csrf
                         <div class="row mb-3">
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <label class="form-label">Purchase Date</label>
                                 <input type="date" class="form-control" name="purchase_date" id="purchase_date"
                                     value="{{ date('Y-m-d') }}">
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <label class="form-label">Vendor Name</label>
                                 <select name="party_name" id="party_name" class="form-control vendor-select">
                                     <option value="" selected disabled>Choose One</option>
@@ -39,9 +39,18 @@
                                     @endforeach
                                 </select>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <label class="form-label">Vendor Code</label>
                                 <input type="text" class="form-control party_code" name="party_code" readonly>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Payment Account</label>
+                                <select name="account_id" class="form-control">
+                                    <option value="">Select Account (Optional)</option>
+                                    @foreach($Accounts as $account)
+                                        <option value="{{ $account->id }}">{{ $account->name }}</option>
+                                    @endforeach
+                                </select>
                             </div>
 
                         </div>
