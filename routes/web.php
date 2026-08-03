@@ -31,6 +31,7 @@ use App\Http\Controllers\StockOutController;
 use App\Http\Controllers\VendorController;
 use App\Models\Product;
 use App\Models\Size;
+use App\Http\Controllers\WizardController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -424,6 +425,14 @@ Route::middleware('auth')->group(function () {
     Route::post('/chart-of-accounts/account/store', [ChartOfAccountController::class, 'storeAccount'])->name('chart-of-accounts.account.store');
     Route::put('/chart-of-accounts/account/update/{id}', [ChartOfAccountController::class, 'updateAccount'])->name('chart-of-accounts.account.update');
     Route::post('/chart-of-accounts/account/toggle/{id}', [ChartOfAccountController::class, 'toggleAccountStatus'])->name('chart-of-accounts.account.toggle');
+
+    // ========================= WIZARD ROUTES =========================
+    Route::get('/wizard', [WizardController::class, 'index'])->name('wizard.index');
+    Route::get('/wizard/api/sales', [WizardController::class, 'getSales'])->name('wizard.api.sales');
+    Route::get('/wizard/api/sale/{id}', [WizardController::class, 'getSaleDetails'])->name('wizard.api.sale.details');
+    Route::post('/wizard/api/sale/quick', [WizardController::class, 'createQuickSale'])->name('wizard.api.sale.quick');
+    Route::post('/wizard/api/purchase/create', [WizardController::class, 'createPurchase'])->name('wizard.api.purchase.create');
+    Route::post('/wizard/api/payment/create', [WizardController::class, 'createPayment'])->name('wizard.api.payment.create');
 
 });
 

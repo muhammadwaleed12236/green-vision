@@ -23,8 +23,12 @@
             @if(Auth::check() && Auth::user()->usertype == 'admin')
                 <ul>
                     <!-- Dashboard -->
-                    <li class="active">
+                    <li class="{{ request()->routeIs('home') ? 'active' : '' }}">
                         <a href="{{ route('home') }}"><i class="fas fa-home"></i><span> Dashboard</span> </a>
+                    </li>
+
+                    <li class="{{ request()->routeIs('wizard.index') ? 'active' : '' }}">
+                        <a href="{{ route('wizard.index') }}"><i class="fas fa-magic"></i><span> Sale/Purchase Wizard</span> </a>
                     </li>
 
 
