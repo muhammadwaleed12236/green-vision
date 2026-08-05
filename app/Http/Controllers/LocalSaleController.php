@@ -148,7 +148,7 @@ class LocalSaleController extends Controller
                 'notify_days_before' => ($request->sale_type === 'sale') ? 0 : ($request->notify_days_before ?? 2),
             ]);
 
-            // Automatically reduce stock if it's a direct Sale
+            // Automatically record stock-out entries & create accounting entries if it's a direct Sale
             if ($request->sale_type === 'sale') {
                 // Pre-validate stock
                 foreach ($items as $index => $itemName) {
@@ -166,40 +166,52 @@ class LocalSaleController extends Controller
                 foreach ($items as $index => $itemName) {
                     $productId = isset($itemIds[$index]) ? intval($itemIds[$index]) : null;
                     if ($productId) {
-                        // Pessimistic lock to prevent race conditions on concurrent stock updates
-                        $productModel = Product::where('id', $productId)->lockForUpdate()->first();
+                        $productModel = Product::where('id', $productId)->first();
                         if ($productModel) {
                             $openingStock = floatval($productModel->initial_stock ?? 0);
                             $usedStock = floatval($qtys[$index] ?? 0);
-                            $closingStock = max($openingStock - $usedStock, 0);
 
-                            // Create StockOut record
+                            // Create StockOut record (new entry) - does NOT change the product's opening stock
                             \App\Models\StockOut::create([
                                 'admin_or_user_id' => $userId,
                                 'product_id' => $productId,
                                 'local_sales_id' => $sale->id,
-                                'current_stock' => $openingStock,    // Opening Stock
-                                'close_stock' => $closingStock,      // Closing Stock (Remaining)
-                                'total_stock' => $usedStock,         // Used Stock
+                                'current_stock' => $openingStock,      // Opening Stock
+                                'close_stock' => max($openingStock - $usedStock, 0), // Closing Stock (Remaining)
+                                'total_stock' => $usedStock,           // Used Stock
+                                'reason' => 'Sale - ' . $sale->invoice_number,
+                                'stock_out_date' => $sale->sale_date,
+                                'reference_type' => 'local_sale',
+                                'reference_id' => $sale->id,
                                 'created_at' => \Carbon\Carbon::now(),
                                 'updated_at' => \Carbon\Carbon::now(),
                             ]);
-
-                            // Update product's initial_stock with the closing stock
-                            $productModel->initial_stock = $closingStock;
-                            $productModel->save();
                         }
                     }
                 }
-            }
 
-            // Update Account Balance
-            if ($request->filled('account_id') && $advance > 0) {
-                $account = Account::find($request->account_id);
-                if ($account) {
-                    $account->opening_balance += $advance;
-                    $account->save();
-                }
+                // Create Journal Voucher (receipt) + account ledger entry for the sale
+                $partyName = $sale->party_name ?? 'Walk-in';
+                $jvPartyType = in_array($partyType, ['customer', 'vendor']) ? $partyType : 'other';
+                $voucherNo = \App\Models\JournalVoucher::generateVoucherNo('receipt');
+                \App\Models\JournalVoucher::create([
+                    'admin_or_user_id' => $userId,
+                    'account_id' => $request->account_id ?? null,
+                    'voucher_no' => $voucherNo,
+                    'voucher_date' => $request->sale_date ?? now(),
+                    'voucher_type' => 'receipt',
+                    'party_type' => $jvPartyType,
+                    'party_id' => $partyType === 'customer' ? $request->customer_id : ($partyType === 'vendor' ? $request->vendor_id : null),
+                    'party_name' => $partyName,
+                    'account_head' => 'Sale',
+                    'debit_amount' => 0,
+                    'credit_amount' => $netAmount,
+                    'payment_method' => 'cash',
+                    'reference_type' => 'local_sale',
+                    'reference_id' => $sale->id,
+                    'narration' => 'Sale - ' . $sale->invoice_number . ' (' . $partyName . ')',
+                    'status' => 'approved',
+                ]);
             }
 
             // Update Customer Ledger: Previous + Remaining = New Closing
@@ -503,13 +515,14 @@ class LocalSaleController extends Controller
         if ($sale->sale_type === 'sale') {
             $stockOuts = \App\Models\StockOut::where('local_sales_id', $sale->id)->get();
             foreach ($stockOuts as $so) {
-                $product = Product::find($so->product_id);
-                if ($product) {
-                    $product->initial_stock += floatval($so->total_stock);
-                    $product->save();
-                }
                 $so->delete();
             }
+
+            // Delete the journal voucher linked to this sale
+            \App\Models\JournalVoucher::where('admin_or_user_id', Auth::id())
+                ->where('reference_type', 'local_sale')
+                ->where('reference_id', $sale->id)
+                ->delete();
         }
 
         $sale->forceDelete();
@@ -577,20 +590,12 @@ class LocalSaleController extends Controller
             }
 
             // 1. Stock / StockOut adjustments
-            // First, if it was a Sale previously, we restore the stock
+            // Delete old StockOut records (opening stock is never modified, so nothing to restore)
             if ($oldType === 'sale') {
-                $stockOuts = \App\Models\StockOut::where('local_sales_id', $sale->id)->get();
-                foreach ($stockOuts as $so) {
-                    $product = Product::find($so->product_id);
-                    if ($product) {
-                        $product->initial_stock += floatval($so->total_stock);
-                        $product->save();
-                    }
-                    $so->delete();
-                }
+                \App\Models\StockOut::where('local_sales_id', $sale->id)->delete();
             }
 
-            // Now, if the new type is a Sale, we reduce stock
+            // Now, if the new type is a Sale, record new StockOut entries (does NOT change opening stock)
             $items = $request->item_name ?? [];
             $qtys = $request->qty ?? [];
             if ($newType === 'sale') {
@@ -615,7 +620,7 @@ class LocalSaleController extends Controller
                             $usedStock = floatval($qtys[$index] ?? 0);
                             $closingStock = max($openingStock - $usedStock, 0);
 
-                            // Create StockOut record
+                            // Create StockOut record (new entry with description)
                             \App\Models\StockOut::create([
                                 'admin_or_user_id' => $userId,
                                 'product_id' => $productModel->id,
@@ -623,13 +628,13 @@ class LocalSaleController extends Controller
                                 'current_stock' => $openingStock,
                                 'close_stock' => $closingStock,
                                 'total_stock' => $usedStock,
+                                'reason' => 'Sale - ' . ($sale->invoice_number ?? $sale->id),
+                                'stock_out_date' => $sale->sale_date,
+                                'reference_type' => 'local_sale',
+                                'reference_id' => $sale->id,
                                 'created_at' => \Carbon\Carbon::now(),
                                 'updated_at' => \Carbon\Carbon::now(),
                             ]);
-
-                            // Update product's initial_stock
-                            $productModel->initial_stock = $closingStock;
-                            $productModel->save();
                         }
                     }
                 }
@@ -673,6 +678,55 @@ class LocalSaleController extends Controller
                         ]);
                     }
                 }
+            }
+
+            // 2b. Sync Journal Voucher for this sale
+            $existingVoucher = \App\Models\JournalVoucher::where('admin_or_user_id', $userId)
+                ->where('reference_type', 'local_sale')
+                ->where('reference_id', $sale->id)
+                ->first();
+
+            if ($newType === 'sale') {
+                $partyName = $request->party_type === 'walkin'
+                    ? ($request->walkin_name ?? 'Walk-in')
+                    : ($sale->party_name ?? 'Walk-in');
+                $jvPartyType = in_array($partyType, ['customer', 'vendor']) ? $partyType : 'other';
+
+                if ($existingVoucher) {
+                    $existingVoucher->update([
+                        'voucher_date' => $request->sale_date ?? $sale->sale_date,
+                        'account_id' => $request->account_id ?? null,
+                        'party_type' => $jvPartyType,
+                        'party_id' => $partyType === 'customer' ? $request->customer_id : ($partyType === 'vendor' ? $request->vendor_id : null),
+                        'party_name' => $partyName,
+                        'debit_amount' => 0,
+                        'credit_amount' => $netAmount,
+                        'narration' => 'Sale - ' . ($sale->invoice_number ?? $sale->id) . ' (' . $partyName . ')',
+                        'status' => 'approved',
+                    ]);
+                } else {
+                    $voucherNo = \App\Models\JournalVoucher::generateVoucherNo('receipt');
+                    \App\Models\JournalVoucher::create([
+                        'admin_or_user_id' => $userId,
+                        'account_id' => $request->account_id ?? null,
+                        'voucher_no' => $voucherNo,
+                        'voucher_date' => $request->sale_date ?? $sale->sale_date,
+                        'voucher_type' => 'receipt',
+                        'party_type' => $jvPartyType,
+                        'party_id' => $partyType === 'customer' ? $request->customer_id : ($partyType === 'vendor' ? $request->vendor_id : null),
+                        'party_name' => $partyName,
+                        'account_head' => 'Sale',
+                        'debit_amount' => 0,
+                        'credit_amount' => $netAmount,
+                        'payment_method' => 'cash',
+                        'reference_type' => 'local_sale',
+                        'reference_id' => $sale->id,
+                        'narration' => 'Sale - ' . ($sale->invoice_number ?? $sale->id) . ' (' . $partyName . ')',
+                        'status' => 'approved',
+                    ]);
+                }
+            } elseif ($existingVoucher) {
+                $existingVoucher->delete();
             }
 
             // Filter out empty items from request arrays
@@ -858,7 +912,7 @@ class LocalSaleController extends Controller
                     }
                 }
 
-                // Automatically reduce stock and create StockOut records
+                // Automatically record StockOut entries (does NOT change opening stock)
                 $items = json_decode($sale->item, true) ?? [];
                 $qtys = json_decode($sale->qty, true) ?? [];
 
@@ -870,7 +924,7 @@ class LocalSaleController extends Controller
                             $usedStock = floatval($qtys[$index] ?? 0);
                             $closingStock = max($openingStock - $usedStock, 0);
 
-                            // Create StockOut record
+                            // Create StockOut record (new entry with description)
                             \App\Models\StockOut::create([
                                 'admin_or_user_id' => $userId,
                                 'product_id' => $productModel->id,
@@ -878,16 +932,39 @@ class LocalSaleController extends Controller
                                 'current_stock' => $openingStock,
                                 'close_stock' => $closingStock,
                                 'total_stock' => $usedStock,
+                                'reason' => 'Sale - ' . ($sale->invoice_number ?? $sale->id),
+                                'stock_out_date' => $sale->sale_date,
+                                'reference_type' => 'local_sale',
+                                'reference_id' => $sale->id,
                                 'created_at' => \Carbon\Carbon::now(),
                                 'updated_at' => \Carbon\Carbon::now(),
                             ]);
-
-                            // Update product's initial_stock
-                            $productModel->initial_stock = $closingStock;
-                            $productModel->save();
                         }
                     }
                 }
+
+                // Create Journal Voucher (receipt) + account ledger entry for the converted sale
+                $partyName = $sale->party_name ?? 'Walk-in';
+                $jvPartyType = in_array($partyType, ['customer', 'vendor']) ? $partyType : 'other';
+                $voucherNo = \App\Models\JournalVoucher::generateVoucherNo('receipt');
+                \App\Models\JournalVoucher::create([
+                    'admin_or_user_id' => $userId,
+                    'account_id' => $sale->account_id ?? null,
+                    'voucher_no' => $voucherNo,
+                    'voucher_date' => $sale->sale_date,
+                    'voucher_type' => 'receipt',
+                    'party_type' => $jvPartyType,
+                    'party_id' => $partyType === 'customer' ? $sale->customer_id : ($partyType === 'vendor' ? $sale->vendor_id : null),
+                    'party_name' => $partyName,
+                    'account_head' => 'Sale',
+                    'debit_amount' => 0,
+                    'credit_amount' => $sale->net_amount ?? 0,
+                    'payment_method' => 'cash',
+                    'reference_type' => 'local_sale',
+                    'reference_id' => $sale->id,
+                    'narration' => 'Sale - ' . ($sale->invoice_number ?? $sale->id) . ' (' . $partyName . ')',
+                    'status' => 'approved',
+                ]);
 
                 $sale->update([
                     'sale_type' => 'sale',
@@ -1014,7 +1091,7 @@ class LocalSaleController extends Controller
                     }
                 }
 
-                // Automatically reduce stock and create StockOut records
+                // Automatically record StockOut entries (does NOT change opening stock)
                 $items = json_decode($sale->item, true) ?? [];
                 $qtys = json_decode($sale->qty, true) ?? [];
 
@@ -1036,7 +1113,7 @@ class LocalSaleController extends Controller
 
                             $closingStock = $openingStock - $usedStock;
 
-                            // Create StockOut record
+                            // Create StockOut record (new entry with description)
                             \App\Models\StockOut::create([
                                 'admin_or_user_id' => $userId,
                                 'product_id' => $productModel->id,
@@ -1044,16 +1121,39 @@ class LocalSaleController extends Controller
                                 'current_stock' => $openingStock,
                                 'close_stock' => $closingStock,
                                 'total_stock' => $usedStock,
+                                'reason' => 'Sale - ' . ($sale->invoice_number ?? $sale->id),
+                                'stock_out_date' => $sale->sale_date,
+                                'reference_type' => 'local_sale',
+                                'reference_id' => $sale->id,
                                 'created_at' => \Carbon\Carbon::now(),
                                 'updated_at' => \Carbon\Carbon::now(),
                             ]);
-
-                            // Update product's initial_stock
-                            $productModel->initial_stock = $closingStock;
-                            $productModel->save();
                         }
                     }
                 }
+
+                // Create Journal Voucher (receipt) + account ledger entry for the converted sale
+                $partyName = $sale->party_name ?? 'Walk-in';
+                $jvPartyType = in_array($partyType, ['customer', 'vendor']) ? $partyType : 'other';
+                $voucherNo = \App\Models\JournalVoucher::generateVoucherNo('receipt');
+                \App\Models\JournalVoucher::create([
+                    'admin_or_user_id' => $userId,
+                    'account_id' => $sale->account_id ?? null,
+                    'voucher_no' => $voucherNo,
+                    'voucher_date' => $sale->sale_date,
+                    'voucher_type' => 'receipt',
+                    'party_type' => $jvPartyType,
+                    'party_id' => $partyType === 'customer' ? $sale->customer_id : ($partyType === 'vendor' ? $sale->vendor_id : null),
+                    'party_name' => $partyName,
+                    'account_head' => 'Sale',
+                    'debit_amount' => 0,
+                    'credit_amount' => $sale->net_amount ?? 0,
+                    'payment_method' => 'cash',
+                    'reference_type' => 'local_sale',
+                    'reference_id' => $sale->id,
+                    'narration' => 'Sale - ' . ($sale->invoice_number ?? $sale->id) . ' (' . $partyName . ')',
+                    'status' => 'approved',
+                ]);
 
                 $sale->update([
                     'sale_type' => 'sale',

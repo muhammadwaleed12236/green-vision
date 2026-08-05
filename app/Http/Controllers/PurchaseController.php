@@ -164,14 +164,27 @@ class PurchaseController extends Controller
                 }
             }
 
-            // ================= UPDATE ACCOUNT BALANCE =================
-            if ($request->filled('account_id')) {
-                $account = Account::find($request->account_id);
-                if ($account) {
-                    $account->opening_balance -= (float) $request->grand_total;
-                    $account->save();
-                }
-            }
+            // ================= CREATE JOURNAL VOUCHER (PAYMENT) =================
+            // Payment voucher instead of mutating the account's opening_balance directly
+            $voucherNo = \App\Models\JournalVoucher::generateVoucherNo('payment');
+            \App\Models\JournalVoucher::create([
+                'admin_or_user_id' => $userId,
+                'account_id' => $request->filled('account_id') ? $request->account_id : null,
+                'voucher_no' => $voucherNo,
+                'voucher_date' => $request->purchase_date,
+                'voucher_type' => 'payment',
+                'party_type' => 'vendor',
+                'party_id' => $vendorId,
+                'party_name' => $vendor->Party_name ?? 'Vendor',
+                'account_head' => 'Purchase',
+                'debit_amount' => (float) $request->grand_total,
+                'credit_amount' => 0,
+                'payment_method' => 'cash',
+                'reference_type' => 'purchase',
+                'reference_id' => $purchase->id,
+                'narration' => 'Purchase - ' . $invoiceNo . ' (' . ($vendor->Party_name ?? 'Vendor') . ')',
+                'status' => 'approved',
+            ]);
 
             // ================= UPDATE VENDOR LEDGER =================
             $ledger = VendorLedger::where('vendor_id', $vendorId)->latest()->first();
@@ -428,6 +441,47 @@ class PurchaseController extends Controller
                 'grand_total' => $newGrandTotal,
             ]);
 
+            // ================= SYNC JOURNAL VOUCHER (PAYMENT) =================
+            $existingVoucher = \App\Models\JournalVoucher::where('admin_or_user_id', $userId)
+                ->where('reference_type', 'purchase')
+                ->where('reference_id', $purchase->id)
+                ->first();
+
+            if ($existingVoucher) {
+                $existingVoucher->update([
+                    'account_id' => $request->filled('account_id') ? $request->account_id : null,
+                    'voucher_date' => $request->purchase_date,
+                    'party_type' => 'vendor',
+                    'party_id' => $vendorId,
+                    'party_name' => $vendor->Party_name ?? 'Vendor',
+                    'account_head' => 'Purchase',
+                    'debit_amount' => $newGrandTotal,
+                    'credit_amount' => 0,
+                    'narration' => 'Purchase - ' . $purchase->invoice_number . ' (' . ($vendor->Party_name ?? 'Vendor') . ')',
+                    'status' => 'approved',
+                ]);
+            } else {
+                $voucherNo = \App\Models\JournalVoucher::generateVoucherNo('payment');
+                \App\Models\JournalVoucher::create([
+                    'admin_or_user_id' => $userId,
+                    'account_id' => $request->filled('account_id') ? $request->account_id : null,
+                    'voucher_no' => $voucherNo,
+                    'voucher_date' => $request->purchase_date,
+                    'voucher_type' => 'payment',
+                    'party_type' => 'vendor',
+                    'party_id' => $vendorId,
+                    'party_name' => $vendor->Party_name ?? 'Vendor',
+                    'account_head' => 'Purchase',
+                    'debit_amount' => $newGrandTotal,
+                    'credit_amount' => 0,
+                    'payment_method' => 'cash',
+                    'reference_type' => 'purchase',
+                    'reference_id' => $purchase->id,
+                    'narration' => 'Purchase - ' . $purchase->invoice_number . ' (' . ($vendor->Party_name ?? 'Vendor') . ')',
+                    'status' => 'approved',
+                ]);
+            }
+
             // ================= REVERSE OLD STOCK & UPDATE WITH NEW STOCK =================
             // First, reverse old stock
             foreach ($oldItems as $i => $oldItemName) {
@@ -498,6 +552,12 @@ class PurchaseController extends Controller
                     }
                 }
             }
+
+            // ================= DELETE JOURNAL VOUCHER =================
+            \App\Models\JournalVoucher::where('admin_or_user_id', $userId)
+                ->where('reference_type', 'purchase')
+                ->where('reference_id', $purchase->id)
+                ->delete();
 
             // ================= SOFT DELETE PURCHASE =================
             $purchase->delete();
