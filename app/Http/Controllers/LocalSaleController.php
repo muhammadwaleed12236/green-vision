@@ -561,6 +561,7 @@ class LocalSaleController extends Controller
             'original' => LocalSale::findOrFail($id),
             'Customers' => Customer::where('admin_or_user_id', $userId)->get(),
             'Vendors' => Vendor::where('admin_or_user_id', $userId)->get(),
+            'Accounts' => \App\Models\Account::where('status', true)->get(),
         ]);
     }
 

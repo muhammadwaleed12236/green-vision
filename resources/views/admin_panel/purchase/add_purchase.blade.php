@@ -44,7 +44,7 @@
                                 <input type="text" class="form-control party_code" name="party_code" readonly>
                             </div>
                             <div class="col-md-3">
-                                <label class="form-label">Payment Account</label>
+                                <label class="form-label" id="paymentAccountLabel">Payment Account</label>
                                 <select name="account_id" class="form-control">
                                     <option value="">Select Account (Optional)</option>
                                     @foreach($Accounts as $account)
@@ -242,6 +242,15 @@
 <script>
     $(document).ready(function () {
 
+        $('#paidAmount').on('input change', function() {
+            let paid = parseFloat($(this).val()) || 0;
+            if (paid > 0) {
+                $('#paymentAccountLabel').html('Payment Account <span class="text-danger">*</span>');
+            } else {
+                $('#paymentAccountLabel').html('Payment Account');
+            }
+        });
+
         // ========== PREVENT ENTER KEY FROM SUBMITTING FORM ==========
         $('#purchaseForm').on('keydown', 'input, select', function (e) {
             if (e.key === 'Enter') {
@@ -300,6 +309,12 @@
             // Check if party is selected
             if (!$('#party_name').val()) {
                 errors.push('Please select a Vendor');
+            }
+
+            // Check if payment account is selected when paid_amount > 0
+            let paidAmount = parseFloat($('#paidAmount').val()) || 0;
+            if (paidAmount > 0 && !$('select[name="account_id"]').val()) {
+                errors.push('Please select a Payment Account for the paid amount.');
             }
 
             // Check if at least one item exists

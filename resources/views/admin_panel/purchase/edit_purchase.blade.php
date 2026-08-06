@@ -34,12 +34,12 @@
                         @csrf
                         @method('PUT')
                         <div class="row mb-4">
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <label class="form-label fw-bold">Purchase Date</label>
                                 <input type="date" class="form-control" name="purchase_date" id="purchase_date"
                                     value="{{ $purchase->purchase_date }}">
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <label class="form-label fw-bold">Vendor Name</label>
                                 <select name="party_name" id="party_name" class="form-control vendor-select">
                                     <option value="" disabled>Choose One</option>
@@ -52,10 +52,19 @@
                                     @endforeach
                                 </select>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <label class="form-label fw-bold">Vendor Code</label>
                                 <input type="text" class="form-control party_code" name="party_code"
                                     value="{{ $purchase->party_code }}" readonly>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label fw-bold" id="paymentAccountLabel">Payment Account</label>
+                                <select name="account_id" class="form-control">
+                                    <option value="">Select Account (Optional)</option>
+                                    @foreach($Accounts as $account)
+                                        <option value="{{ $account->id }}" {{ (old('account_id') ?? $purchase->account_id ?? '') == $account->id ? 'selected' : '' }}>{{ $account->name }}</option>
+                                    @endforeach
+                                </select>
                             </div>
                         </div>
 
@@ -467,6 +476,31 @@ $(document).ready(function () {
         placeholder: 'Search and select vendor',
         allowClear: true,
         width: '100%'
+    });
+
+    // Dynamic paidAmount listener
+    $('#paidAmount').on('input change', function() {
+        let paid = parseFloat($(this).val()) || 0;
+        if (paid > 0) {
+            $('#paymentAccountLabel').html('Payment Account <span class="text-danger">*</span>');
+        } else {
+            $('#paymentAccountLabel').html('Payment Account');
+        }
+    });
+    $('#paidAmount').trigger('change');
+
+    // Submit Validation
+    $('#editPurchaseForm').on('submit', function (e) {
+        let paidAmount = parseFloat($('#paidAmount').val()) || 0;
+        if (paidAmount > 0 && !$('select[name="account_id"]').val()) {
+            e.preventDefault();
+            Swal.fire({
+                icon: 'error',
+                title: 'Validation Error',
+                text: 'Please select a Payment Account for the paid amount.'
+            });
+            return false;
+        }
     });
 
     // Calculate totals for existing data

@@ -332,6 +332,16 @@
                                     value="{{ $original->remaining_amount }}" readonly>
                             </div>
 
+                            <div class="col-md-3" id="accountContainer">
+                                <label id="paymentAccountLabel">Payment Account</label>
+                                <select name="account_id" class="form-control">
+                                    <option value="">Select Account</option>
+                                    @foreach($Accounts as $account)
+                                        <option value="{{ $account->id }}" {{ (old('account_id') ?? $original->account_id ?? '') == $account->id ? 'selected' : '' }}>{{ $account->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
                         </div>
                     </div>
                 </div>
@@ -624,6 +634,12 @@
             return false;
         }
 
+        let advance = parseFloat($('#advance').val()) || 0;
+        let partyType = $('#partyType').val();
+        if ((advance > 0 || partyType === 'walkin') && !$('select[name="account_id"]').val()) {
+            errors.push('Please select a Payment Account.');
+        }
+
         if (errors.length > 0) {
             let errorHtml = '<ul style="text-align:left; margin:0; padding-left:20px;">';
             errors.forEach(function(msg) {
@@ -641,6 +657,20 @@
     });
 
     $(document).ready(function() {
+        function updateAccountLabel() {
+            let adv = parseFloat($('#advance').val()) || 0;
+            let partyType = $('#partyType').val();
+            if (adv > 0 || partyType === 'walkin') {
+                $('#paymentAccountLabel').html('Payment Account <span class="text-danger">*</span>');
+            } else {
+                $('#paymentAccountLabel').html('Payment Account');
+            }
+        }
+
+        $('#advance').on('input change', updateAccountLabel);
+        $('#partyType').on('change', updateAccountLabel);
+        updateAccountLabel();
+
         handleSaleTypeToggle();
         $('input[name="sale_type"]').on('change', handleSaleTypeToggle);
 

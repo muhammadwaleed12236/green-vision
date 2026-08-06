@@ -350,8 +350,9 @@ class PurchaseController extends Controller
             $purchase = Purchase::findOrFail($id);
             $categories = Category::where('admin_or_user_id', $userId)->get();
             $Vendors = Vendor::where('admin_or_user_id', $userId)->get();
+            $Accounts = Account::where('status', true)->get();
 
-            return view('admin_panel.purchase.edit_purchase', compact('categories', 'Vendors', 'purchase'));
+            return view('admin_panel.purchase.edit_purchase', compact('categories', 'Vendors', 'purchase', 'Accounts'));
         } else {
             return redirect()->back();
         }
