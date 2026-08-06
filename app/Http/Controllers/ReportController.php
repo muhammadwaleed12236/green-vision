@@ -133,8 +133,11 @@ class ReportController extends Controller
     {
         try {
             $vendorId = $request->input('Vendor_id');
-            $startDate = $request->input('start_date').' 00:00:00';
-            $endDate = $request->input('end_date').' 23:59:59';
+            $startDateOnly = $request->input('start_date');
+            $endDateOnly = $request->input('end_date');
+            
+            $startDate = $startDateOnly.' 00:00:00';
+            $endDate = $endDateOnly.' 23:59:59';
 
             // ---- Get Base Opening from Vendor Ledger ----
             $ledger = DB::table('vendor_ledgers')
@@ -147,19 +150,23 @@ class ReportController extends Controller
             // ---- Transactions Before Start Date ----
             $previousPurchases = DB::table('purchases')
                 ->where('party_name', $vendorId)
-                ->where('purchase_date', '<', $startDate)
+                ->where('purchase_date', '<', $startDateOnly)
                 ->sum('grand_total');
 
             $previousVendorPayments = DB::table('vendor_payments')
                 ->where('vendor_id', $vendorId)
-                ->where('payment_date', '<', $startDate)
+                ->where('payment_date', '<', $startDateOnly)
                 ->sum('amount');
 
             $previousJournalPayments = DB::table('journal_vouchers')
                 ->where('party_type', 'vendor')
                 ->where('party_id', $vendorId)
                 ->where('voucher_type', 'payment')
-                ->where('voucher_date', '<', $startDate)
+                ->where(function($q) {
+                    $q->whereNull('reference_type')
+                      ->orWhereNotIn('reference_type', ['purchase', 'vendor_payment']);
+                })
+                ->where('voucher_date', '<', $startDateOnly)
                 ->sum('debit_amount');
 
             $previousPayments = $previousVendorPayments + $previousJournalPayments;
@@ -168,12 +175,16 @@ class ReportController extends Controller
                 ->where('party_type', 'vendor')
                 ->where('party_id', $vendorId)
                 ->where('voucher_type', 'receipt')
-                ->where('voucher_date', '<', $startDate)
+                ->where(function($q) {
+                    $q->whereNull('reference_type')
+                      ->orWhereNotIn('reference_type', ['purchase', 'vendor_payment']);
+                })
+                ->where('voucher_date', '<', $startDateOnly)
                 ->sum('credit_amount');
 
             $previousReturnsRaw = DB::table('purchase_returns')
                 ->where('party_name', $vendorId)
-                ->where('return_date', '<', $startDate)
+                ->where('return_date', '<', $startDateOnly)
                 ->get();
 
             $previousReturns = 0;
@@ -182,11 +193,6 @@ class ReportController extends Controller
                 $previousReturns += collect($amountArray)->sum();
             }
 
-            // Vendor builties feature incomplete - table has no amount column
-            // $previousBuilties = DB::table('vendor_builties')
-            //     ->where('vendor_id', $vendorId)
-            //     ->where('date', '<', $startDate)
-            //     ->sum('amount');
             $previousBuilties = 0;
 
             $previousSales = DB::table('local_sales')
@@ -201,13 +207,13 @@ class ReportController extends Controller
                 ->where('created_at', '<', $startDate)
                 ->sum('advance_amount');
 
-            // Job Orders before Start Date (vendor assigned jobs - Debit = total_amount, Credit = paid_amount)
+            // Job Orders before Start Date
             $previousJobOrders = DB::table('job_orders')
                 ->where('vendor_id', $vendorId)
                 ->where('assignee_type', 'vendor')
                 ->whereNotNull('vendor_id')
                 ->whereNull('deleted_at')
-                ->where('order_date', '<', $request->input('start_date'))
+                ->where('order_date', '<', $startDateOnly)
                 ->sum('total_amount');
 
             $previousJobPaidAmounts = DB::table('job_orders')
@@ -215,10 +221,10 @@ class ReportController extends Controller
                 ->where('assignee_type', 'vendor')
                 ->whereNotNull('vendor_id')
                 ->whereNull('deleted_at')
-                ->where('order_date', '<', $request->input('start_date'))
+                ->where('order_date', '<', $startDateOnly)
                 ->sum('paid_amount');
 
-            // ✅ Opening Balance = BaseOpening + Purchases + Builties + JobOrders + VendorReceipts + SalesAdvances − (Payments + Returns + LocalSales + JobPaidAmounts)
+            // Opening Balance Calculation
             $openingBalance = $baseOpening
                 + $previousPurchases
                 + $previousBuilties
@@ -230,7 +236,7 @@ class ReportController extends Controller
             // ---- Current Period Transactions ----
             $recoveries = DB::table('vendor_payments')
                 ->where('vendor_id', $vendorId)
-                ->whereBetween('payment_date', [$startDate, $endDate])
+                ->whereBetween('payment_date', [$startDateOnly, $endDateOnly])
                 ->select('id', 'amount', 'remarks', 'payment_date')
                 ->get();
 
@@ -238,7 +244,11 @@ class ReportController extends Controller
                 ->where('party_type', 'vendor')
                 ->where('party_id', $vendorId)
                 ->where('voucher_type', 'payment')
-                ->whereBetween('voucher_date', [$startDate, $endDate])
+                ->where(function($q) {
+                    $q->whereNull('reference_type')
+                      ->orWhereNotIn('reference_type', ['purchase', 'vendor_payment']);
+                })
+                ->whereBetween('voucher_date', [$startDateOnly, $endDateOnly])
                 ->select('id', 'debit_amount as amount', 'narration as remarks', 'voucher_date as payment_date')
                 ->get();
 
@@ -248,13 +258,17 @@ class ReportController extends Controller
                 ->where('party_type', 'vendor')
                 ->where('party_id', $vendorId)
                 ->where('voucher_type', 'receipt')
-                ->whereBetween('voucher_date', [$startDate, $endDate])
+                ->where(function($q) {
+                    $q->whereNull('reference_type')
+                      ->orWhereNotIn('reference_type', ['purchase', 'vendor_payment']);
+                })
+                ->whereBetween('voucher_date', [$startDateOnly, $endDateOnly])
                 ->select('id', 'credit_amount as amount', 'narration as remarks', 'voucher_date as receipt_date')
                 ->get();
 
             $purchases = DB::table('purchases')
                 ->where('party_name', $vendorId)
-                ->whereBetween('purchase_date', [$startDate, $endDate])
+                ->whereBetween('purchase_date', [$startDateOnly, $endDateOnly])
                 ->select('id', 'invoice_number', 'purchase_date', 'grand_total', 'item')
                 ->get()
                 ->map(function ($purchase) {
@@ -269,7 +283,7 @@ class ReportController extends Controller
 
             $returnsRaw = DB::table('purchase_returns')
                 ->where('party_name', $vendorId)
-                ->whereBetween('return_date', [$startDate, $endDate])
+                ->whereBetween('return_date', [$startDateOnly, $endDateOnly])
                 ->get();
 
             $returns = [];
@@ -287,12 +301,6 @@ class ReportController extends Controller
                 ];
             }
 
-            // Vendor builties feature incomplete - table has no amount column
-            // $builties = DB::table('vendor_builties')
-            //     ->where('vendor_id', $vendorId)
-            //     ->whereBetween('date', [$startDate, $endDate])
-            //     ->select('id', 'date', 'amount', 'description')
-            //     ->get();
             $builties = collect([]);
 
             $local_sales = DB::table('local_sales')
@@ -308,7 +316,7 @@ class ReportController extends Controller
                 ->where('assignee_type', 'vendor')
                 ->whereNotNull('vendor_id')
                 ->whereNull('deleted_at')
-                ->whereBetween('order_date', [$request->input('start_date'), $request->input('end_date')])
+                ->whereBetween('order_date', [$startDateOnly, $endDateOnly])
                 ->select('id', 'job_order_number', 'order_date', 'total_amount', 'paid_amount', 'remaining_amount', 'description', 'assignment_status')
                 ->get();
 
@@ -316,13 +324,11 @@ class ReportController extends Controller
             $totalJobPaid   = $jobOrders->sum('paid_amount');
 
             // ✅ Closing Balance = Opening + Purchases + JobOrders + VendorReceipts + SalesAdvance − (Payments + Returns + Local Sales + JobPaidAmounts)
-            // Note: Builties excluded as table has no amount field
             $closingBalance = $openingBalance
                 + $purchases->sum('grand_total')
                 + $totalJobOrders
                 + $journalReceipts->sum('amount')
                 + $local_sales->sum('advance_amount')
-                // + $builties->sum('amount')  // Excluded - no amount column
                 - ($recoveries->sum('amount') + $currentReturns + $local_sales->sum('net_amount') + $totalJobPaid);
 
             return response()->json([
@@ -335,8 +341,8 @@ class ReportController extends Controller
                 'builties' => $builties,
                 'local_sales' => $local_sales,
                 'job_orders' => $jobOrders,
-                'startDate' => $startDate,
-                'endDate' => $endDate,
+                'startDate' => $startDateOnly,
+                'endDate' => $endDateOnly,
             ]);
         } catch (\Exception $e) {
             \Log::error('Vendor Ledger Error: ' . $e->getMessage());

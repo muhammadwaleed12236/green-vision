@@ -14,9 +14,11 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Account;
 use Illuminate\Support\Facades\DB;
+use App\Traits\AutoJournalVoucher;
 
 class WizardController extends Controller
 {
+    use AutoJournalVoucher;
     public function index()
     {
         if (Auth::id()) {
@@ -194,13 +196,26 @@ class WizardController extends Controller
                     'remarks' => 'Wizard Payment for Purchase ID: ' . $purchase->id,
                 ]);
 
-                if ($accountId) {
-                    $account = \App\Models\Account::find($accountId);
-                    if ($account) {
-                        $account->opening_balance -= $paymentAmount;
-                        $account->save();
-                    }
-                }
+                // Create Journal Voucher (payment) for this vendor payment
+                $voucherNo = \App\Models\JournalVoucher::generateVoucherNo('payment');
+                \App\Models\JournalVoucher::create([
+                    'admin_or_user_id' => $userId,
+                    'account_id' => $accountId,
+                    'voucher_no' => $voucherNo,
+                    'voucher_date' => $purchaseDate,
+                    'voucher_type' => 'payment',
+                    'party_type' => 'vendor',
+                    'party_id' => $vendorId,
+                    'party_name' => $vendor->Party_name,
+                    'account_head' => 'Purchase',
+                    'debit_amount' => $paymentAmount,
+                    'credit_amount' => 0,
+                    'payment_method' => 'cash',
+                    'reference_type' => 'purchase',
+                    'reference_id' => $purchase->id,
+                    'narration' => 'Wizard Purchase - ' . $purchase->invoice_number . ' (' . $vendor->Party_name . ')',
+                    'status' => 'approved',
+                ]);
             }
 
             // Stock update logic can be added here if needed, 
@@ -232,47 +247,78 @@ class WizardController extends Controller
             
             $sale = LocalSale::findOrFail($saleId);
 
+            $oldType = $sale->sale_type;
+            $oldRemaining = ($oldType === 'estimate') ? 0 : floatval($sale->remaining_amount);
+
+            $totalDeduction = $paymentAmount + $discount;
+            $calculatedRemaining = $sale->net_amount - ($sale->advance_amount + $totalDeduction);
+            $ledgerDiff = $calculatedRemaining - $oldRemaining;
+
+            // 1. Update Customer/Vendor Ledger closing balance
             if ($sale->party_type === 'customer' && $sale->customer_id) {
-                $customerId = $sale->customer_id;
-                
-                // Update Customer Ledger
-                $ledger = CustomerLedger::where('customer_id', $customerId)->latest()->first();
+                $ledger = CustomerLedger::where('customer_id', $sale->customer_id)
+                    ->where('admin_or_user_id', $userId)
+                    ->first();
                 if ($ledger) {
-                    $previousBalance = $ledger->closing_balance;
-                    // Payment reduces the balance. Discount also reduces the balance.
-                    $totalDeduction = $paymentAmount + $discount;
-                    $closingBalance = $previousBalance - $totalDeduction;
-
-                    // Update existing ledger
-                    $ledger->update([
-                        'closing_balance' => $closingBalance,
-                    ]);
-
-                    \App\Models\CustomerRecovery::create([
+                    if ($ledgerDiff != 0) {
+                        $ledger->increment('closing_balance', $ledgerDiff);
+                    }
+                } else {
+                    CustomerLedger::create([
+                        'customer_id' => $sale->customer_id,
                         'admin_or_user_id' => $userId,
-                        'customer_ledger_id' => $customerId, // customer_id is stored in customer_ledger_id
-                        'date' => date('Y-m-d'),
-                        'amount_paid' => $paymentAmount,
-                        'remarks' => 'Wizard Payment for Sale ID: ' . $saleId . ($discount > 0 ? " (Discount: $discount)" : ''),
+                        'closing_balance' => $ledgerDiff,
                     ]);
-                    
+                }
+            } elseif ($sale->party_type === 'vendor' && $sale->vendor_id) {
+                $ledger = VendorLedger::where('vendor_id', $sale->vendor_id)
+                    ->where('admin_or_user_id', $userId)
+                    ->first();
+                if ($ledger) {
+                    if ($ledgerDiff != 0) {
+                        $ledger->decrement('closing_balance', $ledgerDiff);
+                    }
+                } else {
+                    VendorLedger::create([
+                        'vendor_id' => $sale->vendor_id,
+                        'admin_or_user_id' => $userId,
+                        'closing_balance' => -$ledgerDiff,
+                    ]);
                 }
             }
 
-            // Update Sale status and type
+            // 2. Update Sale status, advance, and remaining
             $sale->sale_type = 'sale';
             $sale->job_status = 'completed';
             $sale->advance_amount = $sale->advance_amount + $paymentAmount;
-            $sale->remaining_amount = max(0, $sale->net_amount - $sale->advance_amount);
+            $sale->remaining_amount = max(0, $calculatedRemaining);
             $sale->save();
 
+            // 3. Create Journal Voucher Receipt for the cash payment
             $accountId = $request->account_id ?? null;
-            if ($paymentAmount > 0 && $accountId) {
-                $account = \App\Models\Account::find($accountId);
-                if ($account) {
-                    $account->opening_balance += $paymentAmount;
-                    $account->save();
-                }
+            if ($paymentAmount > 0) {
+                $partyName = $sale->party_name ?? 'Walk-in';
+                $jvPartyType = in_array($sale->party_type, ['customer', 'vendor']) ? $sale->party_type : 'other';
+                $voucherNo = \App\Models\JournalVoucher::generateVoucherNo('receipt');
+                
+                \App\Models\JournalVoucher::create([
+                    'admin_or_user_id' => $userId,
+                    'account_id' => $accountId,
+                    'voucher_no' => $voucherNo,
+                    'voucher_date' => date('Y-m-d'),
+                    'voucher_type' => 'receipt',
+                    'party_type' => $jvPartyType,
+                    'party_id' => $sale->party_type === 'customer' ? $sale->customer_id : ($sale->party_type === 'vendor' ? $sale->vendor_id : null),
+                    'party_name' => $partyName,
+                    'account_head' => 'Sale',
+                    'debit_amount' => 0,
+                    'credit_amount' => $paymentAmount,
+                    'payment_method' => 'cash',
+                    'reference_type' => 'local_sale',
+                    'reference_id' => $sale->id,
+                    'narration' => 'Wizard Payment for Sale ID: ' . $sale->id . ($discount > 0 ? " (Discount: $discount)" : ''),
+                    'status' => 'approved',
+                ]);
             }
 
             DB::commit();

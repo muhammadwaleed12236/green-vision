@@ -187,6 +187,16 @@ class PurchaseController extends Controller
                 'status' => 'approved',
             ]);
 
+            if ((float) ($request->paid_amount ?? 0) > 0) {
+                \App\Models\VendorPayment::create([
+                    'admin_or_user_id' => $userId,
+                    'vendor_id' => $vendorId,
+                    'amount' => (float) $request->paid_amount,
+                    'payment_date' => $request->purchase_date ?? date('Y-m-d'),
+                    'remarks' => 'Purchase Payment - ' . $purchase->invoice_number,
+                ]);
+            }
+
             // ================= UPDATE VENDOR LEDGER =================
             $ledger = VendorLedger::where('vendor_id', $vendorId)->latest()->first();
 
@@ -490,6 +500,31 @@ class PurchaseController extends Controller
                 ]);
             }
 
+            // ================= SYNC VENDOR PAYMENT =================
+            $existingPayment = \App\Models\VendorPayment::where('admin_or_user_id', $userId)
+                ->where('remarks', 'Purchase Payment - ' . $purchase->invoice_number)
+                ->first();
+
+            if ($newPaidAmount > 0) {
+                if ($existingPayment) {
+                    $existingPayment->update([
+                        'vendor_id' => $vendorId,
+                        'amount' => $newPaidAmount,
+                        'payment_date' => $request->purchase_date,
+                    ]);
+                } else {
+                    \App\Models\VendorPayment::create([
+                        'admin_or_user_id' => $userId,
+                        'vendor_id' => $vendorId,
+                        'amount' => $newPaidAmount,
+                        'payment_date' => $request->purchase_date,
+                        'remarks' => 'Purchase Payment - ' . $purchase->invoice_number,
+                    ]);
+                }
+            } elseif ($existingPayment) {
+                $existingPayment->delete();
+            }
+
             // ================= REVERSE OLD STOCK & UPDATE WITH NEW STOCK =================
             // First, reverse old stock
             foreach ($oldItems as $i => $oldItemName) {
@@ -566,6 +601,11 @@ class PurchaseController extends Controller
             \App\Models\JournalVoucher::where('admin_or_user_id', $userId)
                 ->where('reference_type', 'purchase')
                 ->where('reference_id', $purchase->id)
+                ->delete();
+
+            // ================= DELETE VENDOR PAYMENT =================
+            \App\Models\VendorPayment::where('admin_or_user_id', $userId)
+                ->where('remarks', 'Purchase Payment - ' . $purchase->invoice_number)
                 ->delete();
 
             // ================= SOFT DELETE PURCHASE =================
