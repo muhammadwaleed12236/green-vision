@@ -191,27 +191,29 @@ class LocalSaleController extends Controller
                 }
 
                 // Create Journal Voucher (receipt) + account ledger entry for the sale
-                $partyName = $sale->party_name ?? 'Walk-in';
-                $jvPartyType = in_array($partyType, ['customer', 'vendor']) ? $partyType : 'other';
-                $voucherNo = \App\Models\JournalVoucher::generateVoucherNo('receipt');
-                \App\Models\JournalVoucher::create([
-                    'admin_or_user_id' => $userId,
-                    'account_id' => $request->account_id ?? null,
-                    'voucher_no' => $voucherNo,
-                    'voucher_date' => $request->sale_date ?? now(),
-                    'voucher_type' => 'receipt',
-                    'party_type' => $jvPartyType,
-                    'party_id' => $partyType === 'customer' ? $request->customer_id : ($partyType === 'vendor' ? $request->vendor_id : null),
-                    'party_name' => $partyName,
-                    'account_head' => 'Sale',
-                    'debit_amount' => 0,
-                    'credit_amount' => $netAmount,
-                    'payment_method' => 'cash',
-                    'reference_type' => 'local_sale',
-                    'reference_id' => $sale->id,
-                    'narration' => 'Sale - ' . $sale->invoice_number . ' (' . $partyName . ')',
-                    'status' => 'approved',
-                ]);
+                if ($advance > 0) {
+                    $partyName = $sale->party_name ?? 'Walk-in';
+                    $jvPartyType = in_array($partyType, ['customer', 'vendor']) ? $partyType : 'other';
+                    $voucherNo = \App\Models\JournalVoucher::generateVoucherNo('receipt');
+                    \App\Models\JournalVoucher::create([
+                        'admin_or_user_id' => $userId,
+                        'account_id' => $request->account_id ?? null,
+                        'voucher_no' => $voucherNo,
+                        'voucher_date' => $request->sale_date ?? now(),
+                        'voucher_type' => 'receipt',
+                        'party_type' => $jvPartyType,
+                        'party_id' => $partyType === 'customer' ? $request->customer_id : ($partyType === 'vendor' ? $request->vendor_id : null),
+                        'party_name' => $partyName,
+                        'account_head' => 'Sale',
+                        'debit_amount' => 0,
+                        'credit_amount' => $advance,
+                        'payment_method' => 'cash',
+                        'reference_type' => 'local_sale',
+                        'reference_id' => $sale->id,
+                        'narration' => 'Sale - ' . $sale->invoice_number . ' (' . $partyName . ')',
+                        'status' => 'approved',
+                    ]);
+                }
             }
 
             // Update Customer Ledger: Previous + Remaining = New Closing
@@ -528,10 +530,19 @@ class LocalSaleController extends Controller
         $sale->forceDelete();
 
         if ($sale->sale_type !== 'estimate') {
-            $ledger = CustomerLedger::where('customer_id', $customerId)->latest()->first();
-            if ($ledger) {
-                $ledger->closing_balance -= $netAmount;
-                $ledger->save();
+            $remaining = floatval($sale->remaining_amount);
+            if ($sale->party_type === 'customer' && $customerId) {
+                $ledger = CustomerLedger::where('customer_id', $customerId)->latest()->first();
+                if ($ledger) {
+                    $ledger->closing_balance -= $remaining;
+                    $ledger->save();
+                }
+            } elseif ($sale->party_type === 'vendor' && $sale->vendor_id) {
+                $ledger = VendorLedger::where('vendor_id', $sale->vendor_id)->latest()->first();
+                if ($ledger) {
+                    $ledger->closing_balance += $remaining;
+                    $ledger->save();
+                }
             }
         }
 
@@ -686,7 +697,7 @@ class LocalSaleController extends Controller
                 ->where('reference_id', $sale->id)
                 ->first();
 
-            if ($newType === 'sale') {
+            if ($newType === 'sale' && $advance > 0) {
                 $partyName = $request->party_type === 'walkin'
                     ? ($request->walkin_name ?? 'Walk-in')
                     : ($sale->party_name ?? 'Walk-in');
@@ -700,7 +711,7 @@ class LocalSaleController extends Controller
                         'party_id' => $partyType === 'customer' ? $request->customer_id : ($partyType === 'vendor' ? $request->vendor_id : null),
                         'party_name' => $partyName,
                         'debit_amount' => 0,
-                        'credit_amount' => $netAmount,
+                        'credit_amount' => $advance,
                         'narration' => 'Sale - ' . ($sale->invoice_number ?? $sale->id) . ' (' . $partyName . ')',
                         'status' => 'approved',
                     ]);
@@ -717,7 +728,7 @@ class LocalSaleController extends Controller
                         'party_name' => $partyName,
                         'account_head' => 'Sale',
                         'debit_amount' => 0,
-                        'credit_amount' => $netAmount,
+                        'credit_amount' => $advance,
                         'payment_method' => 'cash',
                         'reference_type' => 'local_sale',
                         'reference_id' => $sale->id,
@@ -944,27 +955,29 @@ class LocalSaleController extends Controller
                 }
 
                 // Create Journal Voucher (receipt) + account ledger entry for the converted sale
-                $partyName = $sale->party_name ?? 'Walk-in';
-                $jvPartyType = in_array($partyType, ['customer', 'vendor']) ? $partyType : 'other';
-                $voucherNo = \App\Models\JournalVoucher::generateVoucherNo('receipt');
-                \App\Models\JournalVoucher::create([
-                    'admin_or_user_id' => $userId,
-                    'account_id' => $sale->account_id ?? null,
-                    'voucher_no' => $voucherNo,
-                    'voucher_date' => $sale->sale_date,
-                    'voucher_type' => 'receipt',
-                    'party_type' => $jvPartyType,
-                    'party_id' => $partyType === 'customer' ? $sale->customer_id : ($partyType === 'vendor' ? $sale->vendor_id : null),
-                    'party_name' => $partyName,
-                    'account_head' => 'Sale',
-                    'debit_amount' => 0,
-                    'credit_amount' => $sale->net_amount ?? 0,
-                    'payment_method' => 'cash',
-                    'reference_type' => 'local_sale',
-                    'reference_id' => $sale->id,
-                    'narration' => 'Sale - ' . ($sale->invoice_number ?? $sale->id) . ' (' . $partyName . ')',
-                    'status' => 'approved',
-                ]);
+                if (floatval($sale->advance_amount) > 0) {
+                    $partyName = $sale->party_name ?? 'Walk-in';
+                    $jvPartyType = in_array($partyType, ['customer', 'vendor']) ? $partyType : 'other';
+                    $voucherNo = \App\Models\JournalVoucher::generateVoucherNo('receipt');
+                    \App\Models\JournalVoucher::create([
+                        'admin_or_user_id' => $userId,
+                        'account_id' => $sale->account_id ?? null,
+                        'voucher_no' => $voucherNo,
+                        'voucher_date' => $sale->sale_date,
+                        'voucher_type' => 'receipt',
+                        'party_type' => $jvPartyType,
+                        'party_id' => $partyType === 'customer' ? $sale->customer_id : ($partyType === 'vendor' ? $sale->vendor_id : null),
+                        'party_name' => $partyName,
+                        'account_head' => 'Sale',
+                        'debit_amount' => 0,
+                        'credit_amount' => floatval($sale->advance_amount),
+                        'payment_method' => 'cash',
+                        'reference_type' => 'local_sale',
+                        'reference_id' => $sale->id,
+                        'narration' => 'Sale - ' . ($sale->invoice_number ?? $sale->id) . ' (' . $partyName . ')',
+                        'status' => 'approved',
+                    ]);
+                }
 
                 $sale->update([
                     'sale_type' => 'sale',
@@ -1133,27 +1146,29 @@ class LocalSaleController extends Controller
                 }
 
                 // Create Journal Voucher (receipt) + account ledger entry for the converted sale
-                $partyName = $sale->party_name ?? 'Walk-in';
-                $jvPartyType = in_array($partyType, ['customer', 'vendor']) ? $partyType : 'other';
-                $voucherNo = \App\Models\JournalVoucher::generateVoucherNo('receipt');
-                \App\Models\JournalVoucher::create([
-                    'admin_or_user_id' => $userId,
-                    'account_id' => $sale->account_id ?? null,
-                    'voucher_no' => $voucherNo,
-                    'voucher_date' => $sale->sale_date,
-                    'voucher_type' => 'receipt',
-                    'party_type' => $jvPartyType,
-                    'party_id' => $partyType === 'customer' ? $sale->customer_id : ($partyType === 'vendor' ? $sale->vendor_id : null),
-                    'party_name' => $partyName,
-                    'account_head' => 'Sale',
-                    'debit_amount' => 0,
-                    'credit_amount' => $sale->net_amount ?? 0,
-                    'payment_method' => 'cash',
-                    'reference_type' => 'local_sale',
-                    'reference_id' => $sale->id,
-                    'narration' => 'Sale - ' . ($sale->invoice_number ?? $sale->id) . ' (' . $partyName . ')',
-                    'status' => 'approved',
-                ]);
+                if (floatval($sale->advance_amount) > 0) {
+                    $partyName = $sale->party_name ?? 'Walk-in';
+                    $jvPartyType = in_array($partyType, ['customer', 'vendor']) ? $partyType : 'other';
+                    $voucherNo = \App\Models\JournalVoucher::generateVoucherNo('receipt');
+                    \App\Models\JournalVoucher::create([
+                        'admin_or_user_id' => $userId,
+                        'account_id' => $sale->account_id ?? null,
+                        'voucher_no' => $voucherNo,
+                        'voucher_date' => $sale->sale_date,
+                        'voucher_type' => 'receipt',
+                        'party_type' => $jvPartyType,
+                        'party_id' => $partyType === 'customer' ? $sale->customer_id : ($partyType === 'vendor' ? $sale->vendor_id : null),
+                        'party_name' => $partyName,
+                        'account_head' => 'Sale',
+                        'debit_amount' => 0,
+                        'credit_amount' => floatval($sale->advance_amount),
+                        'payment_method' => 'cash',
+                        'reference_type' => 'local_sale',
+                        'reference_id' => $sale->id,
+                        'narration' => 'Sale - ' . ($sale->invoice_number ?? $sale->id) . ' (' . $partyName . ')',
+                        'status' => 'approved',
+                    ]);
+                }
 
                 $sale->update([
                     'sale_type' => 'sale',

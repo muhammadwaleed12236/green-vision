@@ -420,6 +420,10 @@ class ReportController extends Controller
             ->where('party_type', 'customer')
             ->where('party_id', $CustomerId)
             ->where('voucher_type', 'receipt')
+            ->where(function($q) {
+                $q->whereNull('reference_type')
+                  ->orWhereNotIn('reference_type', ['local_sale', 'customer_payment']);
+            })
             ->where('voucher_date', '<', $startDate)
             ->sum('credit_amount');
 
@@ -453,6 +457,10 @@ class ReportController extends Controller
             ->where('party_type', 'customer')
             ->where('party_id', $CustomerId)
             ->where('voucher_type', 'receipt')
+            ->where(function($q) {
+                $q->whereNull('reference_type')
+                  ->orWhereNotIn('reference_type', ['local_sale', 'customer_payment']);
+            })
             ->whereBetween('voucher_date', [$startDate, $endDate])
             ->select('id', 'credit_amount', 'narration as remarks', 'voucher_date')
             ->get();

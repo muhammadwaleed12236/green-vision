@@ -85,6 +85,24 @@
                                         </td>
                                         <td></td>
                                     </tr>
+                                    <tr>
+                                        <td colspan="5" class="text-end fw-bold">Amount Paid to Vendor:</td>
+                                        <td>
+                                            <input type="number" class="form-control form-control-lg fw-bold text-center text-success"
+                                                id="paidAmount" name="paid_amount"
+                                                value="{{ $purchase->paid_amount ?? 0 }}" min="0">
+                                        </td>
+                                        <td></td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="5" class="text-end fw-bold">Remaining Due:</td>
+                                        <td>
+                                            <input type="number" class="form-control form-control-lg fw-bold text-center text-danger"
+                                                id="remainingDue" name="remaining_due"
+                                                value="{{ $purchase->grand_total - ($purchase->paid_amount ?? 0) }}" readonly>
+                                        </td>
+                                        <td></td>
+                                    </tr>
                                 </tfoot>
                             </table>
                         </div>
@@ -424,7 +442,19 @@ $(document).ready(function () {
             total += parseInt($(this).val()) || 0;
         });
         $('#grandTotal').val(total);
+        calculateRemainingDue();
     }
+
+    function calculateRemainingDue() {
+        let grandTotal = parseFloat($('#grandTotal').val()) || 0;
+        let paidAmount = parseFloat($('#paidAmount').val()) || 0;
+        let remaining = grandTotal - paidAmount;
+        $('#remainingDue').val(remaining);
+    }
+
+    $(document).on('input', '#paidAmount', function () {
+        calculateRemainingDue();
+    });
 
     // Vendor select change
     $(document).on('change', '.vendor-select', function () {

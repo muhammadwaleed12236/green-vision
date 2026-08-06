@@ -79,6 +79,20 @@
                                                 name="grand_total" readonly></td>
                                         <td></td>
                                     </tr>
+                                    <tr>
+                                        <td colspan="5" class="text-end fw-bold">Amount Paid to Vendor:</td>
+                                        <td><input type="number"
+                                                class="form-control form-control-lg fw-bold text-center text-success" id="paidAmount"
+                                                name="paid_amount" min="0" value="0"></td>
+                                        <td></td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="5" class="text-end fw-bold">Remaining Due:</td>
+                                        <td><input type="number"
+                                                class="form-control form-control-lg fw-bold text-center text-danger" id="remainingDue"
+                                                name="remaining_due" value="0" readonly></td>
+                                        <td></td>
+                                    </tr>
                                 </tfoot>
                             </table>
                         </div>
@@ -397,6 +411,8 @@
             $('#party_name').val('').trigger('change');
             $('.party_code').val('');
             $('#grandTotal').val('');
+            $('#paidAmount').val(0);
+            $('#remainingDue').val(0);
 
             // Clear all rows and add fresh 5 rows
             $('#purchaseTable tbody').empty();
@@ -618,7 +634,19 @@
                 total += parseInt($(this).val()) || 0;
             });
             $('#grandTotal').val(total);
+            calculateRemainingDue();
         }
+
+        function calculateRemainingDue() {
+            let grandTotal = parseFloat($('#grandTotal').val()) || 0;
+            let paidAmount = parseFloat($('#paidAmount').val()) || 0;
+            let remaining = grandTotal - paidAmount;
+            $('#remainingDue').val(remaining);
+        }
+
+        $(document).on('input', '#paidAmount', function () {
+            calculateRemainingDue();
+        });
 
         // Reposition autocomplete on scroll/resize
         $(window).on('scroll resize', function () {

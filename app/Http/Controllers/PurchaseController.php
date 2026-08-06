@@ -152,6 +152,7 @@ class PurchaseController extends Controller
                 'account_id' => $request->account_id,
                 'pcs_carton' => json_encode(array_column($rows, 'pcs_carton')),
                 'grand_total' => (float) $request->grand_total,
+                'paid_amount' => (float) ($request->paid_amount ?? 0),
             ]);
 
             // ================= UPDATE PRODUCT STOCK =================
@@ -177,7 +178,7 @@ class PurchaseController extends Controller
                 'party_id' => $vendorId,
                 'party_name' => $vendor->Party_name ?? 'Vendor',
                 'account_head' => 'Purchase',
-                'debit_amount' => (float) $request->grand_total,
+                'debit_amount' => (float) ($request->paid_amount ?? 0),
                 'credit_amount' => 0,
                 'payment_method' => 'cash',
                 'reference_type' => 'purchase',
@@ -190,11 +191,12 @@ class PurchaseController extends Controller
             $ledger = VendorLedger::where('vendor_id', $vendorId)->latest()->first();
 
             $currentAmount = (float) $request->grand_total;
+            $paidAmount = (float) ($request->paid_amount ?? 0);
             $openingBalance = $vendor->opening_balance ?? 0;
 
             if ($ledger) {
                 $previousBalance = $ledger->closing_balance;
-                $closingBalance = $previousBalance + $currentAmount;
+                $closingBalance = $previousBalance + $currentAmount - $paidAmount;
 
                 $ledger->update([
                     'previous_balance' => $previousBalance,
@@ -202,7 +204,7 @@ class PurchaseController extends Controller
                 ]);
             } else {
                 $previousBalance = $openingBalance;
-                $closingBalance = $openingBalance + $currentAmount;
+                $closingBalance = $openingBalance + $currentAmount - $paidAmount;
 
                 VendorLedger::create([
                     'admin_or_user_id' => $userId,
@@ -403,8 +405,13 @@ class PurchaseController extends Controller
 
             // ================= CALCULATE LEDGER DIFFERENCE =================
             $oldGrandTotal = (float) $purchase->grand_total;
+            $oldPaidAmount = (float) ($purchase->paid_amount ?? 0);
             $newGrandTotal = (float) $request->grand_total;
-            $diffAmount = $newGrandTotal - $oldGrandTotal;
+            $newPaidAmount = (float) ($request->paid_amount ?? 0);
+
+            $oldNetPayable = $oldGrandTotal - $oldPaidAmount;
+            $newNetPayable = $newGrandTotal - $newPaidAmount;
+            $diffAmount = $newNetPayable - $oldNetPayable;
 
             // ================= UPDATE VENDOR LEDGER =================
             $ledger = VendorLedger::where('vendor_id', $vendorId)->latest()->first();
@@ -421,7 +428,7 @@ class PurchaseController extends Controller
                     'admin_or_user_id' => $userId,
                     'opening_balance' => 0,
                     'previous_balance' => 0,
-                    'closing_balance' => $newGrandTotal,
+                    'closing_balance' => $newNetPayable,
                 ]);
             }
 
@@ -439,6 +446,7 @@ class PurchaseController extends Controller
                 'discount' => json_encode(array_column($rows, 'discount')),
                 'amount' => json_encode(array_column($rows, 'amount')),
                 'grand_total' => $newGrandTotal,
+                'paid_amount' => $newPaidAmount,
             ]);
 
             // ================= SYNC JOURNAL VOUCHER (PAYMENT) =================
@@ -455,7 +463,7 @@ class PurchaseController extends Controller
                     'party_id' => $vendorId,
                     'party_name' => $vendor->Party_name ?? 'Vendor',
                     'account_head' => 'Purchase',
-                    'debit_amount' => $newGrandTotal,
+                    'debit_amount' => $newPaidAmount,
                     'credit_amount' => 0,
                     'narration' => 'Purchase - ' . $purchase->invoice_number . ' (' . ($vendor->Party_name ?? 'Vendor') . ')',
                     'status' => 'approved',
@@ -472,7 +480,7 @@ class PurchaseController extends Controller
                     'party_id' => $vendorId,
                     'party_name' => $vendor->Party_name ?? 'Vendor',
                     'account_head' => 'Purchase',
-                    'debit_amount' => $newGrandTotal,
+                    'debit_amount' => $newPaidAmount,
                     'credit_amount' => 0,
                     'payment_method' => 'cash',
                     'reference_type' => 'purchase',
@@ -533,8 +541,9 @@ class PurchaseController extends Controller
             $ledger = VendorLedger::where('vendor_id', $vendorId)->latest()->first();
             
             if ($ledger) {
+                $netPayable = $purchase->grand_total - ($purchase->paid_amount ?? 0);
                 $ledger->update([
-                    'closing_balance' => $ledger->closing_balance - $purchase->grand_total,
+                    'closing_balance' => $ledger->closing_balance - $netPayable,
                 ]);
             }
 

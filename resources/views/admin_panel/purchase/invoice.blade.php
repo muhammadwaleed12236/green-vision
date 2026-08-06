@@ -86,6 +86,14 @@
     <td class="text-end">{{ number_format($netTotal,2) }}</td>
 </tr>
 <tr>
+    <th class="text-end">Amount Paid</th>
+    <td class="text-end text-success">{{ number_format($purchase->paid_amount ?? 0, 2) }}</td>
+</tr>
+<tr>
+    <th class="text-end">Remaining Due</th>
+    <td class="text-end text-danger">{{ number_format($netTotal - ($purchase->paid_amount ?? 0), 2) }}</td>
+</tr>
+<tr>
     <th class="text-end">Closing Balance</th>
     <td class="text-end fw-bold">{{ number_format($closingBalance,2) }}</td>
 </tr>
