@@ -296,7 +296,7 @@
                             <input type="number" id="purchase_payment_amount" class="form-control" placeholder="0.00">
                         </div>
                         <div class="col-md-4">
-                            <label>Account</label>
+                            <label>Account <span class="text-danger">*</span></label>
                             <select id="purchase_account_id" class="form-control select2">
                                 <option value="">-- Select Account --</option>
                                 @if(isset($accounts))
@@ -348,7 +348,7 @@
                                     </div>
 
                                     <div class="form-group mb-4">
-                                        <label class="fw-bold">Account</label>
+                                        <label class="fw-bold">Account <span class="text-danger">*</span></label>
                                         <select id="pay_account_id" class="form-control select2">
                                             <option value="">-- Select Account --</option>
                                             @if(isset($accounts))
@@ -563,6 +563,12 @@
                 showAlert('Please select a vendor', 'danger');
                 return;
             }
+
+            const accountId = $('#purchase_account_id').val();
+            if(!accountId) {
+                showAlert('Please select an account', 'danger');
+                return;
+            }
             
             let purchaseItems = [];
             let isValid = true;
@@ -628,6 +634,12 @@
             if(!amount || amount < 0) {
                 showAlert('Please enter a valid payment amount', 'danger');
                 $('#pay_amount').addClass('is-invalid');
+                return;
+            }
+
+            const accountId = $('#pay_account_id').val();
+            if(!accountId) {
+                showAlert('Please select an account', 'danger');
                 return;
             }
             
