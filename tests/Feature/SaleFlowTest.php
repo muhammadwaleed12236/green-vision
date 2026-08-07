@@ -71,6 +71,9 @@ class SaleFlowTest extends TestCase
         $this->assertEquals(150, $sale->advance_amount);
         $this->assertEquals(50, $sale->remaining_amount);
 
+        // Assert Product stock is correctly reduced by 1 (10 - 1 = 9)
+        $this->assertEquals(9, $product->fresh()->initial_stock);
+
         // 5. Assert Customer Ledger is updated correctly with remaining amount (50)
         $ledger = CustomerLedger::where('customer_id', $customer->id)->latest()->first();
         $this->assertNotNull($ledger);
@@ -109,5 +112,8 @@ class SaleFlowTest extends TestCase
 
         // Also Journal Voucher must be deleted
         $this->assertNull(JournalVoucher::where('reference_type', 'local_sale')->where('reference_id', $sale->id)->first());
+
+        // Assert Product stock is correctly restored back to 10
+        $this->assertEquals(10, $product->fresh()->initial_stock);
     }
 }

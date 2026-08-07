@@ -164,29 +164,42 @@ class LocalSaleController extends Controller
                 }
 
                 foreach ($items as $index => $itemName) {
+                    if (empty($itemName)) {
+                        continue;
+                    }
                     $productId = isset($itemIds[$index]) ? intval($itemIds[$index]) : null;
+                    $productModel = null;
                     if ($productId) {
-                        $productModel = Product::where('id', $productId)->first();
-                        if ($productModel) {
-                            $openingStock = floatval($productModel->initial_stock ?? 0);
-                            $usedStock = floatval($qtys[$index] ?? 0);
+                        $productModel = Product::find($productId);
+                    }
+                    if (!$productModel) {
+                        $productModel = Product::where('item_name', $itemName)->first();
+                    }
 
-                            // Create StockOut record (new entry) - does NOT change the product's opening stock
-                            \App\Models\StockOut::create([
-                                'admin_or_user_id' => $userId,
-                                'product_id' => $productId,
-                                'local_sales_id' => $sale->id,
-                                'current_stock' => $openingStock,      // Opening Stock
-                                'close_stock' => max($openingStock - $usedStock, 0), // Closing Stock (Remaining)
-                                'total_stock' => $usedStock,           // Used Stock
-                                'reason' => 'Sale - ' . $sale->invoice_number,
-                                'stock_out_date' => $sale->sale_date,
-                                'reference_type' => 'local_sale',
-                                'reference_id' => $sale->id,
-                                'created_at' => \Carbon\Carbon::now(),
-                                'updated_at' => \Carbon\Carbon::now(),
-                            ]);
-                        }
+                    if ($productModel) {
+                        $openingStock = floatval($productModel->initial_stock ?? 0);
+                        $usedStock = floatval($qtys[$index] ?? 0);
+                        $closingStock = max($openingStock - $usedStock, 0);
+
+                        // Create StockOut record (new entry)
+                        \App\Models\StockOut::create([
+                            'admin_or_user_id' => $userId,
+                            'product_id' => $productModel->id,
+                            'local_sales_id' => $sale->id,
+                            'current_stock' => $openingStock,      // Opening Stock
+                            'close_stock' => $closingStock,         // Closing Stock (Remaining)
+                            'total_stock' => $usedStock,           // Used Stock
+                            'reason' => 'Sale - ' . $sale->invoice_number,
+                            'stock_out_date' => $sale->sale_date,
+                            'reference_type' => 'local_sale',
+                            'reference_id' => $sale->id,
+                            'created_at' => \Carbon\Carbon::now(),
+                            'updated_at' => \Carbon\Carbon::now(),
+                        ]);
+
+                        // Update product's initial_stock
+                        $productModel->initial_stock = $closingStock;
+                        $productModel->save();
                     }
                 }
 
@@ -517,6 +530,11 @@ class LocalSaleController extends Controller
         if ($sale->sale_type === 'sale') {
             $stockOuts = \App\Models\StockOut::where('local_sales_id', $sale->id)->get();
             foreach ($stockOuts as $so) {
+                $productModel = Product::find($so->product_id);
+                if ($productModel) {
+                    $productModel->initial_stock += floatval($so->total_stock);
+                    $productModel->save();
+                }
                 $so->delete();
             }
 
@@ -602,12 +620,20 @@ class LocalSaleController extends Controller
             }
 
             // 1. Stock / StockOut adjustments
-            // Delete old StockOut records (opening stock is never modified, so nothing to restore)
+            // Revert old stock if the previous state was a completed Sale
             if ($oldType === 'sale') {
-                \App\Models\StockOut::where('local_sales_id', $sale->id)->delete();
+                $stockOuts = \App\Models\StockOut::where('local_sales_id', $sale->id)->get();
+                foreach ($stockOuts as $so) {
+                    $productModel = Product::find($so->product_id);
+                    if ($productModel) {
+                        $productModel->initial_stock += floatval($so->total_stock);
+                        $productModel->save();
+                    }
+                    $so->delete();
+                }
             }
 
-            // Now, if the new type is a Sale, record new StockOut entries (does NOT change opening stock)
+            // Now, if the new type is a Sale, record new StockOut entries
             $items = $request->item_name ?? [];
             $qtys = $request->qty ?? [];
             if ($newType === 'sale') {
@@ -647,6 +673,10 @@ class LocalSaleController extends Controller
                                 'created_at' => \Carbon\Carbon::now(),
                                 'updated_at' => \Carbon\Carbon::now(),
                             ]);
+
+                            // Deduct stock from product model
+                            $productModel->initial_stock = $closingStock;
+                            $productModel->save();
                         }
                     }
                 }
@@ -924,7 +954,7 @@ class LocalSaleController extends Controller
                     }
                 }
 
-                // Automatically record StockOut entries (does NOT change opening stock)
+                // Automatically record StockOut entries and update stock
                 $items = json_decode($sale->item, true) ?? [];
                 $qtys = json_decode($sale->qty, true) ?? [];
 
@@ -951,6 +981,10 @@ class LocalSaleController extends Controller
                                 'created_at' => \Carbon\Carbon::now(),
                                 'updated_at' => \Carbon\Carbon::now(),
                             ]);
+
+                            // Deduct stock from product model
+                            $productModel->initial_stock = $closingStock;
+                            $productModel->save();
                         }
                     }
                 }
@@ -1105,7 +1139,7 @@ class LocalSaleController extends Controller
                     }
                 }
 
-                // Automatically record StockOut entries (does NOT change opening stock)
+                // Automatically record StockOut entries and update stock
                 $items = json_decode($sale->item, true) ?? [];
                 $qtys = json_decode($sale->qty, true) ?? [];
 
@@ -1142,6 +1176,10 @@ class LocalSaleController extends Controller
                                 'created_at' => \Carbon\Carbon::now(),
                                 'updated_at' => \Carbon\Carbon::now(),
                             ]);
+
+                            // Deduct stock from product model
+                            $productModel->initial_stock = $closingStock;
+                            $productModel->save();
                         }
                     }
                 }
