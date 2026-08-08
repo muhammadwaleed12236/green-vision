@@ -611,3 +611,24 @@ input[type="radio"]:checked {
         print-color-adjust: exact;
     }
 }
+
+/* ========== MOBILE RESPONSIVE (Admin Shell) ========== */
+@media (max-width: 991.98px) {
+    /* Header title next to profile is hidden on tablets/phones */
+    .header .nav.user-menu h5 {
+        display: none !important;
+    }
+}
+
+@media (max-width: 575.98px) {
+    /* Mobile profile (ellipsis) menu anchors from the right edge */
+    .header .dropdown-menu.dropdown-menu-right {
+        right: 0 !important;
+        left: auto !important;
+    }
+
+    /* Global loader sized for small screens */
+    #global-loader {
+        background-size: 60px !important;
+    }
+}

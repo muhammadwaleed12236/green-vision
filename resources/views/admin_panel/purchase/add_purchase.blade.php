@@ -1,4 +1,151 @@
 @include('admin_panel.include.header_include')
+
+<style>
+    /* ============================================
+       RESPONSIVE LAYOUT (mirror of admin dashboard)
+       ============================================ */
+
+    /* Never allow accidental horizontal scrolling */
+    html, body {
+        overflow-x: hidden;
+        width: 100%;
+        margin: 0;
+    }
+
+    /* Keep media flexible so nothing overflows */
+    img, canvas, table {
+        max-width: 100%;
+    }
+
+    /* Purchase form table never scrolls horizontally */
+    .pch-wrap {
+        overflow-x: hidden;
+    }
+    #purchaseTable th {
+        white-space: normal;
+        word-break: break-word;
+    }
+    #purchaseTable td {
+        white-space: normal;
+        word-break: break-word;
+    }
+
+    /* ---------- Phone & below (576px) ---------- */
+    @media (max-width: 575.98px) {
+        .page-header .page-btn {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        .page-header .page-btn .btn {
+            width: 100%;
+            margin-right: 0 !important;
+        }
+        .page-title h4 { font-size: 1.05rem; }
+        .page-title h6 { font-size: 0.85rem; }
+    }
+
+    /* ---------- Purchase table -> stacked cards (phone & small tablet) ---------- */
+    @media (max-width: 767.98px) {
+        .pch-wrap #purchaseTable {
+            display: block !important;
+        }
+        .pch-wrap #purchaseTable thead {
+            display: none !important;
+        }
+        .pch-wrap #purchaseTable tbody {
+            display: flex !important;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .pch-wrap #purchaseTable tbody tr {
+            background: #fff;
+            border: 1px solid #eef2f7 !important;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            padding: 4px 14px;
+            margin: 0 !important;
+        }
+        .pch-wrap #purchaseTable tbody tr:hover {
+            background: #fff;
+        }
+        .pch-wrap #purchaseTable tbody td {
+            display: flex !important;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 9px 0 !important;
+            border: 0 !important;
+            border-bottom: 1px dashed #eef2f7 !important;
+            background: transparent !important;
+            font-size: 0.85rem !important;
+            color: #1e293b;
+            text-align: right;
+            width: 100% !important;
+            box-sizing: border-box !important;
+        }
+        .pch-wrap #purchaseTable tbody td:last-child {
+            border-bottom: 0 !important;
+        }
+        .pch-wrap #purchaseTable tbody td::before {
+            content: attr(data-label);
+            flex-shrink: 0;
+            color: #94a3b8;
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            text-align: left;
+        }
+        .pch-wrap #purchaseTable tbody td .form-control {
+            max-width: 55%;
+            flex: 1 1 auto;
+        }
+        .pch-wrap #purchaseTable tbody td .input-group {
+            max-width: 70%;
+            flex: 1 1 auto;
+        }
+        .pch-wrap #purchaseTable tbody td .add-row,
+        .pch-wrap #purchaseTable tbody td .remove-row {
+            width: 34px;
+            height: 34px;
+        }
+        /* Grand Total / Paid / Due summary rows */
+        .pch-wrap #purchaseTable tfoot {
+            display: block;
+        }
+        .pch-wrap #purchaseTable tfoot tr {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            border: 1px solid #eef2f7 !important;
+            border-radius: 12px;
+            padding: 10px 14px;
+            margin-bottom: 8px;
+            background: #f8fafc;
+        }
+        .pch-wrap #purchaseTable tfoot td {
+            border: 0 !important;
+            background: transparent !important;
+            padding: 4px 0 !important;
+            text-align: left;
+        }
+        .pch-wrap #purchaseTable tfoot td:first-child {
+            flex: 1 1 auto;
+        }
+        .pch-wrap #purchaseTable tfoot td input {
+            max-width: 140px;
+        }
+        .pch-wrap #purchaseTable tfoot td:last-child {
+            display: none !important;
+        }
+    }
+</style>
+
 <div class="main-wrapper">
     @include('admin_panel.include.navbar_include')
     @include('admin_panel.include.admin_sidebar_include')
@@ -55,17 +202,17 @@
 
                         </div>
 
-                        <div class="table-responsive">
+                        <div class="table-responsive pch-wrap">
                             <table class="table table-bordered align-middle text-center" id="purchaseTable">
                                 <thead>
                                     <tr>
-                                        <th style="width: 50px">#</th>
+                                        <th style="width: 6%">#</th>
                                         <th>Product Name</th>
                                         <th>Quantity</th>
                                         <th>Unit</th>
                                         <th>Price/unit</th>
                                         <th>Amount</th>
-                                        <th style="width: 100px">Action</th>
+                                        <th style="width: 13%">Action</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -163,25 +310,25 @@
 
     /* Column Widths */
     #purchaseTable th:nth-child(1),
-    #purchaseTable td:nth-child(1) { width: 50px; } /* # */
+    #purchaseTable td:nth-child(1) { width: 6%; } /* # */
 
     #purchaseTable th:nth-child(2),
-    #purchaseTable td:nth-child(2) { width: 220px; } /* Product Name */
+    #purchaseTable td:nth-child(2) { width: 27%; } /* Product Name */
 
     #purchaseTable th:nth-child(3),
-    #purchaseTable td:nth-child(3) { width: 100px; } /* Quantity */
+    #purchaseTable td:nth-child(3) { width: 13%; } /* Quantity */
 
     #purchaseTable th:nth-child(4),
-    #purchaseTable td:nth-child(4) { width: 100px; } /* Unit */
+    #purchaseTable td:nth-child(4) { width: 13%; } /* Unit */
 
     #purchaseTable th:nth-child(5),
-    #purchaseTable td:nth-child(5) { width: 110px; } /* Price/unit */
+    #purchaseTable td:nth-child(5) { width: 14%; } /* Price/unit */
 
     #purchaseTable th:nth-child(6),
-    #purchaseTable td:nth-child(6) { width: 120px; } /* amount */
+    #purchaseTable td:nth-child(6) { width: 14%; } /* amount */
 
     #purchaseTable th:nth-child(7),
-    #purchaseTable td:nth-child(7) { width: 100px; } /* Action */
+    #purchaseTable td:nth-child(7) { width: 13%; } /* Action */
 
     /* Input Styling in Table */
     #purchaseTable .form-control {
@@ -449,8 +596,8 @@
         function createRowHtml() {
             return `
     <tr class="purchase-row">
-        <td class="row-index text-center fw-semibold" style="vertical-align: middle;"></td>
-        <td style="position:relative;">
+        <td class="row-index text-center fw-semibold" data-label="No." style="vertical-align: middle;"></td>
+        <td data-label="Product" style="position:relative;">
             <input type="hidden" name="item_id[]" class="item-id">
             <div class="input-group input-group-sm">
                 <button type="button" class="btn btn-outline-secondary mode-toggle px-2" title="Toggle Search/Manual" tabindex="-1">
@@ -461,19 +608,19 @@
             <div class="autocomplete-list d-none"></div>
         </td>
 
-        <td>
+        <td data-label="Qty">
             <input type="number" class="form-control pcx" name="pcs[]" min="0" value="0">
         </td>
 
-        <td>
+        <td data-label="Unit">
             <input type="text" class="form-control unit" name="unit[]" placeholder="e.g. pcs, box" readonly>
         </td>
 
-        <td>
+        <td data-label="Price">
             <input type="number" class="form-control rate" name="rate[]" min="0">
         </td>
 
-        <td>
+        <td data-label="Amount">
             <input type="number" class="form-control amount" name="amount[]" readonly>
             <!-- Hidden backward-compatible inputs -->
             <input type="hidden" name="measurement[]" class="measurement" value="">
@@ -482,7 +629,7 @@
             <input type="hidden" name="pcs_carton[]" class="pcs-carton" value="0">
         </td>
 
-        <td>
+        <td data-label="Action">
             <button type="button" class="btn btn-success btn-sm add-row" title="Add row">
                 <i class="fas fa-plus"></i>
             </button>

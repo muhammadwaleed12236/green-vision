@@ -95,7 +95,7 @@
 		</li>
 
 		<li class="nav-item">
-			<h5 class="mt-3">
+			<h5 class="mt-3 d-none d-md-block">
 				@if(auth()->check())
 				@if(auth()->user()->usertype === 'admin')
 				Admin Dashboard

@@ -112,6 +112,124 @@
         transform: translateY(-50%);
         color: #9ca3af;
     }
+
+    /* ============================================
+       RESPONSIVE LAYOUT (mirror of admin dashboard)
+       Design/colors stay identical on every device.
+       ============================================ */
+
+    /* Never allow accidental horizontal scrolling */
+    html, body {
+        overflow-x: hidden;
+        width: 100%;
+        margin: 0;
+    }
+
+    /* Keep media flexible so nothing overflows */
+    img, canvas, table {
+        max-width: 100%;
+    }
+
+    /* Price table never scrolls horizontally - cells wrap to fit */
+    .pr-wrap {
+        overflow-x: hidden;
+    }
+    .pr-wrap .price-table {
+        table-layout: fixed;
+        width: 100%;
+        border-collapse: collapse;
+        border-spacing: 0;
+    }
+    .pr-wrap .price-table th {
+        white-space: normal;
+    }
+    .pr-wrap .price-table td {
+        white-space: normal;
+        word-break: break-word;
+        overflow-wrap: break-word;
+    }
+
+    /* ---------- Phone & below (576px) ---------- */
+    @media (max-width: 575.98px) {
+        .page-header h3 { font-size: 1.1rem; }
+        .page-header .col-auto .btn-add {
+            padding: 8px 16px;
+            font-size: 0.85rem;
+        }
+        .search-box { margin-bottom: 10px; }
+        .pagination { flex-wrap: wrap; gap: 4px; }
+        .pagination .page-link { padding: 0.35rem 0.6rem; }
+    }
+
+    /* ---------- Price table -> stacked cards (phone & small tablet) ---------- */
+    @media (max-width: 767.98px) {
+        .pr-wrap .price-table thead {
+            display: none !important;
+        }
+        .pr-wrap .price-table,
+        .pr-wrap .price-table tbody,
+        .pr-wrap .price-table tr,
+        .pr-wrap .price-table td {
+            display: block !important;
+            width: 100% !important;
+            box-sizing: border-box !important;
+        }
+        .pr-wrap .price-table {
+            border: 0 !important;
+        }
+        .pr-wrap .price-table tbody {
+            display: flex !important;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .pr-wrap .price-table tbody tr {
+            background: #fff;
+            border: 1px solid #eef2f7 !important;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            padding: 4px 14px;
+            margin: 0 !important;
+        }
+        .pr-wrap .price-table tbody tr:hover {
+            background: #fff;
+        }
+        .pr-wrap .price-table td {
+            display: flex !important;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 9px 0 !important;
+            border: 0 !important;
+            border-bottom: 1px dashed #eef2f7 !important;
+            background: transparent !important;
+            font-size: 0.85rem !important;
+            color: #1e293b;
+            text-align: right;
+        }
+        .pr-wrap .price-table td:last-child {
+            border-bottom: 0 !important;
+        }
+        .pr-wrap .price-table td::before {
+            content: attr(data-label);
+            flex-shrink: 0;
+            color: #94a3b8;
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            text-align: left;
+        }
+        .pr-wrap .price-table td .row-qty {
+            margin: 0 !important;
+        }
+        .pr-wrap .price-table td .d-flex {
+            justify-content: flex-end;
+        }
+        .pr-wrap .price-table td .d-flex .action-btn {
+            width: 34px;
+            height: 34px;
+        }
+    }
 </style>
 
 <div class="main-wrapper">
@@ -149,6 +267,7 @@
 
             <!-- Price List Table -->
             <div class="price-container">
+                <div class="table-responsive pr-wrap">
                 <table class="price-table" id="priceTable">
                     <thead>
                         <tr>
@@ -164,25 +283,25 @@
                     <tbody>
                         @forelse($priceLists as $index => $item)
                         <tr>
-                            <td>{{ $priceLists->firstItem() + $index }}</td>
+                            <td data-label="No.">{{ $priceLists->firstItem() + $index }}</td>
 
-                            <td>
+                            <td data-label="Product">
                                 <strong>{{ $item->product_name }}</strong>
                                 @if($item->description)
                                     <br><small class="text-muted">{{ $item->description }}</small>
                                 @endif
                             </td>
-                            <td>
+                            <td data-label="Qty">
                                 <input type="number" class="form-control form-control-sm text-center row-qty" value="1" min="1" style="max-width: 85px; margin: 0 auto;">
                             </td>
-                            <td>{{ $item->unit ? ucfirst($item->unit) : '-' }}</td>
-                            <td>
+                            <td data-label="Unit">{{ $item->unit ? ucfirst($item->unit) : '-' }}</td>
+                            <td data-label="Price">
                                 <span class="row-rate" data-rate="{{ $item->rate }}">Rs {{ number_format($item->rate, 2) }}</span>
                             </td>
-                            <td>
+                            <td data-label="Amount">
                                 <span class="row-amount fw-bold text-success">Rs {{ number_format($item->rate, 2) }}</span>
                             </td>
-                            <td class="text-center">
+                            <td data-label="Action" class="text-center">
                                 <div class="d-flex gap-1 justify-content-center">
                                     <button class="action-btn edit" onclick="editItem({{ $item->id }})" title="Edit">
                                         <i class="fas fa-pen"></i>
@@ -206,11 +325,12 @@
                         @endforelse
                     </tbody>
                 </table>
+                </div>
             </div>
 
             <!-- Pagination -->
             <div class="mt-4">
-                {{ $priceLists->links() }}
+                {{ $priceLists->links('pagination::bootstrap-5') }}
             </div>
 
         </div>

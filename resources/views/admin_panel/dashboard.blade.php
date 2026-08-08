@@ -164,6 +164,207 @@
     .dash-widget[onclick], .stat-mini-card[onclick], canvas {
         cursor: pointer;
     }
+
+    /* ============================================
+       RESPONSIVE LAYOUT
+       Design/colors stay identical on every device.
+       ============================================ */
+
+    /* Never allow accidental horizontal scrolling */
+    html, body {
+        overflow-x: hidden;
+        width: 100%;
+        margin: 0;
+    }
+
+    /* Keep media flexible so nothing overflows */
+    img, canvas, table {
+        max-width: 100%;
+    }
+
+    .liquidity-row {
+        flex-wrap: wrap;
+        overflow: visible !important;
+    }
+    .liquidity-row > [class*="col-"] {
+        min-width: 0 !important;
+    }
+
+    /* ---------- Tablet & below (991px) ---------- */
+    @media (max-width: 991.98px) {
+        .content { padding: 16px !important; }
+
+        .welcome-header {
+            flex-direction: column;
+            align-items: flex-start !important;
+            justify-content: flex-start !important;
+            gap: 4px;
+            margin-bottom: 20px !important;
+        }
+        .welcome-header h3 { font-size: 1.4rem; }
+        .welcome-header p { font-size: 0.9rem; margin-bottom: 0; }
+
+        .card .card-header { padding: 16px 20px !important; }
+        .card-body { padding: 16px 20px !important; }
+
+        .card-body h3.fw-bold { font-size: 1.5rem !important; }
+        .card-body h1.fw-bold { font-size: 2rem !important; }
+
+        .stat-mini-card { padding: 16px !important; gap: 12px; margin-bottom: 16px; }
+        .stat-mini-icon { width: 42px !important; height: 42px !important; }
+        .stat-mini-icon i { font-size: 1.1rem; }
+        .stat-mini-card h4 { font-size: 1.1rem; }
+
+        .card-body canvas { max-height: 240px !important; }
+    }
+
+    /* ---------- Phone & below (576px) ---------- */
+    @media (max-width: 575.98px) {
+        .content { padding: 12px !important; }
+
+        .card .card-header { padding: 14px 16px !important; }
+        .card-body { padding: 14px 16px !important; }
+
+        .card-body h3.fw-bold { font-size: 1.25rem !important; }
+        .card-body h1.fw-bold { font-size: 1.7rem !important; }
+
+        .card-body p[style*="0.9rem"] { font-size: 0.82rem !important; }
+        .card-body .text-muted[style*="0.8rem"] { font-size: 0.75rem !important; }
+        .card-body span[style*="0.85rem"] { font-size: 0.78rem !important; }
+
+        .card-body canvas { max-height: 210px !important; }
+
+        .welcome-header h3 { font-size: 1.25rem; }
+
+        /* Recent Sales table stays compact and readable */
+        .table thead th,
+        .table tbody td {
+            padding: 10px 12px !important;
+            font-size: 0.8rem;
+            white-space: nowrap;
+        }
+
+        /* DataTables controls wrap cleanly */
+        .dataTables_wrapper .dataTables_length,
+        .dataTables_wrapper .dataTables_filter {
+            float: none !important;
+            text-align: left !important;
+            margin-bottom: 8px !important;
+        }
+        .dataTables_wrapper .dataTables_filter input {
+            width: 100% !important;
+            max-width: 180px;
+        }
+        .dataTables_wrapper .row {
+            margin: 0 !important;
+        }
+    }
+
+    /* ---------- Phone & small tablet (768px) ----------
+       Recent Sales table → stacked cards, no horizontal scroll */
+    @media (max-width: 767.98px) {
+        .sales-table-responsive {
+            overflow: visible !important;
+            padding: 0;
+        }
+
+        .sales-table-responsive .dataTables_wrapper .dataTables_length,
+        .sales-table-responsive .dataTables_wrapper .dataTables_filter {
+            float: none !important;
+            text-align: left !important;
+            margin-bottom: 10px !important;
+        }
+        .sales-table-responsive .dataTables_wrapper .dataTables_filter input {
+            width: 100% !important;
+            max-width: 220px;
+        }
+        .sales-table-responsive .dataTables_wrapper .dataTables_info {
+            padding-top: 8px;
+            font-size: 0.8rem;
+        }
+        .sales-table-responsive .dataTables_wrapper .dataTables_paginate {
+            float: none !important;
+            text-align: center !important;
+            padding-top: 10px;
+        }
+        .sales-table-responsive .dataTables_wrapper .dataTables_paginate .paginate_button {
+            padding: 4px 10px;
+        }
+        .sales-table-responsive .dataTables_wrapper .row {
+            margin: 0 !important;
+        }
+
+        .sales-table-responsive .sales-table,
+        .sales-table-responsive .sales-table thead,
+        .sales-table-responsive .sales-table tbody,
+        .sales-table-responsive .sales-table tr,
+        .sales-table-responsive .sales-table td {
+            display: block;
+            width: 100%;
+        }
+
+        .sales-table-responsive .sales-table thead {
+            display: none;
+        }
+
+        .sales-table-responsive .sales-table tbody {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .sales-table-responsive .sales-table tr {
+            background: #fff;
+            border: 1px solid #eef2f7;
+            border-radius: 14px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            padding: 4px 16px;
+            margin: 0 !important;
+            box-sizing: border-box;
+        }
+
+        .sales-table-responsive .sales-table td {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 11px 0;
+            border: 0;
+            border-bottom: 1px dashed #eef2f7;
+            background: transparent;
+            color: #1e293b;
+            font-size: 0.88rem;
+            font-weight: 600;
+            white-space: normal;
+            box-sizing: border-box;
+        }
+
+        .sales-table-responsive .sales-table td:last-child {
+            border-bottom: 0;
+        }
+
+        .sales-table-responsive .sales-table td::before {
+            content: attr(data-label);
+            flex-shrink: 0;
+            color: #94a3b8;
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .sales-table-responsive .sales-table td .cell-value {
+            min-width: 0;
+            text-align: right;
+            overflow-wrap: anywhere;
+            word-break: break-word;
+        }
+
+        .sales-table-responsive .sales-table td .cell-value .badges {
+            white-space: nowrap;
+            font-size: 0.72rem;
+        }
+    }
 </style>
 
 <div class="main-wrapper">
@@ -426,11 +627,11 @@
                     <i class="fas fa-university me-2"></i> BANK & LEDGER LIQUIDITY
                 </h6>
             </div>
-            <div class="row flex-nowrap overflow-auto pb-3" style="scrollbar-width: thin;">
+            <div class="row liquidity-row pb-3">
                 @php $totalLiquid = 0; @endphp
                 @foreach($accounts as $account)
                     @php $totalLiquid += $account->calculated_balance; @endphp
-                    <div class="col-lg-3 col-md-4 col-sm-6" style="min-width: 280px;">
+                    <div class="col-lg-3 col-md-4 col-sm-6">
                         <div class="card h-100 border-0 shadow-sm" style="border-radius: 16px; border-top: 4px solid #8b5cf6 !important; background: #fff;">
                             <div class="card-body p-4 d-flex flex-column">
                                 <div class="d-flex justify-content-between align-items-start mb-4">
@@ -458,7 +659,7 @@
                 @endforeach
 
                 <!-- Total Card -->
-                <div class="col-lg-3 col-md-4 col-sm-6" style="min-width: 280px;">
+                <div class="col-lg-3 col-md-4 col-sm-6">
                     <div class="card h-100 border-0 shadow-sm" style="border-radius: 16px; background: #10b981; color: white;">
                         <div class="card-body p-4 d-flex flex-column">
                             <div class="d-flex justify-content-between align-items-start mb-4">
@@ -614,8 +815,8 @@
                             <h5 class="card-title">Recent Sales</h5>
                         </div>
                         <div class="card-body">
-                            <div class="table-responsive">
-                                <table class="table datanew">
+                            <div class="table-responsive sales-table-responsive">
+                                <table class="table datanew sales-table">
                                     <thead>
                                         <tr>
                                             <th>Invoice #</th>
@@ -628,18 +829,20 @@
                                     <tbody>
                                         @foreach($stats['recentlocal_sales'] as $sale)
                                         <tr>
-                                            <td>{{ $sale->invoice_number }}</td>
-                                            <td>{{ $sale->customer_name }}</td>
-                                            <td>{{ date('d M Y', strtotime($sale->created_at)) }}</td>
-                                            <td class="amount-text" data-amount="{{ $sale->grand_total }}">{{ number_format($sale->grand_total, 0) }}</td>
-                                            <td>
-                                                 @if($sale->job_status == 'paid')
-                                                    <span class="badges bg-lightgreen">Paid</span>
-                                                @elseif($sale->job_status == 'pending')
-                                                    <span class="badges bg-secondary">Pending</span>
-                                                @else
-                                                    <span class="badges bg-lightred">Unpaid</span>
-                                                @endif
+                                            <td data-label="Invoice #"><span class="cell-value">{{ $sale->invoice_number }}</span></td>
+                                            <td data-label="Customer"><span class="cell-value">{{ $sale->customer_name }}</span></td>
+                                            <td data-label="Date"><span class="cell-value">{{ date('d M Y', strtotime($sale->created_at)) }}</span></td>
+                                            <td data-label="Total Amount"><span class="cell-value amount-text" data-amount="{{ $sale->grand_total }}">{{ number_format($sale->grand_total, 0) }}</span></td>
+                                            <td data-label="Status">
+                                                <span class="cell-value">
+                                                     @if($sale->job_status == 'paid')
+                                                        <span class="badges bg-lightgreen">Paid</span>
+                                                    @elseif($sale->job_status == 'pending')
+                                                        <span class="badges bg-secondary">Pending</span>
+                                                    @else
+                                                        <span class="badges bg-lightred">Unpaid</span>
+                                                    @endif
+                                                </span>
                                             </td>
                                         </tr>
                                         @endforeach

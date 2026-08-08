@@ -1,4 +1,158 @@
 @include('admin_panel.include.header_include')
+
+<style>
+    /* ============================================
+       RESPONSIVE LAYOUT (mirror of admin dashboard)
+       ============================================ */
+
+    /* Never allow accidental horizontal scrolling */
+    html, body {
+        overflow-x: hidden;
+        width: 100%;
+        margin: 0;
+    }
+
+    /* Keep media flexible so nothing overflows */
+    img, canvas, table {
+        max-width: 100%;
+    }
+
+    /* Purchases table never scrolls horizontally - cells wrap to fit */
+    .pch2-wrap {
+        overflow-x: hidden;
+    }
+    .pch2-wrap .datanew {
+        table-layout: fixed !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        border-spacing: 0 !important;
+    }
+    .pch2-wrap .datanew td {
+        white-space: normal !important;
+        word-break: break-word !important;
+        overflow-wrap: break-word !important;
+    }
+    .pch2-wrap .datanew th {
+        white-space: normal !important;
+        word-break: break-word !important;
+    }
+    .pch2-wrap .datanew th:nth-child(1) { width: 14% !important; }
+    .pch2-wrap .datanew th:nth-child(2) { width: 12% !important; }
+    .pch2-wrap .datanew th:nth-child(3) { width: 20% !important; }
+    .pch2-wrap .datanew th:nth-child(4) { width: 10% !important; }
+    .pch2-wrap .datanew th:nth-child(5) { width: 14% !important; }
+    .pch2-wrap .datanew th:nth-child(6) { width: 12% !important; }
+    .pch2-wrap .datanew th:nth-child(7) { width: 18% !important; }
+    .pch2-wrap .dataTables_wrapper {
+        max-width: 100%;
+    }
+    .pch2-wrap .datanew td .btn-group {
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 2px;
+    }
+    @media (max-width: 1199.98px) {
+        .pch2-wrap .btn-group-sm .btn {
+            padding: 0.25rem 0.4rem;
+        }
+    }
+
+    /* ---------- Phone & below (576px) ---------- */
+    @media (max-width: 575.98px) {
+        .page-header .page-btn {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        .page-header .page-btn .btn {
+            width: 100%;
+            margin-right: 0 !important;
+        }
+        .page-title h4 { font-size: 1.05rem; }
+        .page-title h6 { font-size: 0.85rem; }
+        .pch2-wrap .dataTables_filter { margin-bottom: 8px; }
+        .pch2-wrap .dataTables_filter input { max-width: 130px; }
+        .pch2-wrap .dataTables_length select { max-width: 70px; }
+    }
+
+    /* ---------- Purchases table -> stacked cards (phone & small tablet) ---------- */
+    @media (max-width: 767.98px) {
+        .table-responsive .datanew thead {
+            display: none !important;
+        }
+        .table-responsive .datanew,
+        .table-responsive .datanew tbody,
+        .table-responsive .datanew tr,
+        .table-responsive .datanew td {
+            display: block !important;
+            width: 100% !important;
+            box-sizing: border-box !important;
+        }
+        .table-responsive .datanew {
+            border: 0 !important;
+        }
+        .table-responsive .datanew tbody {
+            display: flex !important;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .table-responsive .datanew tbody tr {
+            background: #fff;
+            border: 1px solid #eef2f7 !important;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            padding: 4px 14px;
+            margin: 0 !important;
+        }
+        .table-responsive .datanew tbody tr:hover {
+            background: #fff;
+        }
+        .table-responsive .datanew td {
+            display: flex !important;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 9px 0 !important;
+            border: 0 !important;
+            border-bottom: 1px dashed #eef2f7 !important;
+            background: transparent !important;
+            font-size: 0.85rem !important;
+            color: #1e293b;
+            text-align: right;
+            white-space: normal !important;
+            word-break: break-word;
+        }
+        .table-responsive .datanew td:last-child {
+            border-bottom: 0 !important;
+        }
+        .table-responsive .datanew td::before {
+            content: attr(data-label);
+            flex-shrink: 0;
+            color: #94a3b8;
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            text-align: left;
+        }
+        .table-responsive .datanew td .btn {
+            padding: 0.35rem 0.6rem;
+        }
+        .pch2-wrap .datanew td .btn-group {
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+        .pch2-wrap .dataTables_filter,
+        .pch2-wrap .dataTables_length,
+        .pch2-wrap .dataTables_info,
+        .pch2-wrap .dataTables_paginate {
+            max-width: 100%;
+        }
+    }
+</style>
+
 <div class="main-wrapper">
     @include('admin_panel.include.navbar_include')
     @include('admin_panel.include.admin_sidebar_include')
@@ -149,7 +303,7 @@
 
             <div class="card shadow-sm">
                 <div class="card-body">
-                    <div class="table-responsive">
+                    <div class="table-responsive pch2-wrap">
                         <table class="table table-hover datanew" id="purchaseTable">
                             <thead>
                                 <tr>
@@ -172,13 +326,13 @@
                                         $itemCount = count($items);
                                     @endphp
                                     <tr>
-                                        <td>
+                                        <td data-label="Invoice #">
                                             <span class="fw-bold text-primary">{{ $purchase->invoice_number }}</span>
                                         </td>
-                                        <td>
+                                        <td data-label="Date">
                                             <span class="text-dark">{{ \Carbon\Carbon::parse($purchase->purchase_date)->format('d M Y') }}</span>
                                         </td>
-                                        <td>
+                                        <td data-label="Party">
                                             <div class="d-flex align-items-center">
                                                 <div class="avatar avatar-sm bg-primary text-white rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; font-size: 12px;">
                                                     {{ strtoupper(substr($purchase->vendor?->Party_name ?? 'N', 0, 1)) }}
@@ -188,20 +342,20 @@
                                                 </div>
                                             </div>
                                         </td>
-                                        <td class="text-center">
+                                        <td data-label="Items" class="text-center">
                                             <span class="badge bg-info text-white">{{ $itemCount }} Items</span>
                                         </td>
-                                        <td class="text-end">
+                                        <td data-label="Total" class="text-end">
                                             <span class="fw-bold text-success fs-6">PKR {{ number_format($purchase->grand_total) }}</span>
                                         </td>
-                                        <td>
+                                        <td data-label="Status">
                                             @if($purchase->return_status == 1)
                                                 <span class="badge bg-danger">Returned</span>
                                             @else
                                                 <span class="badge bg-success">Completed</span>
                                             @endif
                                         </td>
-                                        <td class="text-center">
+                                        <td data-label="Action" class="text-center">
                                             <div class="btn-group btn-group-sm" role="group">
                                                 <button type="button" 
                                                     class="btn btn-info quick-view-btn" 

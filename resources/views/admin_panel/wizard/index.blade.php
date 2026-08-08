@@ -86,6 +86,132 @@
         from { opacity: 0; transform: translateY(10px); }
         to { opacity: 1; transform: translateY(0); }
     }
+
+    /* ============================================
+       RESPONSIVE LAYOUT (mirror of admin dashboard)
+       Design/colors stay identical on every device.
+       ============================================ */
+
+    /* Never allow accidental horizontal scrolling */
+    html, body {
+        overflow-x: hidden;
+        width: 100%;
+        margin: 0;
+    }
+
+    /* Keep media flexible so nothing overflows */
+    img, canvas, table {
+        max-width: 100%;
+    }
+
+    /* ---------- Tablet & below (991px) ---------- */
+    @media (max-width: 991.98px) {
+        .wizard-container { padding: 20px; }
+    }
+
+    /* ---------- Phone & below (576px) ---------- */
+    @media (max-width: 575.98px) {
+        .wizard-container { padding: 14px; margin-bottom: 20px; }
+        .page-header { margin-bottom: 16px !important; }
+        .page-header h4 { font-size: 1.15rem; }
+        .page-header small { font-size: 0.8rem; }
+
+        .wizard-steps { margin-bottom: 24px; }
+        .step-icon { width: 34px; height: 34px; font-size: 0.85rem; margin-bottom: 6px; }
+        .step-title { font-size: 0.62rem; letter-spacing: 0; white-space: nowrap; }
+    }
+
+    /* ---------- Wizard tables -> stacked cards (phone & small tablet) ---------- */
+    @media (max-width: 767.98px) {
+        .table-responsive .wizard-table thead {
+            display: none !important;
+        }
+        .table-responsive .wizard-table,
+        .table-responsive .wizard-table tbody,
+        .table-responsive .wizard-table tr,
+        .table-responsive .wizard-table td {
+            display: block !important;
+            width: 100% !important;
+            box-sizing: border-box !important;
+        }
+        .table-responsive .wizard-table {
+            border: 0 !important;
+        }
+        .table-responsive .wizard-table tbody {
+            display: flex !important;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .table-responsive .wizard-table tr {
+            background: #fff;
+            border: 1px solid #eef2f7 !important;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            padding: 4px 12px;
+            margin: 0 !important;
+        }
+        .table-responsive .wizard-table td {
+            display: flex !important;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 9px 0 !important;
+            border: 0 !important;
+            border-bottom: 1px dashed #eef2f7 !important;
+            background: transparent !important;
+            font-size: 0.85rem !important;
+            color: #1e293b;
+            text-align: right;
+        }
+        .table-responsive .wizard-table td:last-child {
+            border-bottom: 0 !important;
+        }
+        .table-responsive .wizard-table td::before {
+            content: attr(data-label);
+            flex-shrink: 0;
+            color: #94a3b8;
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            text-align: left;
+        }
+        .table-responsive .wizard-table td .form-control {
+            width: 60%;
+            max-width: 170px;
+            text-align: right;
+            font-size: 0.85rem;
+        }
+        .table-responsive .wizard-table td .select2-container {
+            width: 60% !important;
+        }
+        .table-responsive .wizard-table td .qs-amt,
+        .table-responsive .wizard-table td .purchase-amount {
+            min-width: 70px;
+            text-align: right;
+            font-weight: 700;
+        }
+
+        /* tfoot (grand total) */
+        .table-responsive .wizard-table tfoot {
+            display: block !important;
+        }
+        .table-responsive .wizard-table tfoot tr {
+            display: flex !important;
+            justify-content: space-between;
+            align-items: center;
+            background: #f8fafc;
+            padding: 10px 12px;
+            margin-top: 12px !important;
+            border: 0 !important;
+            box-shadow: none;
+        }
+        .table-responsive .wizard-table tfoot th {
+            border: 0 !important;
+            padding: 0 !important;
+            font-size: 0.85rem;
+        }
+    }
 </style>
 
 <div class="main-wrapper">
@@ -179,7 +305,7 @@
                             </div>
                         </div>
                         <div class="table-responsive">
-                            <table class="table table-bordered table-sm" id="qs_table">
+                            <table class="table table-bordered table-sm wizard-table" id="qs_table">
                                 <thead class="table-light">
                                     <tr>
                                         <th style="width: 40%">Product</th>
@@ -191,7 +317,7 @@
                                 </thead>
                                 <tbody>
                                     <tr>
-                                        <td>
+                                        <td data-label="Product">
                                             <select class="form-control select2 qs-product">
                                                 <option value="">Select Product</option>
                                                 @foreach($products as $prod)
@@ -199,10 +325,10 @@
                                                 @endforeach
                                             </select>
                                         </td>
-                                        <td><input type="number" class="form-control qs-rate" value="0"></td>
-                                        <td><input type="number" class="form-control qs-qty" value="1"></td>
-                                        <td class="qs-amt fw-bold text-end">0.00</td>
-                                        <td><button type="button" class="btn btn-sm btn-danger qs-remove"><i class="fas fa-times"></i></button></td>
+                                        <td data-label="Rate"><input type="number" class="form-control qs-rate" value="0"></td>
+                                        <td data-label="Qty"><input type="number" class="form-control qs-qty" value="1"></td>
+                                        <td data-label="Amount"><span class="qs-amt fw-bold text-end">0.00</span></td>
+                                        <td data-label="Action"><button type="button" class="btn btn-sm btn-danger qs-remove"><i class="fas fa-times"></i></button></td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -227,7 +353,7 @@
                         </div>
 
                         <div class="table-responsive">
-                            <table class="table table-bordered">
+                            <table class="table table-bordered wizard-table">
                                 <thead class="table-light">
                                     <tr>
                                         <th>Item Name</th>
@@ -265,7 +391,7 @@
                     </div>
 
                     <div class="table-responsive">
-                        <table class="table table-bordered">
+                        <table class="table table-bordered wizard-table">
                             <thead class="table-light">
                                 <tr>
                                     <th>Item Name</th>
@@ -389,7 +515,7 @@
         // Quick Sale Logic
         $('#qs_add_row').click(function() {
             const row = `<tr>
-                <td>
+                <td data-label="Product">
                     <select class="form-control qs-product">
                         <option value="">Select Product</option>
                         @foreach($products as $prod)
@@ -397,10 +523,10 @@
                         @endforeach
                     </select>
                 </td>
-                <td><input type="number" class="form-control qs-rate" value="0"></td>
-                <td><input type="number" class="form-control qs-qty" value="1"></td>
-                <td class="qs-amt fw-bold text-end">0.00</td>
-                <td><button type="button" class="btn btn-sm btn-danger qs-remove"><i class="fas fa-times"></i></button></td>
+                <td data-label="Rate"><input type="number" class="form-control qs-rate" value="0"></td>
+                <td data-label="Qty"><input type="number" class="form-control qs-qty" value="1"></td>
+                <td data-label="Amount"><span class="qs-amt fw-bold text-end">0.00</span></td>
+                <td data-label="Action"><button type="button" class="btn btn-sm btn-danger qs-remove"><i class="fas fa-times"></i></button></td>
             </tr>`;
             $('#qs_table tbody').append(row);
             // Reinitialize select2 for dynamic rows if you use it globally
@@ -718,10 +844,10 @@
                 let tbody = '';
                 saleProducts.forEach(prod => {
                     tbody += `<tr>
-                        <td>${prod.item_name}</td>
-                        <td>${prod.rate}</td>
-                        <td>${prod.qty}</td>
-                        <td>${prod.unit}</td>
+                        <td data-label="Item Name">${prod.item_name}</td>
+                        <td data-label="Rate">${prod.rate}</td>
+                        <td data-label="Qty">${prod.qty}</td>
+                        <td data-label="Unit">${prod.unit}</td>
                     </tr>`;
                 });
                 $('#sale_products_table').html(tbody);
@@ -736,10 +862,10 @@
         let tbody = '';
         saleProducts.forEach((prod, index) => {
             tbody += `<tr class="purchase-row">
-                <td>${prod.item_name}</td>
-                <td>${prod.qty} ${prod.unit}</td>
-                <td><input type="number" class="form-control form-control-sm purchase-rate" value="${prod.purchase_rate}" readonly></td>
-                <td class="purchase-amount fw-bold">0.00</td>
+                <td data-label="Item Name">${prod.item_name}</td>
+                <td data-label="Required Qty">${prod.qty} ${prod.unit}</td>
+                <td data-label="Purchase Rate"><input type="number" class="form-control form-control-sm purchase-rate" value="${prod.purchase_rate}" readonly></td>
+                <td data-label="Total Amount"><span class="purchase-amount fw-bold">0.00</span></td>
             </tr>`;
         });
         $('#purchase_products_table').html(tbody);

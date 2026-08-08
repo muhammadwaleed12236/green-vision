@@ -173,6 +173,180 @@
         font-size: 0.8rem;
         font-weight: 600;
     }
+
+    /* ============================================
+       RESPONSIVE LAYOUT (mirror of admin dashboard)
+       Design/colors stay identical on every device.
+       ============================================ */
+
+    /* Never allow accidental horizontal scrolling */
+    html, body {
+        overflow-x: hidden;
+        width: 100%;
+        margin: 0;
+    }
+
+    /* Keep media flexible so nothing overflows */
+    img, canvas, table {
+        max-width: 100%;
+    }
+
+    /* Date-wise table never scrolls horizontally - cells wrap to fit */
+    .br-wrap {
+        overflow-x: hidden;
+    }
+    .br-table {
+        table-layout: fixed;
+        width: 100%;
+    }
+    .br-wrap .br-table td {
+        white-space: normal;
+        word-break: break-word;
+        overflow-wrap: break-word;
+    }
+    .br-wrap .br-table th {
+        white-space: normal;
+        word-break: break-word;
+    }
+    .br-table th:nth-child(1)  { width: 11%; }
+    .br-table th:nth-child(2)  { width: 9%; }
+    .br-table th:nth-child(3)  { width: 5%; }
+    .br-table th:nth-child(4)  { width: 10%; }
+    .br-table th:nth-child(5)  { width: 10%; }
+    .br-table th:nth-child(6)  { width: 9%; }
+    .br-table th:nth-child(7)  { width: 9%; }
+    .br-table th:nth-child(8)  { width: 9%; }
+    .br-table th:nth-child(9)  { width: 9%; }
+    .br-table th:nth-child(10) { width: 9%; }
+    .br-table th:nth-child(11) { width: 10%; }
+
+    /* ---------- Tablet & below (991px) ---------- */
+    @media (max-width: 991.98px) {
+        .section-card { padding: 18px; }
+        .filter-card { padding: 16px; }
+        .page-header-custom { padding: 20px; }
+    }
+
+    /* ---------- Phone & below (576px) ---------- */
+    @media (max-width: 575.98px) {
+        .section-card { padding: 14px; }
+        .filter-card { padding: 14px; }
+
+        .page-header-custom { padding: 16px; }
+        .page-header-custom .d-flex {
+            flex-direction: column;
+            align-items: flex-start !important;
+            gap: 10px;
+        }
+        .page-header-custom h3 { font-size: 1.2rem; }
+        .page-header-custom p { font-size: 0.85rem; }
+
+        .stat-box { padding: 14px; }
+        .stat-value { font-size: 1.25rem; }
+        .stat-label { font-size: 0.72rem; }
+
+        .section-title { font-size: 1rem; }
+
+        /* Net profit / loss card stacks cleanly */
+        .profit-card { padding: 20px; }
+        .profit-card .d-flex {
+            flex-direction: column;
+            gap: 8px;
+            text-align: center;
+        }
+        .profit-card .text-start { text-align: center !important; }
+        .profit-card .profit-value { font-size: 1.7rem; }
+        .profit-card [style*="3rem"] { font-size: 2rem !important; }
+
+        .dues-box { padding: 14px; }
+        .dues-box .value { font-size: 1.25rem; }
+    }
+
+    /* ---------- Date-wise table -> stacked cards (phone & small tablet) ---------- */
+    @media (max-width: 767.98px) {
+        .table-responsive .br-table thead {
+            display: none !important;
+        }
+        .table-responsive .br-table,
+        .table-responsive .br-table tbody,
+        .table-responsive .br-table tr,
+        .table-responsive .br-table td {
+            display: block !important;
+            width: 100% !important;
+            box-sizing: border-box !important;
+        }
+        .table-responsive .br-table {
+            border: 0 !important;
+        }
+        .table-responsive .br-table tbody {
+            display: flex !important;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .table-responsive .br-table tbody tr {
+            background: #fff;
+            border: 1px solid #eef2f7 !important;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            padding: 4px 14px;
+            margin: 0 !important;
+        }
+        .table-responsive .br-table tbody tr:hover {
+            background: #fff;
+        }
+        .table-responsive .br-table td {
+            display: flex !important;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 9px 0 !important;
+            border: 0 !important;
+            border-bottom: 1px dashed #eef2f7 !important;
+            background: transparent !important;
+            font-size: 0.85rem !important;
+            color: #1e293b;
+            text-align: right;
+        }
+        .table-responsive .br-table td:last-child {
+            border-bottom: 0 !important;
+        }
+        .table-responsive .br-table td::before {
+            content: attr(data-label);
+            flex-shrink: 0;
+            color: #94a3b8;
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            text-align: left;
+        }
+        .table-responsive .br-table td [class*="text-"],
+        .table-responsive .br-table td strong,
+        .table-responsive .br-table td span {
+            text-align: right;
+        }
+        .table-responsive .br-table td .count-badge {
+            margin-left: auto;
+        }
+
+        /* TOTAL footer -> summary bar */
+        .table-responsive .br-table tfoot {
+            display: block !important;
+            background: transparent !important;
+        }
+        .table-responsive .br-table tfoot tr {
+            display: block !important;
+            background: #F8FAFC;
+            border: 1px solid #eef2f7 !important;
+            border-radius: 12px;
+            padding: 4px 14px;
+            margin-top: 12px !important;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+        .table-responsive .br-table tfoot td {
+            border-bottom-color: #e2e8f0 !important;
+        }
+    }
 </style>
 <div class="main-wrapper">
     @include('admin_panel.include.navbar_include')
@@ -433,8 +607,8 @@
                     <span class="count-badge ms-auto">{{ count($dateWiseData) }} Days</span>
                 </div>
 
-                <div class="table-responsive">
-                    <table class="table table-custom">
+                <div class="table-responsive br-wrap">
+                    <table class="table table-custom br-table">
                         <thead>
                             <tr>
                                 <th>Date</th>
@@ -453,65 +627,65 @@
                         <tbody>
                             @forelse($dateWiseData as $day)
                             <tr>
-                                <td><strong>{{ $day['formatted_date'] }}</strong></td>
-                                <td><span class="text-muted">{{ $day['day_name'] }}</span></td>
-                                <td class="text-center">
+                                <td data-label="Date"><strong>{{ $day['formatted_date'] }}</strong></td>
+                                <td data-label="Day"><span class="text-muted">{{ $day['day_name'] }}</span></td>
+                                <td data-label="Jobs" class="text-center">
                                     @if($day['jobs_count'] > 0)
                                         <span class="count-badge">{{ $day['jobs_count'] }}</span>
                                     @else
                                         <span class="text-muted">-</span>
                                     @endif
                                 </td>
-                                <td class="text-end">
+                                <td data-label="Jobs Amount" class="text-end">
                                     @if($day['jobs_amount'] > 0)
                                         <span class="text-success fw-bold">{{ number_format($day['jobs_amount']) }}</span>
                                     @else
                                         <span class="text-muted">-</span>
                                     @endif
                                 </td>
-                                <td class="text-end">
+                                <td data-label="Job Exp (Accr)" class="text-end">
                                     @if($day['job_expense'] > 0)
                                         <span class="text-muted small">{{ number_format($day['job_expense']) }}</span>
                                     @else
                                         <span class="text-muted">-</span>
                                     @endif
                                 </td>
-                                <td class="text-end">
+                                <td data-label="Vendor Paid" class="text-end">
                                     @if($day['vendor_payment'] > 0)
                                         <span class="text-danger">{{ number_format($day['vendor_payment']) }}</span>
                                     @else
                                         <span class="text-muted">-</span>
                                     @endif
                                 </td>
-                                <td class="text-end">
+                                <td data-label="Contractor Paid" class="text-end">
                                     @if($day['contractor_payment'] > 0)
                                         <span class="text-warning">{{ number_format($day['contractor_payment']) }}</span>
                                     @else
                                         <span class="text-muted">-</span>
                                     @endif
                                 </td>
-                                <td class="text-end">
+                                <td data-label="Other Expense" class="text-end">
                                     @if($day['other_expense'] > 0)
                                         <span class="text-warning">{{ number_format($day['other_expense']) }}</span>
                                     @else
                                         <span class="text-muted">-</span>
                                     @endif
                                 </td>
-                                <td class="text-end">
+                                <td data-label="Staff Payment" class="text-end">
                                     @if($day['staff_payment'] > 0)
                                         <span class="text-purple" style="color: var(--purple);">{{ number_format($day['staff_payment']) }}</span>
                                     @else
                                         <span class="text-muted">-</span>
                                     @endif
                                 </td>
-                                <td class="text-end">
+                                <td data-label="Customer Receipt" class="text-end">
                                     @if($day['customer_receipt'] > 0)
                                         <span class="text-info">{{ number_format($day['customer_receipt']) }}</span>
                                     @else
                                         <span class="text-muted">-</span>
                                     @endif
                                 </td>
-                                <td class="text-end">
+                                <td data-label="Day Profit" class="text-end">
                                     @if($day['profit'] >= 0)
                                         <span class="profit-positive">+{{ number_format($day['profit']) }}</span>
                                     @else
@@ -531,16 +705,16 @@
                         @if(count($dateWiseData) > 0)
                         <tfoot style="background: #F8FAFC;">
                             <tr>
-                                <td colspan="2"><strong>TOTAL</strong></td>
-                                <td class="text-center"><strong>{{ $summaryStats['total_jobs'] }}</strong></td>
-                                <td class="text-end"><strong class="text-success">{{ number_format($summaryStats['total_jobs_amount']) }}</strong></td>
-                                <td class="text-end"><strong class="text-muted small">{{ number_format($summaryStats['job_assignment_expense']) }}</strong></td>
-                                <td class="text-end"><strong class="text-danger">{{ number_format($summaryStats['vendor_payments']) }}</strong></td>
-                                <td class="text-end"><strong class="text-warning">{{ number_format($summaryStats['contractor_payments']) }}</strong></td>
-                                <td class="text-end"><strong class="text-warning">{{ number_format($summaryStats['other_expenses']) }}</strong></td>
-                                <td class="text-end"><strong style="color: var(--purple);">{{ number_format($summaryStats['staff_payments']) }}</strong></td>
-                                <td class="text-end"><strong class="text-info">{{ number_format($summaryStats['total_receipts_in']) }}</strong></td>
-                                <td class="text-end">
+                                <td colspan="2" data-label=""><strong>TOTAL</strong></td>
+                                <td data-label="Jobs" class="text-center"><strong>{{ $summaryStats['total_jobs'] }}</strong></td>
+                                <td data-label="Jobs Amount" class="text-end"><strong class="text-success">{{ number_format($summaryStats['total_jobs_amount']) }}</strong></td>
+                                <td data-label="Job Exp (Accr)" class="text-end"><strong class="text-muted small">{{ number_format($summaryStats['job_assignment_expense']) }}</strong></td>
+                                <td data-label="Vendor Paid" class="text-end"><strong class="text-danger">{{ number_format($summaryStats['vendor_payments']) }}</strong></td>
+                                <td data-label="Contractor Paid" class="text-end"><strong class="text-warning">{{ number_format($summaryStats['contractor_payments']) }}</strong></td>
+                                <td data-label="Other Expense" class="text-end"><strong class="text-warning">{{ number_format($summaryStats['other_expenses']) }}</strong></td>
+                                <td data-label="Staff Payment" class="text-end"><strong style="color: var(--purple);">{{ number_format($summaryStats['staff_payments']) }}</strong></td>
+                                <td data-label="Customer Receipt" class="text-end"><strong class="text-info">{{ number_format($summaryStats['total_receipts_in']) }}</strong></td>
+                                <td data-label="Day Profit" class="text-end">
                                     @if($summaryStats['net_profit'] >= 0)
                                         <strong class="profit-positive">+{{ number_format($summaryStats['net_profit']) }}</strong>
                                     @else

@@ -1,4 +1,164 @@
 @include('admin_panel.include.header_include')
+
+<style>
+    /* ============================================
+       RESPONSIVE LAYOUT (mirror of admin dashboard)
+       ============================================ */
+
+    /* Never allow accidental horizontal scrolling */
+    html, body {
+        overflow-x: hidden;
+        width: 100%;
+        margin: 0;
+    }
+
+    /* Keep media flexible so nothing overflows */
+    img, canvas, table {
+        max-width: 100%;
+    }
+
+    /* Customer table never scrolls horizontally - cells wrap to fit */
+    .cust-wrap {
+        overflow-x: hidden;
+    }
+    .cust-wrap .datanew {
+        table-layout: fixed !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        border-spacing: 0 !important;
+    }
+    .cust-wrap .datanew td {
+        white-space: normal !important;
+        word-break: break-word !important;
+        overflow-wrap: break-word !important;
+    }
+    .cust-wrap .datanew th {
+        white-space: normal !important;
+        word-break: break-word !important;
+    }
+    .cust-wrap .datanew th:nth-child(1) { width: 5% !important; }
+    .cust-wrap .datanew th:nth-child(2) { width: 18% !important; }
+    .cust-wrap .datanew th:nth-child(3) { width: 22% !important; }
+    .cust-wrap .datanew th:nth-child(4) { width: 12% !important; }
+    .cust-wrap .datanew th:nth-child(5) { width: 15% !important; }
+    .cust-wrap .datanew th:nth-child(6) { width: 28% !important; }
+    .cust-wrap .dataTables_wrapper {
+        max-width: 100%;
+    }
+
+    /* Empty-state message: keep it a full-width centered table cell */
+    .cust-wrap .datanew td.dataTables_empty {
+        display: table-cell !important;
+        width: 100% !important;
+        text-align: center !important;
+        padding: 28px !important;
+        color: #94a3b8;
+        font-weight: 500;
+        border: 0 !important;
+    }
+
+    /* Actions cell: keep buttons wrapping inside the cell on desktop */
+    @media (min-width: 768px) {
+        .cust-wrap .datanew td:last-child:not(.dataTables_empty) {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            justify-content: flex-start;
+        }
+    }
+
+    /* ---------- Phone & below (576px) ---------- */
+    @media (max-width: 575.98px) {
+        .page-header .page-btn {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        .page-header .page-btn .btn {
+            width: 100%;
+            margin-right: 0 !important;
+        }
+        .page-title h4 { font-size: 1.05rem; }
+        .page-title h6 { font-size: 0.85rem; }
+        .cust-wrap .dataTables_filter { margin-bottom: 8px; }
+        .cust-wrap .dataTables_filter input { max-width: 130px; }
+        .cust-wrap .dataTables_length select { max-width: 70px; }
+    }
+
+    /* ---------- Customer table -> stacked cards (phone & small tablet) ---------- */
+    @media (max-width: 767.98px) {
+        .table-responsive .datanew thead {
+            display: none !important;
+        }
+        .table-responsive .datanew,
+        .table-responsive .datanew tbody,
+        .table-responsive .datanew tr,
+        .table-responsive .datanew td {
+            display: block !important;
+            width: 100% !important;
+            box-sizing: border-box !important;
+        }
+        .table-responsive .datanew {
+            border: 0 !important;
+        }
+        .table-responsive .datanew tbody {
+            display: flex !important;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .table-responsive .datanew tbody tr {
+            background: #fff;
+            border: 1px solid #eef2f7 !important;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            padding: 4px 14px;
+            margin: 0 !important;
+        }
+        .table-responsive .datanew tbody tr:hover {
+            background: #fff;
+        }
+        .table-responsive .datanew td {
+            display: flex !important;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 9px 0 !important;
+            border: 0 !important;
+            border-bottom: 1px dashed #eef2f7 !important;
+            background: transparent !important;
+            font-size: 0.85rem !important;
+            color: #1e293b;
+            text-align: right;
+            white-space: normal !important;
+            word-break: break-word;
+        }
+        .table-responsive .datanew td:last-child {
+            border-bottom: 0 !important;
+        }
+        .table-responsive .datanew td::before {
+            content: attr(data-label);
+            flex-shrink: 0;
+            color: #94a3b8;
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            text-align: left;
+        }
+        .table-responsive .datanew td .btn {
+            padding: 0.35rem 0.6rem;
+        }
+        .cust-wrap .dataTables_filter,
+        .cust-wrap .dataTables_length,
+        .cust-wrap .dataTables_info,
+        .cust-wrap .dataTables_paginate {
+            max-width: 100%;
+        }
+    }
+</style>
+
 <div class="main-wrapper">
     @include('admin_panel.include.navbar_include')
     @include('admin_panel.include.admin_sidebar_include')
@@ -30,7 +190,7 @@
             @endif
 
             <div class="container">
-                <div class="table-responsive">
+                <div class="table-responsive cust-wrap">
                     <table class="table datanew">
                         <thead>
                             <tr>
@@ -45,12 +205,12 @@
                         <tbody>
                             @foreach($customers as $key => $customer)
                                 <tr>
-                                    <td>{{ $key + 1 }}</td>
-                                    <td>{{ $customer->customer_name }}</td>
-                                    <td>{{ $customer->address }}</td>
-                                    <td>{{ $customer->phone_number }}</td>
-                                    <td>{{ $customer->opening_balance }}</td>
-                                    <td>
+                                    <td data-label="#">#{{ $key + 1 }}</td>
+                                    <td data-label="Name">{{ $customer->customer_name }}</td>
+                                    <td data-label="Address">{{ $customer->address }}</td>
+                                    <td data-label="Phone">{{ $customer->phone_number }}</td>
+                                    <td data-label="Opening Balance">{{ $customer->opening_balance }}</td>
+                                    <td data-label="Actions">
                                         @if(Auth::check() && Auth::user()->usertype == 'admin')
                                             <button class="btn btn-sm btn-primary editCustomerBtn"
                                                 data-id="{{ $customer->id }}">Edit</button>

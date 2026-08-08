@@ -1,5 +1,147 @@
 @include('admin_panel.include.header_include')
 
+<style>
+    /* ============================================
+       RESPONSIVE LAYOUT (mirror of admin dashboard)
+       Design/colors stay identical on every device.
+       ============================================ */
+
+    /* Never allow accidental horizontal scrolling */
+    html, body {
+        overflow-x: hidden;
+        width: 100%;
+        margin: 0;
+    }
+
+    /* Keep media flexible so nothing overflows */
+    img, canvas, table {
+        max-width: 100%;
+    }
+
+    /* Voucher table never scrolls horizontally - cells wrap to fit */
+    .jv-wrap {
+        overflow-x: hidden;
+    }
+    .jv-table {
+        table-layout: fixed;
+        width: 100%;
+    }
+    .jv-wrap .jv-table td {
+        white-space: normal;
+        word-break: break-word;
+        overflow-wrap: break-word;
+    }
+    .jv-wrap .jv-table th {
+        white-space: normal;
+        word-break: break-word;
+    }
+    .jv-table th:nth-child(1) { width: 5%; }
+    .jv-table th:nth-child(2) { width: 11%; }
+    .jv-table th:nth-child(3) { width: 10%; }
+    .jv-table th:nth-child(4) { width: 8%; }
+    .jv-table th:nth-child(5) { width: 9%; }
+    .jv-table th:nth-child(6) { width: 20%; }
+    .jv-table th:nth-child(7) { width: 11%; }
+    .jv-table th:nth-child(8) { width: 14%; }
+    .jv-table th:nth-child(9) { width: 12%; }
+
+    /* ---------- Phone & below (576px) ---------- */
+    @media (max-width: 575.98px) {
+        .page-header .page-btn {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        .page-header .page-btn .btn {
+            width: 100%;
+            margin-right: 0 !important;
+        }
+
+        .card .card-body {
+            padding: 14px;
+        }
+
+        .page-title h4 { font-size: 1.05rem; }
+        .page-title h6 { font-size: 0.85rem; }
+
+        /* Stats values readable on tiny screens */
+        .card-body h3 { font-size: 1.15rem; }
+
+        /* Filter labels + button full width */
+        .filter-card .form-group { margin-bottom: 12px; }
+    }
+
+    /* ---------- Voucher table -> stacked cards (phone & small tablet) ---------- */
+    @media (max-width: 767.98px) {
+        .table-responsive .jv-table thead {
+            display: none !important;
+        }
+        .table-responsive .jv-table,
+        .table-responsive .jv-table tbody,
+        .table-responsive .jv-table tr,
+        .table-responsive .jv-table td {
+            display: block !important;
+            width: 100% !important;
+            box-sizing: border-box !important;
+        }
+        .table-responsive .jv-table {
+            border: 0 !important;
+        }
+        .table-responsive .jv-table tbody {
+            display: flex !important;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .table-responsive .jv-table tbody tr {
+            background: #fff;
+            border: 1px solid #eef2f7 !important;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            padding: 4px 14px;
+            margin: 0 !important;
+        }
+        .table-responsive .jv-table tbody tr:hover {
+            background: #fff;
+        }
+        .table-responsive .jv-table td {
+            display: flex !important;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 9px 0 !important;
+            border: 0 !important;
+            border-bottom: 1px dashed #eef2f7 !important;
+            background: transparent !important;
+            font-size: 0.85rem !important;
+            color: #1e293b;
+            text-align: right;
+            white-space: normal !important;
+            word-break: break-word;
+        }
+        .table-responsive .jv-table td:last-child {
+            border-bottom: 0 !important;
+        }
+        .table-responsive .jv-table td::before {
+            content: attr(data-label);
+            flex-shrink: 0;
+            color: #94a3b8;
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            text-align: left;
+        }
+        .table-responsive .jv-table td .btn {
+            padding: 0.35rem 0.6rem;
+        }
+        .table-responsive .jv-table td .btn i {
+            font-size: 0.8rem;
+        }
+    }
+</style>
+
 <div class="main-wrapper">
     @include('admin_panel.include.navbar_include')
     @include('admin_panel.include.admin_sidebar_include')
@@ -123,7 +265,8 @@
                         <div class="alert alert-success">{{ session('success') }}</div>
                     @endif
 
-                    <table class="table datanew">
+                    <div class="table-responsive jv-wrap">
+                    <table class="table datanew jv-table">
                         <thead>
                             <tr>
                                 <th>#</th>
@@ -140,27 +283,27 @@
                         <tbody>
                             @forelse($vouchers as $k => $v)
                                 <tr>
-                                    <td>{{ $k + 1 }}</td>
-                                    <td><strong>{{ $v->voucher_no }}</strong></td>
-                                    <td>{{ \Carbon\Carbon::parse($v->voucher_date)->format('d M Y') }}</td>
-                                    <td>
+                                    <td data-label="No.">{{ $k + 1 }}</td>
+                                    <td data-label="Voucher No"><strong>{{ $v->voucher_no }}</strong></td>
+                                    <td data-label="Date">{{ \Carbon\Carbon::parse($v->voucher_date)->format('d M Y') }}</td>
+                                    <td data-label="Type">
                                         @if($v->voucher_type == 'payment')
                                             <span class="badge bg-danger">Payment</span>
                                         @else
                                             <span class="badge bg-success">Receipt</span>
                                         @endif
                                     </td>
-                                    <td><span class="badge bg-info">{{ ucfirst($v->party_type) }}</span></td>
-                                    <td>{{ $v->party_name }}</td>
-                                    <td>
+                                    <td data-label="Party Type"><span class="badge bg-info">{{ ucfirst($v->party_type) }}</span></td>
+                                    <td data-label="Party Name">{{ $v->party_name }}</td>
+                                    <td data-label="Amount">
                                         @if($v->voucher_type == 'payment')
                                             <span class="text-danger">₨ {{ number_format($v->debit_amount, 2) }}</span>
                                         @else
                                             <span class="text-success">₨ {{ number_format($v->credit_amount, 2) }}</span>
                                         @endif
                                     </td>
-                                    <td>{{ Str::limit($v->narration, 30) }}</td>
-                                    <td>
+                                    <td data-label="Narration">{{ Str::limit($v->narration, 30) }}</td>
+                                    <td data-label="Action">
                                         <a href="{{ route('journal-voucher.print', $v->id) }}" class="btn btn-sm btn-primary" target="_blank">
                                             <i class="fas fa-print"></i>
                                         </a>
@@ -176,6 +319,7 @@
                             @endforelse
                         </tbody>
                     </table>
+                    </div>
 
                     <div class="d-flex justify-content-center mt-3">
                         {{ $vouchers->appends(request()->query())->links('pagination::bootstrap-5') }}

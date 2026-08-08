@@ -1,4 +1,143 @@
 ﻿@include('admin_panel.include.header_include')
+
+<style>
+    /* ============================================
+       RESPONSIVE LAYOUT (mirror of admin dashboard)
+       ============================================ */
+
+    /* Never allow accidental horizontal scrolling */
+    html, body {
+        overflow-x: hidden;
+        width: 100%;
+        margin: 0;
+    }
+
+    /* Keep media flexible so nothing overflows */
+    img, canvas, table {
+        max-width: 100%;
+    }
+
+    /* Vendors table never scrolls horizontally - cells wrap to fit */
+    .vd-wrap {
+        overflow-x: hidden;
+    }
+    .vd-wrap .datanew {
+        table-layout: fixed !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        border-spacing: 0 !important;
+    }
+    .vd-wrap .datanew td {
+        white-space: normal !important;
+        word-break: break-word !important;
+        overflow-wrap: break-word !important;
+    }
+    .vd-wrap .datanew th {
+        white-space: normal !important;
+        word-break: break-word !important;
+    }
+    .vd-wrap .datanew th:nth-child(1) { width: 5% !important; }
+    .vd-wrap .datanew th:nth-child(2) { width: 12% !important; }
+    .vd-wrap .datanew th:nth-child(3) { width: 20% !important; }
+    .vd-wrap .datanew th:nth-child(4) { width: 28% !important; }
+    .vd-wrap .datanew th:nth-child(5) { width: 15% !important; }
+    .vd-wrap .datanew th:nth-child(6) { width: 20% !important; }
+    .vd-wrap .dataTables_wrapper {
+        max-width: 100%;
+    }
+
+    /* ---------- Phone & below (576px) ---------- */
+    @media (max-width: 575.98px) {
+        .page-header .page-btn {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        .page-header .page-btn .btn {
+            width: 100%;
+            margin-right: 0 !important;
+        }
+        .page-title h4 { font-size: 1.05rem; }
+        .page-title h6 { font-size: 0.85rem; }
+        .vd-wrap .dataTables_filter { margin-bottom: 8px; }
+        .vd-wrap .dataTables_filter input { max-width: 130px; }
+        .vd-wrap .dataTables_length select { max-width: 70px; }
+    }
+
+    /* ---------- Vendors table -> stacked cards (phone & small tablet) ---------- */
+    @media (max-width: 767.98px) {
+        .table-responsive .datanew thead {
+            display: none !important;
+        }
+        .table-responsive .datanew,
+        .table-responsive .datanew tbody,
+        .table-responsive .datanew tr,
+        .table-responsive .datanew td {
+            display: block !important;
+            width: 100% !important;
+            box-sizing: border-box !important;
+        }
+        .table-responsive .datanew {
+            border: 0 !important;
+        }
+        .table-responsive .datanew tbody {
+            display: flex !important;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .table-responsive .datanew tbody tr {
+            background: #fff;
+            border: 1px solid #eef2f7 !important;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            padding: 4px 14px;
+            margin: 0 !important;
+        }
+        .table-responsive .datanew tbody tr:hover {
+            background: #fff;
+        }
+        .table-responsive .datanew td {
+            display: flex !important;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 9px 0 !important;
+            border: 0 !important;
+            border-bottom: 1px dashed #eef2f7 !important;
+            background: transparent !important;
+            font-size: 0.85rem !important;
+            color: #1e293b;
+            text-align: right;
+            white-space: normal !important;
+            word-break: break-word;
+        }
+        .table-responsive .datanew td:last-child {
+            border-bottom: 0 !important;
+        }
+        .table-responsive .datanew td::before {
+            content: attr(data-label);
+            flex-shrink: 0;
+            color: #94a3b8;
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            text-align: left;
+        }
+        .table-responsive .datanew td .btn {
+            padding: 0.35rem 0.6rem;
+        }
+        .vd-wrap .dataTables_filter,
+        .vd-wrap .dataTables_length,
+        .vd-wrap .dataTables_info,
+        .vd-wrap .dataTables_paginate {
+            max-width: 100%;
+        }
+    }
+</style>
+
 <div class="main-wrapper">
     @include('admin_panel.include.navbar_include')
     @include('admin_panel.include.admin_sidebar_include')
@@ -28,7 +167,7 @@
                             <strong>Success!</strong> {{ session('success') }}.
                         </div>
                     @endif
-                    <div class="table-responsive">
+                    <div class="table-responsive vd-wrap">
                         <table class="table datanew">
                             <thead>
                                 <tr>
@@ -46,15 +185,16 @@
                             <tbody>
                                 @foreach($Vendors as $key => $Vendor)
                                     <tr>
-                                        <td>{{ $key + 1 }}</td>
-                                        <td>{{ $Vendor->Party_code }}</td>
-                                        <td>{{ $Vendor->Party_name }}</td>
+                                        <td data-label="#">#{{ $key + 1 }}</td>
+                                        <td data-label="Code">{{ $Vendor->Party_code }}</td>
+                                        <td data-label="Name">{{ $Vendor->Party_name }}</td>
 
                                         @if(Auth::user()->usertype === 'admin')
-                                            <td>{{ $Vendor->Party_address }}</td>
-                                            <td>{{ $Vendor->Party_phone }}</td>
+                                            <td data-label="Address">{{ $Vendor->Party_address }}</td>
+                                            <td data-label="Phone">{{ $Vendor->Party_phone }}</td>
                                         @endif
-                                        <td>
+                                        <td data-label="Action">
+                                            <div class="d-flex gap-1 justify-content-end flex-wrap">
                                             <!-- Edit Button with Admin Check -->
                                             @if(Auth::user()->usertype === 'admin')
                                                 <button class="btn btn-sm btn-primary editVendorBtn" data-id="{{ $Vendor->id }}"
@@ -74,6 +214,7 @@
                                                class="btn btn-sm btn-warning text-white" title="Transaction History">
                                                 <i class="fa fa-history"></i> History
                                             </a>
+                                            </div>
                                         </td>
                                     </tr>
                                 @endforeach
