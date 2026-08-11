@@ -104,25 +104,107 @@
         color: #212529;
     }
 
-    /* Autocomplete */
+    /* ── Product Autocomplete ── */
     .autocomplete-list {
         position: absolute;
         z-index: 9999;
         background: #fff;
-        border: 1px solid #ddd;
-        max-height: 220px;
+        border: 1px solid #dee2e6;
+        max-height: 260px;
         overflow-y: auto;
         width: 100%;
-        border-radius: 4px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        border-radius: 6px;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.13);
+        top: 100%;
+        left: 0;
     }
     .autocomplete-item {
-        padding: 8px 12px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 7px 10px;
         cursor: pointer;
-        border-bottom: 1px solid #eee;
+        border-bottom: 1px solid #f1f3f5;
+        transition: background 0.13s;
+        min-height: 46px;
     }
     .autocomplete-item:last-child { border-bottom: none; }
-    .autocomplete-item:hover { background: #e9ecef; }
+    .autocomplete-item:hover, .autocomplete-item.ac-active { background: #f0f4ff; }
+    .ac-thumb {
+        width: 34px;
+        height: 34px;
+        border-radius: 5px;
+        object-fit: cover;
+        flex-shrink: 0;
+        border: 1px solid #e2e8f0;
+        background: #f8f9fa;
+    }
+    .ac-thumb-placeholder {
+        width: 34px;
+        height: 34px;
+        border-radius: 5px;
+        flex-shrink: 0;
+        border: 1px solid #e2e8f0;
+        background: #f1f3f5;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #adb5bd;
+        font-size: 16px;
+    }
+    .ac-info { display: flex; flex-direction: column; min-width: 0; }
+    .ac-name { font-size: 13px; font-weight: 500; color: #212529; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .ac-sku  { font-size: 11px; color: #868e96; margin-top: 1px; }
+
+    /* ── Selected product display inside input ── */
+    .selected-product-display {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 3px 8px;
+        background: #fff;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        cursor: pointer;
+        min-height: 34px;
+        width: 100%;
+    }
+    .selected-product-display:hover { border-color: #637381; }
+    .sel-thumb {
+        width: 26px;
+        height: 26px;
+        border-radius: 4px;
+        object-fit: cover;
+        border: 1px solid #e2e8f0;
+        flex-shrink: 0;
+    }
+    .sel-thumb-placeholder {
+        width: 26px;
+        height: 26px;
+        border-radius: 4px;
+        border: 1px solid #e2e8f0;
+        background: #f1f3f5;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #adb5bd;
+        font-size: 12px;
+        flex-shrink: 0;
+    }
+    .sel-info { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+    .sel-name { font-size: 13px; font-weight: 500; color: #212529; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .sel-sku  { font-size: 10px; color: #868e96; }
+    .sel-clear {
+        margin-left: auto;
+        color: #adb5bd;
+        font-size: 14px;
+        cursor: pointer;
+        padding: 0 2px;
+        flex-shrink: 0;
+    }
+    .sel-clear:hover { color: #e03131; }
+    /* hide native input when product selected */
+    .item-input.ac-hidden { display: none; }
 </style>
 
 <div class="main-wrapper">
@@ -233,7 +315,10 @@
                                         <td class="text-center"><span class="row-index">{{ $i + 1 }}</span></td>
                                         <td style="position:relative;">
                                             <input type="hidden" name="item_id[]" class="item-id">
-                                            <input type="text" name="item_name[]" class="form-control item-input" autocomplete="off" placeholder="Product Name">
+                                            <input type="hidden" name="item_image[]" class="item-image-val">
+                                            <input type="hidden" name="item_sku[]" class="item-sku-val">
+                                            <input type="text" name="item_name[]" class="form-control item-input" autocomplete="off" placeholder="Search Product…">
+                                            <div class="selected-display d-none"></div>
                                             <div class="autocomplete-list d-none"></div>
                                         </td>
                                         <td>
@@ -444,6 +529,8 @@
         r.find('.item-total').val('0.00');
         r.find('.unit').val('pcs');
         r.find('.autocomplete-list').addClass('d-none').empty();
+        r.find('.selected-display').addClass('d-none').empty();
+        r.find('.item-input').removeClass('ac-hidden').val('');
         
         $('#saleTableBody').append(r);
         updateRowNumbers();
@@ -500,6 +587,50 @@
         }
     });
 
+    // ── Storage base URL ──
+    const STORAGE_URL = "{{ asset('storage') }}";
+
+    function acThumb(image) {
+        if (image) {
+            return `<img src="${STORAGE_URL}/${image}" class="ac-thumb" onerror="this.outerHTML='<div class=ac-thumb-placeholder><svg width=16 height=16 fill=none viewBox=\'0 0 24 24\'><rect width=24 height=24 rx=4 fill=\'#e9ecef\'/><path d=\'M5 19l4-5 3 4 4-6 5 7H5z\' fill=\'#adb5bd\'/></svg></div>'">` ;
+        }
+        return `<div class="ac-thumb-placeholder"><svg width="16" height="16" fill="none" viewBox="0 0 24 24"><rect width="24" height="24" rx="4" fill="#e9ecef"/><path d="M5 19l4-5 3 4 4-6 5 7H5z" fill="#adb5bd"/></svg></div>`;
+    }
+
+    function selThumb(image) {
+        if (image) {
+            return `<img src="${STORAGE_URL}/${image}" class="sel-thumb" onerror="this.outerHTML='<div class=sel-thumb-placeholder><svg width=12 height=12 fill=none viewBox=\'0 0 24 24\'><rect width=24 height=24 rx=4 fill=\'#e9ecef\'/><path d=\'M5 19l4-5 3 4 4-6 5 7H5z\' fill=\'#adb5bd\'/></svg></div>'">` ;
+        }
+        return `<div class="sel-thumb-placeholder"><svg width="12" height="12" fill="none" viewBox="0 0 24 24"><rect width="24" height="24" rx="4" fill="#e9ecef"/><path d="M5 19l4-5 3 4 4-6 5 7H5z" fill="#adb5bd"/></svg></div>`;
+    }
+
+    function showSelectedProduct(row, it) {
+        let skuHtml = it.item_code ? `<span class="sel-sku">${it.item_code}</span>` : '';
+        let html = `<div class="selected-product-display">
+            ${selThumb(it.image)}
+            <div class="sel-info">
+                <span class="sel-name">${it.item_name}</span>
+                ${skuHtml}
+            </div>
+            <span class="sel-clear" title="Clear">✕</span>
+        </div>`;
+        row.find('.selected-display').html(html).removeClass('d-none');
+        row.find('.item-input').addClass('ac-hidden').val(it.item_name);
+        row.find('.item-id').val(it.id);
+        row.find('.item-image-val').val(it.image || '');
+        row.find('.item-sku-val').val(it.item_code || '');
+    }
+
+    function clearSelectedProduct(row) {
+        row.find('.selected-display').addClass('d-none').empty();
+        row.find('.item-input').removeClass('ac-hidden').val('').focus();
+        row.find('.item-id').val('');
+        row.find('.item-image-val').val('');
+        row.find('.item-sku-val').val('');
+        row.find('.rate').val('');
+        calcRow(row);
+    }
+
     $(document).ready(function() {
         updateRowNumbers();
 
@@ -527,7 +658,14 @@
 
                     list.empty().removeClass('d-none');
                     res.forEach(it => {
-                        let el = $(`<div class="autocomplete-item">${it.item_name}</div>`);
+                        let skuHtml = it.item_code ? `<span class="ac-sku">${it.item_code}</span>` : '';
+                        let el = $(`<div class="autocomplete-item">
+                            ${acThumb(it.image)}
+                            <div class="ac-info">
+                                <span class="ac-name">${it.item_name}</span>
+                                ${skuHtml}
+                            </div>
+                        </div>`);
                         el.data('item', it);
                         list.append(el);
                     });
@@ -537,7 +675,7 @@
 
         // Hide autocomplete when clicking outside
         $(document).on('click', function (e) {
-            if (!$(e.target).closest('.item-input, .autocomplete-list').length) {
+            if (!$(e.target).closest('.item-input, .autocomplete-list, .selected-product-display').length) {
                 $('.autocomplete-list').addClass('d-none');
             }
         });
@@ -547,16 +685,19 @@
             let it = $(this).data('item');
             let row = $(this).closest('tr');
 
-            row.find('.item-input').val(it.item_name);
-            row.find('.item-id').val(it.id);
-
             // Rate logic
             let price = parseFloat(it.retail_price) || parseFloat(it.wholesale_price) || 0;
             row.find('.rate').val(price);
 
             row.find('.autocomplete-list').addClass('d-none');
 
+            showSelectedProduct(row, it);
             calcRow(row);
+        });
+
+        // Clear selected product
+        $(document).on('click', '.sel-clear', function () {
+            clearSelectedProduct($(this).closest('tr'));
         });
     });
 </script>
