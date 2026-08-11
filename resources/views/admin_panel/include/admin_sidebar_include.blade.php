@@ -246,23 +246,24 @@
                     @endhaspermission
 
                     <!-- Reports -->
-                    {{-- @if(auth()->user()->hasPermission('stock-report.view') || auth()->user()->hasPermission('vendor-ledger-record.view') || auth()->user()->hasPermission('customer-ledger-record.view') || auth()->user()->hasPermission('purchase-report.view') || auth()->user()->hasPermission('vendor.view') || auth()->user()->hasPermission('sales-report.view') || auth()->user()->hasPermission('product-sales-report.view') || auth()->user()->hasPermission('contractor-report.view') || auth()->user()->hasPermission('staff-report.view'))
+                         @if(auth()->user()->hasPermission('stock-report.view') || auth()->user()->hasPermission('vendor-ledger-record.view') || auth()->user()->hasPermission('customer-ledger-record.view') || auth()->user()->hasPermission('purchase-report.view') || auth()->user()->hasPermission('vendor.view') || auth()->user()->hasPermission('sales-report.view') || auth()->user()->hasPermission('product-sales-report.view') || auth()->user()->hasPermission('contractor-report.view') || auth()->user()->hasPermission('staff-report.view'))
                     <li class="submenu">
                         <a href="javascript:void(0);"><i class="fas fa-chart-line"></i><span> Reports</span> <span
                                 class="menu-arrow"></span></a>
                         <ul>
-                            @haspermission('stock-report.view')<li><a href="{{ route('stock-Record') }}">Stock Report</a></li>@endhaspermission
+                            @haspermission('stock-
+                            .view')<li><a href="{{ route('stock-Record') }}">Stock Report</a></li>@endhaspermission
                             @haspermission('vendor-ledger-record.view')<li><a href="{{ route('vendor-Ledger-Record') }}">Vendor Ledger</a></li>@endhaspermission
                             @haspermission('customer-ledger-record.view')<li><a href="{{ route('Customer-Ledger-Record') }}">Customer Ledger</a></li>@endhaspermission
                             @haspermission('purchase-report.view')<li><a href="{{ route('date-wise-purcahse-report') }}">Purchase Report</a></li>@endhaspermission
                             @haspermission('vendor.view')<li><a href="{{ route('vendor-wise-purcahse-report') }}">Vendor Purchase</a></li>@endhaspermission
                             @haspermission('sales-report.view')<li><a href="{{ route('Date-wise-Sales-Report') }}">Sales Report</a></li>@endhaspermission
                             @haspermission('product-sales-report.view')<li><a href="{{ route('Product-wise-Sales-Report') }}">Product Sales</a></li>@endhaspermission
-                            @haspermission('contractor-report.view')<li><a href="{{ route('contractor-wise-report') }}">Contractor Report</a></li>@endhaspermission
-                            @haspermission('staff-report.view')<li><a href="{{ route('staff-wise-report') }}">Staff Report</a></li>@endhaspermission
+                            <!-- @haspermission('contractor-report.view')<li><a href="{{ route('contractor-wise-report') }}">Contractor Report</a></li>@endhaspermission
+                            @haspermission('staff-report.view')<li><a href="{{ route('staff-wise-report') }}">Staff Report</a></li>@endhaspermission -->
                         </ul>
                     </li>
-                    @endif --}}
+                    @endif 
 
                     <!-- User Management -->
                     @if(auth()->user()->hasPermission('user-management-users.view') || auth()->user()->hasPermission('user-management-roles.view') || auth()->user()->hasPermission('user-management-permissions.view'))
@@ -290,7 +291,7 @@
                     @endhaspermission
 
                     <!-- Reporting -->
-                     <li class="submenu">
+                     <!-- <li class="submenu">
                         <a href="javascript:void(0);"><i class="fas fa-chart-pie"></i><span>Reports</span> <span
                                 class="menu-arrow"></span></a>
                         <ul>
@@ -306,7 +307,7 @@
                             <li><a href="{{ route('Date-wise-Sales-Report') }}">Date wise Sales Report </a></li>
                             <li><a href="{{ route('Product-wise-Sales-Report') }}">Product Wise Sales Report </a></li>
                         </ul>
-                    </li> 
+                    </li>  -->
 
                     <!-- QA Testing Section -->
                      {{-- <li class="submenu">
