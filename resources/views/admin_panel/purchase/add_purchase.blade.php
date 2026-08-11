@@ -309,48 +309,60 @@
     .selected-product-display {
         display: flex;
         align-items: center;
-        gap: 8px;
-        padding: 3px 8px;
-        background: #fff;
+        gap: 12px;
+        padding: 5px 10px;
+        background: #f8f9fa;
         border: 1px solid #ced4da;
-        border-radius: 4px;
+        border-radius: 6px;
         cursor: pointer;
-        min-height: 34px;
+        min-height: 44px;
         width: 100%;
+        transition: all 0.2s ease;
     }
-    .selected-product-display:hover { border-color: #80bdff; }
+    .selected-product-display:hover { 
+        border-color: #adb5bd;
+        background: #fff;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.04);
+    }
     .sel-thumb {
-        width: 26px;
-        height: 26px;
-        border-radius: 4px;
+        width: 34px;
+        height: 34px;
+        border-radius: 5px;
         object-fit: cover;
         border: 1px solid #e2e8f0;
         flex-shrink: 0;
+        background: #fff;
     }
     .sel-thumb-placeholder {
-        width: 26px;
-        height: 26px;
-        border-radius: 4px;
+        width: 34px;
+        height: 34px;
+        border-radius: 5px;
         border: 1px solid #e2e8f0;
-        background: #f1f3f5;
+        background: #e9ecef;
         display: flex;
         align-items: center;
         justify-content: center;
         color: #adb5bd;
         flex-shrink: 0;
     }
-    .sel-info { display: flex; flex-direction: column; min-width: 0; flex: 1; }
-    .sel-name { font-size: 13px; font-weight: 500; color: #212529; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .sel-sku  { font-size: 10px; color: #868e96; }
+    .sel-info { display: flex; flex-direction: column; min-width: 0; flex: 1; justify-content: center; }
+    .sel-name { font-size: 13.5px; font-weight: 600; color: #212529; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2; }
+    .sel-sku  { font-size: 11px; color: #6c757d; margin-top: 2px; }
     .sel-clear {
         margin-left: auto;
         color: #adb5bd;
-        font-size: 14px;
+        font-size: 15px;
         cursor: pointer;
-        padding: 0 2px;
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         flex-shrink: 0;
+        border-radius: 4px;
+        transition: all 0.15s;
     }
-    .sel-clear:hover { color: #e03131; }
+    .sel-clear:hover { color: #e03131; background: #ffe3e3; }
     .item-input.ac-hidden { display: none; }
 
     .row-relative {
@@ -787,9 +799,9 @@
 
         function selThumb(image) {
             if (image) {
-                return `<img src="${STORAGE_URL}/${image}" class="sel-thumb" onerror="this.outerHTML='<div class=sel-thumb-placeholder><svg width=12 height=12 fill=none viewBox=\'0 0 24 24\'><rect width=24 height=24 rx=4 fill=\'#e9ecef\'/><path d=\'M5 19l4-5 3 4 4-6 5 7H5z\' fill=\'#adb5bd\'/></svg></div>'">`;
+                return `<img src="${STORAGE_URL}/${image}" class="sel-thumb" onerror="this.outerHTML='<div class=sel-thumb-placeholder><svg width=16 height=16 fill=none viewBox=\'0 0 24 24\'><rect width=24 height=24 rx=4 fill=\'#e9ecef\'/><path d=\'M5 19l4-5 3 4 4-6 5 7H5z\' fill=\'#adb5bd\'/></svg></div>'">`;
             }
-            return `<div class="sel-thumb-placeholder"><svg width="12" height="12" fill="none" viewBox="0 0 24 24"><rect width="24" height="24" rx="4" fill="#e9ecef"/><path d="M5 19l4-5 3 4 4-6 5 7H5z" fill="#adb5bd"/></svg></div>`;
+            return `<div class="sel-thumb-placeholder"><svg width="16" height="16" fill="none" viewBox="0 0 24 24"><rect width="24" height="24" rx="4" fill="#e9ecef"/><path d="M5 19l4-5 3 4 4-6 5 7H5z" fill="#adb5bd"/></svg></div>`;
         }
 
         function showSelectedProduct(row, it) {
@@ -800,9 +812,10 @@
                     <span class="sel-name">${it.item_name}</span>
                     ${skuHtml}
                 </div>
-                <span class="sel-clear" title="Clear">✕</span>
+                <span class="sel-clear" title="Clear"><i class="fas fa-times"></i></span>
             </div>`;
             row.find('.selected-display').html(html).removeClass('d-none');
+            row.find('.input-group').addClass('d-none');
             row.find('.item-input').addClass('ac-hidden').val(it.item_name);
             row.find('.item-id').val(it.id);
             row.find('.item-image-val').val(it.image || '');
@@ -886,6 +899,7 @@
         $(document).on('click', '.sel-clear', function () {
             let row = $(this).closest('tr');
             row.find('.selected-display').addClass('d-none').empty();
+            row.find('.input-group').removeClass('d-none');
             row.find('.item-input').removeClass('ac-hidden').val('').focus();
             row.find('.item-id').val('');
             row.find('.item-image-val').val('');
