@@ -52,6 +52,10 @@ class ProductController extends Controller
             'initial_stock'    => $request->stock,
         ];
 
+        if ($request->hasFile('image')) {
+            $data['image'] = $this->storeProductImage($request->file('image'));
+        }
+
         // Check if a soft-deleted product with same name exists for this user — restore it
         $trashed = Product::withTrashed()
                           ->where('admin_or_user_id', Auth::id())
@@ -96,6 +100,19 @@ class ProductController extends Controller
             'initial_stock'   => $request->stock,
         ];
 
+        if ($request->hasFile('image')) {
+            $oldProduct = Product::find($request->product_id);
+
+            if ($oldProduct && $oldProduct->image) {
+                $oldPath = public_path('storage/' . $oldProduct->image);
+                if (file_exists($oldPath)) {
+                    @unlink($oldPath);
+                }
+            }
+
+            $data['image'] = $this->storeProductImage($request->file('image'));
+        }
+
         Product::where('id', $request->product_id)->update($data);
 
         if ($request->ajax()) {
@@ -127,6 +144,13 @@ class ProductController extends Controller
             ]);
         }
 
+        if ($product->image) {
+            $oldPath = public_path('storage/' . $product->image);
+            if (file_exists($oldPath)) {
+                @unlink($oldPath);
+            }
+        }
+
         $product->delete();
 
         return response()->json([
@@ -150,5 +174,20 @@ class ProductController extends Controller
             'status' => 'success',
             'unit'   => $unit,
         ]);
+    }
+
+    protected function storeProductImage($file)
+    {
+        $dir = public_path('storage/products');
+
+        if (! file_exists($dir)) {
+            mkdir($dir, 0777, true);
+        }
+
+        $filename = time() . '_' . preg_replace('/[^a-zA-Z0-9.]/', '_', $file->getClientOriginalName());
+
+        $file->move($dir, $filename);
+
+        return 'products/' . $filename;
     }
 }

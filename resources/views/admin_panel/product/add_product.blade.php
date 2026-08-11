@@ -38,12 +38,13 @@
         word-break: break-word !important;
     }
     .pp-wrap .datanew th:nth-child(1) { width: 5% !important; }
-    .pp-wrap .datanew th:nth-child(2) { width: 30% !important; }
-    .pp-wrap .datanew th:nth-child(3) { width: 10% !important; }
-    .pp-wrap .datanew th:nth-child(4) { width: 15% !important; }
-    .pp-wrap .datanew th:nth-child(5) { width: 15% !important; }
-    .pp-wrap .datanew th:nth-child(6) { width: 10% !important; }
-    .pp-wrap .datanew th:nth-child(7) { width: 15% !important; }
+    .pp-wrap .datanew th:nth-child(2) { width: 20% !important; }
+    .pp-wrap .datanew th:nth-child(3) { width: 15% !important; }
+    .pp-wrap .datanew th:nth-child(4) { width: 10% !important; }
+    .pp-wrap .datanew th:nth-child(5) { width: 12% !important; }
+    .pp-wrap .datanew th:nth-child(6) { width: 12% !important; }
+    .pp-wrap .datanew th:nth-child(7) { width: 10% !important; }
+    .pp-wrap .datanew th:nth-child(8) { width: 16% !important; }
     .pp-wrap .dataTables_wrapper {
         max-width: 100%;
     }
@@ -175,6 +176,7 @@
                                 <tr>
                                     <th>#</th>
                                     <th>Item Name</th>
+                                    <th>Image</th>
                                     <th>Unit</th>
                                     <th>Purchase</th>
                                     <th>Sale</th>
@@ -187,6 +189,16 @@
                                     <tr>
                                         <td data-label="#">#{{ $k + 1 }}</td>
                                         <td data-label="Item Name">{{ $p->item_name }}</td>
+                                        <td data-label="Image">
+                                            @if ($p->image)
+                                                <img src="{{ asset('storage/' . $p->image) }}"
+                                                     alt="{{ $p->item_name }}"
+                                                     class="product-thumb"
+                                                     style="width:48px;height:48px;object-fit:cover;border-radius:8px;">
+                                            @else
+                                                <span class="badge bg-light text-secondary">No Image</span>
+                                            @endif
+                                        </td>
                                         <td data-label="Unit">{{ $p->unit ?? '—' }}</td>
                                         <td data-label="Purchase">PKR {{ number_format($p->wholesale_price, 2) }}</td>
                                         <td data-label="Sale">PKR {{ number_format($p->retail_price, 2) }}</td>
@@ -216,6 +228,7 @@
                                                         data-wholesale="{{ $p->wholesale_price }}"
                                                         data-retail="{{ $p->retail_price }}"
                                                         data-stock="{{ $p->initial_stock ?? 0 }}"
+                                                        data-image="{{ $p->image }}"
                                                         data-bs-toggle="modal"
                                                         data-bs-target="#editProductModal">
                                                     Edit
@@ -243,7 +256,7 @@
 <div class="modal fade" id="addProductModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <form method="POST" action="{{ route('store-product') }}" id="addProductForm">
+            <form method="POST" action="{{ route('store-product') }}" id="addProductForm" enctype="multipart/form-data">
                 @csrf
                 <div class="modal-header">
                     <h5 class="modal-title">Add Product</h5>
@@ -263,6 +276,13 @@
                                     <option value="{{ $u->name }}">{{ $u->name }}</option>
                                 @endforeach
                             </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label">Product Image</label>
+                            <input type="file" class="form-control" name="image" accept="image/*" id="add_product_image">
+                            <div id="addImagePreview" class="mt-2"></div>
                         </div>
                     </div>
                     <div class="row">
@@ -294,7 +314,7 @@
 <div class="modal fade" id="editProductModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <form method="POST" action="" id="editProductForm">
+            <form method="POST" action="" id="editProductForm" enctype="multipart/form-data">
                 @csrf
                 <input type="hidden" name="product_id" id="edit_product_id">
                 <div class="modal-header">
@@ -315,6 +335,13 @@
                                     <option value="{{ $u->name }}">{{ $u->name }}</option>
                                 @endforeach
                             </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label">Product Image</label>
+                            <input type="file" class="form-control" name="image" accept="image/*" id="edit_product_image">
+                            <div id="editImagePreview" class="mt-2"></div>
                         </div>
                     </div>
                     <div class="row">
@@ -378,6 +405,7 @@
         let wholesale = $(this).data("wholesale");
         let retail    = $(this).data("retail");
         let stock     = $(this).data("stock");
+        let image     = $(this).data("image");
 
         $("#editProductForm").attr("action", "{{ url('/product/update') }}");
         $("#edit_product_id").val(id);
@@ -386,6 +414,12 @@
         $("#edit_wholesale_price").val(wholesale);
         $("#edit_retail_price").val(retail);
         $("#edit_stock").val(stock);
+
+        let preview = $("#editImagePreview");
+        preview.empty();
+        if (image) {
+            preview.html(`<img src="{{ asset('storage/') }}/${image}" alt="Preview" style="width:72px;height:72px;object-fit:cover;border-radius:8px;border:1px solid #eef2f7;">`);
+        }
     });
 
     // AJAX - Add Unit
@@ -439,11 +473,14 @@
         $.ajax({
             url: form.attr('action'),
             type: "POST",
-            data: form.serialize(),
+            data: new FormData(form[0]),
+            processData: false,
+            contentType: false,
             success: function (response) {
                 if (response.status === 'success') {
                     $('#addProductModal').modal('hide');
                     form[0].reset();
+                    $('#addImagePreview').empty();
                     Swal.fire({
                         icon: 'success',
                         title: 'Success',
@@ -479,11 +516,14 @@
         $.ajax({
             url: form.attr('action'),
             type: "POST",
-            data: form.serialize(),
+            data: new FormData(form[0]),
+            processData: false,
+            contentType: false,
             success: function (response) {
                 if (response.status === 'success') {
                     $('#editProductModal').modal('hide');
                     form[0].reset();
+                    $('#editImagePreview').empty();
                     Swal.fire({
                         icon: 'success',
                         title: 'Success',
@@ -541,5 +581,33 @@
                 });
             }
         });
+    });
+
+    // Live preview when an image is selected in the Add modal
+    $("#add_product_image").on("change", function () {
+        let file = this.files[0];
+        let preview = $("#addImagePreview");
+        preview.empty();
+        if (file) {
+            let reader = new FileReader();
+            reader.onload = function (e) {
+                preview.html(`<img src="${e.target.result}" alt="Preview" style="width:72px;height:72px;object-fit:cover;border-radius:8px;border:1px solid #eef2f7;">`);
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    // Live preview when an image is selected in the Edit modal
+    $("#edit_product_image").on("change", function () {
+        let file = this.files[0];
+        let preview = $("#editImagePreview");
+        preview.empty();
+        if (file) {
+            let reader = new FileReader();
+            reader.onload = function (e) {
+                preview.html(`<img src="${e.target.result}" alt="Preview" style="width:72px;height:72px;object-fit:cover;border-radius:8px;border:1px solid #eef2f7;">`);
+            };
+            reader.readAsDataURL(file);
+        }
     });
 </script>

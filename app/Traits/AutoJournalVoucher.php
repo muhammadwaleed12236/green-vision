@@ -41,8 +41,9 @@ trait AutoJournalVoucher
     private function generateVoucherNumber($type)
     {
         $prefix = $type === 'payment' ? 'PAY' : 'REC';
+        $dateCode = date('ymd');
 
-        // Get last voucher of this type
+        // Get last voucher of this type created today
         $lastVoucher = JournalVoucher::where('admin_or_user_id', Auth::id())
             ->where('voucher_type', $type)
             ->whereDate('created_at', today())
@@ -50,15 +51,33 @@ trait AutoJournalVoucher
             ->first();
 
         if ($lastVoucher) {
-            // Extract number from voucher_no like PAY001, REC002
-            preg_match('/\d+$/', $lastVoucher->voucher_no, $matches);
-            $lastNumber = $matches[0] ?? 0;
+            // Expected format: PREFIX + ymd + sequence, e.g. PAY260808001
+            if (preg_match('/^' . preg_quote($prefix) . preg_quote($dateCode) . '(\d+)$/', $lastVoucher->voucher_no, $matches)
+                && substr_count($lastVoucher->voucher_no, $dateCode) === 1) {
+                $lastNumber = (int) $matches[1];
+            } else {
+                // Legacy/corrupted voucher number — fall back to counting today's vouchers
+                $lastNumber = JournalVoucher::where('admin_or_user_id', Auth::id())
+                    ->where('voucher_type', $type)
+                    ->whereDate('created_at', today())
+                    ->count();
+            }
             $newNumber = str_pad($lastNumber + 1, 3, '0', STR_PAD_LEFT);
         } else {
             $newNumber = '001';
         }
 
-        return $prefix . date('ymd') . $newNumber;
+        $voucherNo = $prefix . $dateCode . $newNumber;
+
+        // Safety net: never reuse an existing voucher number
+        $attempts = 0;
+        while (JournalVoucher::withTrashed()->where('voucher_no', $voucherNo)->exists() && $attempts < 1000) {
+            $newNumber = str_pad((int) $newNumber + 1, 3, '0', STR_PAD_LEFT);
+            $voucherNo = $prefix . $dateCode . $newNumber;
+            $attempts++;
+        }
+
+        return $voucherNo;
     }
 
     /**

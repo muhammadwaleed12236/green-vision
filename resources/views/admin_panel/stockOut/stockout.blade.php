@@ -1,6 +1,214 @@
 @include('admin_panel.include.header_include')
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 
+<style>
+    /* ============================================
+       RESPONSIVE LAYOUT (mirror of admin dashboard)
+       ============================================ */
+
+    html, body {
+        overflow-x: hidden;
+        width: 100%;
+        margin: 0;
+    }
+
+    img, canvas, table {
+        max-width: 100%;
+    }
+
+    /* StockOut table never scrolls horizontally - cells wrap to fit */
+    .so-wrap {
+        overflow-x: hidden;
+    }
+    .so-wrap .datanew {
+        table-layout: fixed !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        border-spacing: 0 !important;
+    }
+    .so-wrap .datanew td,
+    .so-wrap .datanew th {
+        white-space: normal !important;
+        word-break: break-word !important;
+        overflow-wrap: break-word !important;
+    }
+    .so-wrap .datanew th:nth-child(1) { width: 4% !important; }
+    .so-wrap .datanew th:nth-child(2) { width: 15% !important; }
+    .so-wrap .datanew th:nth-child(3) { width: 24% !important; }
+    .so-wrap .datanew th:nth-child(4) { width: 12% !important; }
+    .so-wrap .datanew th:nth-child(5) { width: 13% !important; }
+    .so-wrap .datanew th:nth-child(6) { width: 14% !important; }
+    .so-wrap .datanew th:nth-child(7) { width: 18% !important; }
+    .so-wrap .dataTables_wrapper {
+        max-width: 100%;
+    }
+
+    /* Empty-state message: keep it a full-width centered table cell */
+    .so-wrap .datanew td.dataTables_empty {
+        display: table-cell !important;
+        width: 100% !important;
+        text-align: center !important;
+        padding: 28px !important;
+        color: #94a3b8;
+        font-weight: 500;
+        border: 0 !important;
+    }
+
+    /* Actions cell: keep button wrapping inside the cell on desktop */
+    @media (min-width: 768px) {
+        .so-wrap .datanew td:last-child:not(.dataTables_empty) {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            justify-content: flex-start;
+        }
+    }
+
+    /* ---------- Phone & below (576px) ---------- */
+    @media (max-width: 575.98px) {
+        .page-title h4 { font-size: 1.05rem; }
+        .page-title h6 { font-size: 0.85rem; }
+        .so-wrap .dataTables_filter { margin-bottom: 8px; }
+        .so-wrap .dataTables_filter input { max-width: 130px; }
+        .so-wrap .dataTables_length select { max-width: 70px; }
+    }
+
+    /* ---------- StockOut table -> stacked cards (phone & small tablet) ---------- */
+    @media (max-width: 767.98px) {
+        .table-responsive .datanew thead {
+            display: none !important;
+        }
+        .table-responsive .datanew,
+        .table-responsive .datanew tbody,
+        .table-responsive .datanew tr,
+        .table-responsive .datanew td {
+            display: block !important;
+            width: 100% !important;
+            box-sizing: border-box !important;
+        }
+        .table-responsive .datanew {
+            border: 0 !important;
+        }
+        .table-responsive .datanew tbody {
+            display: flex !important;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .table-responsive .datanew tbody tr {
+            background: #fff;
+            border: 1px solid #eef2f7 !important;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            padding: 4px 14px;
+            margin: 0 !important;
+        }
+        .table-responsive .datanew tbody tr:hover {
+            background: #fff;
+        }
+        .table-responsive .datanew td {
+            display: flex !important;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 9px 0 !important;
+            border: 0 !important;
+            border-bottom: 1px dashed #eef2f7 !important;
+            background: transparent !important;
+            font-size: 0.85rem !important;
+            color: #1e293b;
+            text-align: right;
+            white-space: normal !important;
+            word-break: break-word;
+        }
+        .table-responsive .datanew td:last-child {
+            border-bottom: 0 !important;
+        }
+        .table-responsive .datanew td::before {
+            content: attr(data-label);
+            flex-shrink: 0;
+            color: #94a3b8;
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            text-align: left;
+        }
+        .table-responsive .datanew td .btn {
+            padding: 0.35rem 0.6rem;
+        }
+        .so-wrap .dataTables_filter,
+        .so-wrap .dataTables_length,
+        .so-wrap .dataTables_info,
+        .so-wrap .dataTables_paginate {
+            max-width: 100%;
+        }
+    }
+
+    /* ---------- Add StockOut modal products table ---------- */
+    .so-modal-wrap {
+        overflow-x: hidden;
+    }
+    .so-modal-wrap .so-products {
+        table-layout: fixed;
+        width: 100%;
+        min-width: 0;
+    }
+    .so-modal-wrap .so-products th,
+    .so-modal-wrap .so-products td {
+        white-space: normal !important;
+        word-break: break-word;
+        overflow-wrap: break-word;
+    }
+    .so-modal-wrap .so-products th:nth-child(1), .so-modal-wrap .so-products td:nth-child(1) { width: 22%; }
+    .so-modal-wrap .so-products th:nth-child(2), .so-modal-wrap .so-products td:nth-child(2) { width: 10%; }
+    .so-modal-wrap .so-products th:nth-child(3), .so-modal-wrap .so-products td:nth-child(3) { width: 13%; }
+    .so-modal-wrap .so-products th:nth-child(4), .so-modal-wrap .so-products td:nth-child(4) { width: 12%; }
+    .so-modal-wrap .so-products th:nth-child(5), .so-modal-wrap .so-products td:nth-child(5) { width: 14%; }
+    .so-modal-wrap .so-products th:nth-child(6), .so-modal-wrap .so-products td:nth-child(6) { width: 13%; }
+    .so-modal-wrap .so-products th:nth-child(7), .so-modal-wrap .so-products td:nth-child(7) { width: 16%; }
+
+    @media (max-width: 767.98px) {
+        .so-modal-wrap .so-products thead {
+            display: none;
+        }
+        .so-modal-wrap .so-products tbody tr {
+            display: block;
+            margin-bottom: 12px;
+            border: 1px solid #eef2f7 !important;
+            border-radius: 8px;
+            background: #fff;
+        }
+        .so-modal-wrap .so-products tbody tr td {
+            display: flex !important;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 7px 10px !important;
+            border: 0 !important;
+            border-bottom: 1px dashed #eef2f7 !important;
+            background: transparent !important;
+            text-align: right;
+        }
+        .so-modal-wrap .so-products tbody tr td:last-child {
+            border-bottom: 0 !important;
+        }
+        .so-modal-wrap .so-products tbody tr td::before {
+            content: attr(data-label);
+            flex-shrink: 0;
+            color: #94a3b8;
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            text-align: left;
+        }
+        .so-modal-wrap .so-products tbody tr td .form-control {
+            width: 100%;
+            max-width: 100%;
+        }
+    }
+</style>
+
 <div class="main-wrapper">
     @include('admin_panel.include.navbar_include')
     @include('admin_panel.include.admin_sidebar_include')
@@ -32,7 +240,7 @@
                     @endif
 
                     {{-- StockOut Table --}}
-                    <div class="table-responsive">
+                    <div class="table-responsive so-wrap">
                         <table class="table datanew">
                             <thead>
                                 <tr>

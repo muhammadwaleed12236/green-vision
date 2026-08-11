@@ -99,7 +99,7 @@ public function index(Request $request)
 
             if ($existingAttendance) {
                 $staff = Salesman::find($staffId);
-                $alreadyMarked[] = $staff ? $staff->name : "Staff #$staffId";
+                $alreadyMarked[$staffId] = $staff ? $staff->name : "Staff #$staffId";
                 continue;
             }
 
@@ -141,16 +141,23 @@ public function index(Request $request)
         $unmappedStaff = array_diff($allStaff, array_merge($processedStaff, array_keys($alreadyMarked)));
 
         foreach ($unmappedStaff as $staffId) {
-            AttendanceNotification::updateOrCreate(
-                [
+            $existingNotification = AttendanceNotification::withTrashed()
+                ->where('admin_or_user_id', $userId)
+                ->where('staff_id', $staffId)
+                ->where('attendance_date', $attendanceDate)
+                ->first();
+
+            if ($existingNotification) {
+                $existingNotification->restore();
+                $existingNotification->update(['status' => 'pending']);
+            } else {
+                AttendanceNotification::create([
                     'admin_or_user_id' => $userId,
                     'staff_id' => $staffId,
                     'attendance_date' => $attendanceDate,
-                ],
-                [
                     'status' => 'pending',
-                ]
-            );
+                ]);
+            }
         }
 
         return response()->json([
