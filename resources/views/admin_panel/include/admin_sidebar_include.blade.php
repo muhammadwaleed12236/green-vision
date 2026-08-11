@@ -23,9 +23,9 @@
             @if(Auth::check() && Auth::user()->usertype == 'admin')
                 <ul>
                     <!-- Dashboard -->
-                    {{-- <li class="{{ request()->routeIs('home') ? 'active' : '' }}">
+                    <li class="{{ request()->routeIs('home') ? 'active' : '' }}">
                         <a href="{{ route('home') }}"><i class="fas fa-home"></i><span> Dashboard</span> </a>
-                    </li> --}}
+                    </li>
 
                     {{-- <li class="{{ request()->routeIs('wizard.index') ? 'active' : '' }}">
                         <a href="{{ route('wizard.index') }}"><i class="fas fa-magic"></i><span> Sale/Purchase Wizard</span> </a>
@@ -34,7 +34,7 @@
 
 
                     <!-- Business Report -->
-                    {{-- @haspermission('business-report.view')
+                    @haspermission('business-report.view')
                     <li>
                         <a href="{{ route('business-report.index') }}"><i class="fas fa-chart-pie"></i><span> Business Report</span></a>
                     </li>
@@ -43,14 +43,14 @@
                     <li>
                         <a href="{{ route('journal-voucher.index') }}"><i class="fas fa-receipt"></i><span> All Vouchers</span></a>
                     </li>
-                    @endhaspermission --}}
+                    @endhaspermission
 
                     <!-- Price List -->
-                    {{-- @haspermission('price-list.view')
+                    @haspermission('price-list.view')
                     <li>
                         <a href="{{ route('price-list.index') }}"><i class="fas fa-tags"></i><span>Price List</span></a>
                     </li>
-                    @endhaspermission --}}
+                    @endhaspermission
 
                     <!-- Product Management -->
                     @haspermission('product.view')
@@ -60,7 +60,7 @@
                     @endhaspermission
 
                     <!-- Vendors -->
-                    {{-- @haspermission('vendor.view')
+                    @haspermission('vendor.view')
                     <li class="submenu">
                         <a href="javascript:void(0);"><i class="fas fa-user-friends"></i><span> Vendors</span> <span
                                 class="menu-arrow"></span></a>
@@ -73,10 +73,10 @@
                             @endhaspermission
                         </ul>
                     </li>
-                    @endhaspermission --}}
+                    @endhaspermission
 
                     <!-- Purchase -->
-                    {{-- @if(auth()->user()->hasPermission('purchase.create') || auth()->user()->hasPermission('purchase.view'))
+                    @if(auth()->user()->hasPermission('purchase.create') || auth()->user()->hasPermission('purchase.view'))
                     <li class="submenu">
                         <a href="javascript:void(0);"><i class="fas fa-shopping-basket"></i><span> Purchase</span> <span
                                 class="menu-arrow"></span></a>
@@ -92,7 +92,7 @@
                             @endhaspermission
                         </ul>
                     </li>
-                    @endif --}}
+                    @endif
 
                     <!-- Customers -->
                     @haspermission('customer.view')
@@ -140,8 +140,8 @@
                     @endhaspermission
 
                     <!-- Job Assignment -->
-                    {{--
-                    @if(auth()->user()->hasPermission('job-order.view') || auth()->user()->hasPermission('job-assignment.view'))
+                    
+                    {{-- @if(auth()->user()->hasPermission('job-order.view') || auth()->user()->hasPermission('job-assignment.view'))
                     <li class="submenu">
                         <a href="javascript:void(0);"><i class="fas fa-clipboard-list"></i><span> Job Management</span> <span
                                 class="menu-arrow"></span></a>
@@ -150,11 +150,11 @@
                             @haspermission('job-assignment.view')<li><a href="{{ route('job-assignments') }}">Job Assignments</a></li>@endhaspermission
                         </ul>
                     </li>
-                    @endif
-                    --}}
+                    @endif --}}
+                   
 
                     <!-- Contractor -->
-                    @haspermission('contractor.view')
+                    {{-- @haspermission('contractor.view')
                     <li class="submenu">
                         <a href="javascript:void(0);"><i class="fa fa-wrench"></i><span> Contractor</span> <span
                                 class="menu-arrow"></span></a>
@@ -170,10 +170,10 @@
                             @endhaspermission
                         </ul>
                     </li>
-                    @endhaspermission
+                    @endhaspermission --}}
 
                     <!-- Staff -->
-                    @if(auth()->user()->hasPermission('designation.view') || auth()->user()->hasPermission('salesman.view') || auth()->user()->hasPermission('staff-report.view') || auth()->user()->hasPermission('staff-recovery.recovery'))
+                    {{-- @if(auth()->user()->hasPermission('designation.view') || auth()->user()->hasPermission('salesman.view') || auth()->user()->hasPermission('staff-report.view') || auth()->user()->hasPermission('staff-recovery.recovery'))
                     <li class="submenu">
                         <a href="javascript:void(0);"><i class="fas fa-user-tie"></i><span> Staff</span> <span
                                 class="menu-arrow"></span></a>
@@ -192,10 +192,10 @@
                             @endhaspermission
                         </ul>
                     </li>
-                    @endif
+                    @endif --}}
 
                     <!-- Staff Attendance -->
-                    @if(auth()->user()->hasPermission('staff-attendance.view') || auth()->user()->hasPermission('staff-advance.view') || auth()->user()->hasPermission('staff-salary.view') || auth()->user()->hasPermission('staff-ledger.view'))
+                    {{-- @if(auth()->user()->hasPermission('staff-attendance.view') || auth()->user()->hasPermission('staff-advance.view') || auth()->user()->hasPermission('staff-salary.view') || auth()->user()->hasPermission('staff-ledger.view'))
                     <li class="submenu">
                         <a href="javascript:void(0);"><i class="fas fa-user-check"></i><span> Staff Management</span> <span class="menu-arrow"></span></a>
                         <ul>
@@ -213,7 +213,7 @@
                             @endhaspermission
                         </ul>
                     </li>
-                    @endif
+                    @endif --}}
 
                     <!-- Chart of Accounts -->
                     <li>
@@ -230,7 +230,7 @@
                     @endhaspermission --}}
 
                     <!-- Expenses -->
-                    {{-- @haspermission('expense.view')
+                    @haspermission('expense.view')
                     <li class="submenu">
                         <a href="javascript:void(0);"><i class="fas fa-money-bill-wave"></i><span> Expense Categories</span> <span
                                 class="menu-arrow"></span></a>
@@ -243,7 +243,7 @@
                             @endhaspermission
                         </ul>
                     </li>
-                    @endhaspermission --}}
+                    @endhaspermission
 
                     <!-- Reports -->
                     {{-- @if(auth()->user()->hasPermission('stock-report.view') || auth()->user()->hasPermission('vendor-ledger-record.view') || auth()->user()->hasPermission('customer-ledger-record.view') || auth()->user()->hasPermission('purchase-report.view') || auth()->user()->hasPermission('vendor.view') || auth()->user()->hasPermission('sales-report.view') || auth()->user()->hasPermission('product-sales-report.view') || auth()->user()->hasPermission('contractor-report.view') || auth()->user()->hasPermission('staff-report.view'))
@@ -265,7 +265,7 @@
                     @endif --}}
 
                     <!-- User Management -->
-                    {{-- @if(auth()->user()->hasPermission('user-management-users.view') || auth()->user()->hasPermission('user-management-roles.view') || auth()->user()->hasPermission('user-management-permissions.view'))
+                    @if(auth()->user()->hasPermission('user-management-users.view') || auth()->user()->hasPermission('user-management-roles.view') || auth()->user()->hasPermission('user-management-permissions.view'))
                     <li class="submenu">
                         <a href="javascript:void(0);"><i class="fas fa-users-cog"></i><span> User Management</span> <span class="menu-arrow"></span></a>
                         <ul>
@@ -280,7 +280,7 @@
                             @endif
                         </ul>
                     </li>
-                    @endif --}}
+                    @endif
 
                     <!-- Company Settings -->
                     @haspermission('settings.edit')
@@ -290,7 +290,7 @@
                     @endhaspermission
 
                     <!-- Reporting -->
-                    <!-- <li class="submenu">
+                     <li class="submenu">
                         <a href="javascript:void(0);"><i class="fas fa-chart-pie"></i><span>Reports</span> <span
                                 class="menu-arrow"></span></a>
                         <ul>
@@ -301,21 +301,21 @@
                             <li><a href="{{ route('date-wise-recovery-report') }}">Date Wise Recovery Report </a></li>
                             <li><a href="{{ route('date-wise-purcahse-report') }}">Date wise Purchase Report </a></li>
                             <li><a href="{{ route('vendor-wise-purcahse-report') }}">Vendor wise Purchase Report </a></li>
-                            <li><a href="{{ route('contractor-wise-report') }}">Contractor wise Report </a></li>
-                            <li><a href="{{ route('staff-wise-report') }}">Staff wise Report </a></li>
+                            {{-- <li><a href="{{ route('contractor-wise-report') }}">Contractor wise Report </a></li> --}}
+                            {{-- <li><a href="{{ route('staff-wise-report') }}">Staff wise Report </a></li> --}}
                             <li><a href="{{ route('Date-wise-Sales-Report') }}">Date wise Sales Report </a></li>
                             <li><a href="{{ route('Product-wise-Sales-Report') }}">Product Wise Sales Report </a></li>
                         </ul>
-                    </li> -->
+                    </li> 
 
                     <!-- QA Testing Section -->
-                    <!-- <li class="submenu">
+                     {{-- <li class="submenu">
                         <a href="javascript:void(0);"><i class="fas fa-bug"></i><span> Quality Assurance</span> <span
                                 class="menu-arrow"></span></a>
                         <ul>
                             <li><a href="{{ route('qa.dashboard') }}">QA Dashboard</a></li>
                         </ul>
-                    </li> -->
+                    </li>  --}}
                 </ul>
             @endif
 
