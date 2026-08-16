@@ -27,6 +27,53 @@
             font-weight: bold;
             background-color: #e9e9e9;
         }
+
+        /* ============ RESPONSIVE (mirror of dashboard) ============ */
+        html, body {
+            overflow-x: hidden;
+            width: 100%;
+            margin: 0;
+        }
+
+        .table-responsive.Purcahse_report {
+            overflow-x: hidden;
+        }
+        .Purcahse_report .report-table {
+            table-layout: fixed;
+            width: 100%;
+            min-width: 0;
+        }
+        .Purcahse_report .report-table th,
+        .Purcahse_report .report-table td {
+            white-space: normal;
+            word-break: break-word;
+            overflow-wrap: break-word;
+        }
+        .Purcahse_report .report-table th:nth-child(1) { width: 10%; }
+        .Purcahse_report .report-table th:nth-child(2) { width: 12%; }
+        .Purcahse_report .report-table th:nth-child(3) { width: 24%; }
+        .Purcahse_report .report-table th:nth-child(4) { width: 14%; }
+        .Purcahse_report .report-table th:nth-child(5) { width: 10%; }
+        .Purcahse_report .report-table th:nth-child(6) { width: 10%; }
+        .Purcahse_report .report-table th:nth-child(7) { width: 10%; }
+        .Purcahse_report .report-table th:nth-child(8) { width: 10%; }
+
+        @media (max-width: 575.98px) {
+            .Purcahse_report .report-actions {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .Purcahse_report .report-actions .btn {
+                width: 100%;
+            }
+            .Purcahse_report .report-table {
+                font-size: 11px;
+            }
+            .Purcahse_report .report-table th,
+            .Purcahse_report .report-table td {
+                padding: 4px;
+            }
+        }
     </style>
 
     <div class="page-wrapper">
@@ -56,7 +103,7 @@
                                 <input type="date" id="end_date" name="end_date" class="form-control">
                             </div>
                         </div>
-                        <div class="d-flex justify-content-between align-items-center gap-4 mt-4">
+                        <div class="d-flex justify-content-between align-items-center gap-4 mt-4 report-actions">
                             <button type="button" id="searchLedger" class="btn btn-primary btn-lg px-5">Search</button>
 
                             <button id="downloadPdf" class="btn btn-danger btn-lg">Download PDF</button>
@@ -127,14 +174,14 @@
                 response.report.forEach(row => {
                     rows += `
                         <tr>
-                            <td>${row.inv_no}</td>
-                            <td>${row.date}</td>
-                            <td>${row.item}</td>
-                            <td>${row.carton_packing}</td>
-                            <td>${row.carton_qty}</td>
-                            <td>${row.pcs}</td>
-                            <td>${row.liter}</td>
-                            <td>${Number(row.net_amount).toLocaleString()}</td>
+                            <td data-label="Inv#">${row.inv_no}</td>
+                            <td data-label="Date">${row.date}</td>
+                            <td data-label="Item Name">${row.item}</td>
+                            <td data-label="Carton Packing">${row.carton_packing}</td>
+                            <td data-label="Carton">${row.carton_qty}</td>
+                            <td data-label="Pcs">${row.pcs}</td>
+                            <td data-label="Liter">${row.liter}</td>
+                            <td data-label="Net Amount">${Number(row.net_amount).toLocaleString()}</td>
                         </tr>`;
                 });
 

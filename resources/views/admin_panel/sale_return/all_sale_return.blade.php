@@ -15,9 +15,54 @@
                 </a>
             </div>
 
+            <style>
+                .asr-wrap {
+                    overflow-x: auto;
+                    scrollbar-width: none;
+                    -ms-overflow-style: none;
+                }
+                .asr-wrap::-webkit-scrollbar {
+                    display: none;
+                    width: 0;
+                    height: 0;
+                }
+                .asr-wrap .table {
+                    table-layout: fixed;
+                    width: 100%;
+                    min-width: 0;
+                }
+                .asr-wrap .table th,
+                .asr-wrap .table td {
+                    white-space: normal;
+                    word-break: break-word;
+                    overflow-wrap: break-word;
+                }
+                .asr-wrap .table th:nth-child(1)  { width: 10%; }
+                .asr-wrap .table th:nth-child(2)  { width: 12%; }
+                .asr-wrap .table th:nth-child(3)  { width: 16%; }
+                .asr-wrap .table th:nth-child(4)  { width: 9%; }
+                .asr-wrap .table th:nth-child(5)  { width: 9%; }
+                .asr-wrap .table th:nth-child(6)  { width: 9%; }
+                .asr-wrap .table th:nth-child(7)  { width: 8%; }
+                .asr-wrap .table th:nth-child(8)  { width: 8%; }
+                .asr-wrap .table th:nth-child(9)  { width: 9%; }
+                .asr-wrap .table th:nth-child(10) { width: 10%; }
+
+                @media (max-width: 767.98px) {
+                    .asr-wrap {
+                        -webkit-overflow-scrolling: touch;
+                    }
+                    .asr-wrap .table {
+                        table-layout: auto;
+                        width: auto;
+                        min-width: 720px;
+                    }
+                }
+            </style>
+
             <div class="card p-4">
                 <div class="card-body">
-                    <div class="table-responsive">
+                    <div class="table-responsive asr-wrap">
                         <table class="table table-striped">
                             <thead>
                                 <tr>

@@ -3,6 +3,153 @@
     @include('admin_panel.include.navbar_include')
     @include('admin_panel.include.admin_sidebar_include')
 
+    <style>
+        /* ============================================
+           RESPONSIVE LAYOUT (mirror of admin dashboard)
+           ============================================ */
+
+        html, body {
+            overflow-x: hidden;
+            width: 100%;
+            margin: 0;
+        }
+
+        img, canvas, table {
+            max-width: 100%;
+        }
+
+        /* Expenses table never scrolls horizontally - cells wrap to fit */
+        .ex-wrap {
+            overflow-x: hidden;
+        }
+        .ex-wrap .datanew {
+            table-layout: fixed !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            border-spacing: 0 !important;
+        }
+        .ex-wrap .datanew td,
+        .ex-wrap .datanew th {
+            white-space: normal !important;
+            word-break: break-word !important;
+            overflow-wrap: break-word !important;
+        }
+        .ex-wrap .datanew th:nth-child(1) { width: 6% !important; }
+        .ex-wrap .datanew th:nth-child(2) { width: 14% !important; }
+        .ex-wrap .datanew th:nth-child(3) { width: 18% !important; }
+        .ex-wrap .datanew th:nth-child(4) { width: 34% !important; }
+        .ex-wrap .datanew th:nth-child(5) { width: 13% !important; }
+        .ex-wrap .datanew th:nth-child(6) { width: 15% !important; }
+        .ex-wrap .dataTables_wrapper {
+            max-width: 100%;
+        }
+
+        /* Empty-state message: keep it a full-width centered table cell */
+        .ex-wrap .datanew td.dataTables_empty {
+            display: table-cell !important;
+            width: 100% !important;
+            text-align: center !important;
+            padding: 28px !important;
+            color: #94a3b8;
+            font-weight: 500;
+            border: 0 !important;
+        }
+
+        /* Actions cell: keep button wrapping inside the cell on desktop */
+        @media (min-width: 768px) {
+            .ex-wrap .datanew td:last-child:not(.dataTables_empty) {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 6px;
+                justify-content: flex-start;
+            }
+        }
+
+        /* ---------- Phone & below (576px) ---------- */
+        @media (max-width: 575.98px) {
+            .page-title h4 { font-size: 1.05rem; }
+            .page-title h6 { font-size: 0.85rem; }
+            .ex-wrap .dataTables_filter { margin-bottom: 8px; }
+            .ex-wrap .dataTables_filter input { max-width: 130px; }
+            .ex-wrap .dataTables_length select { max-width: 70px; }
+        }
+
+        /* ---------- Expenses table -> stacked cards (phone & small tablet) ---------- */
+        @media (max-width: 767.98px) {
+            .table-responsive .datanew thead {
+                display: none !important;
+            }
+            .table-responsive .datanew,
+            .table-responsive .datanew tbody,
+            .table-responsive .datanew tr,
+            .table-responsive .datanew td {
+                display: block !important;
+                width: 100% !important;
+                box-sizing: border-box !important;
+            }
+            .table-responsive .datanew {
+                border: 0 !important;
+            }
+            .table-responsive .datanew tbody {
+                display: flex !important;
+                flex-direction: column;
+                gap: 12px;
+            }
+            .table-responsive .datanew tbody tr {
+                background: #fff;
+                border: 1px solid #eef2f7 !important;
+                border-radius: 12px;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+                padding: 4px 14px;
+                margin: 0 !important;
+            }
+            .table-responsive .datanew tbody tr:hover {
+                background: #fff;
+            }
+            .table-responsive .datanew td {
+                display: flex !important;
+                align-items: center;
+                justify-content: space-between;
+                gap: 12px;
+                padding: 9px 0 !important;
+                border: 0 !important;
+                border-bottom: 1px dashed #eef2f7 !important;
+                background: transparent !important;
+                font-size: 0.85rem !important;
+                color: #1e293b;
+                text-align: right;
+                white-space: normal !important;
+                word-break: break-word;
+            }
+            .table-responsive .datanew td:last-child {
+                border-bottom: 0 !important;
+            }
+            .table-responsive .datanew td::before {
+                content: attr(data-label);
+                flex-shrink: 0;
+                color: #94a3b8;
+                font-size: 0.68rem;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+                text-align: left;
+            }
+            .table-responsive .datanew td .btn {
+                padding: 0.35rem 0.6rem;
+            }
+            .table-responsive .datanew td:last-child {
+                flex-wrap: wrap;
+                row-gap: 4px;
+            }
+            .ex-wrap .dataTables_filter,
+            .ex-wrap .dataTables_length,
+            .ex-wrap .dataTables_info,
+            .ex-wrap .dataTables_paginate {
+                max-width: 100%;
+            }
+        }
+    </style>
+
     <div class="page-wrapper">
         <div class="content">
             <div class="page-header">
@@ -24,7 +171,7 @@
                             <strong>Success!</strong> {{ session('success') }}.
                         </div>
                     @endif
-                    <div class="table-responsive">
+                    <div class="table-responsive ex-wrap">
                         <table class="table datanew">
                             <thead>
                                 <tr>
@@ -42,17 +189,17 @@
                                         $isJobAssignment = strpos($expense->description, 'Job Assignment #') !== false;
                                     @endphp
                                     <tr class="{{ $isJobAssignment ? 'table-warning' : '' }}">
-                                        <td>{{ $key + 1 }}</td>
-                                        <td>{{ \Carbon\Carbon::parse($expense->expense_date)->format('d/m/Y') }}</td>
-                                        <td>
+                                        <td data-label="#">{{ $key + 1 }}</td>
+                                        <td data-label="Date">{{ \Carbon\Carbon::parse($expense->expense_date)->format('d/m/Y') }}</td>
+                                        <td data-label="Category">
                                             {{ $expense->expenseCategory->expense_name ?? 'N/A' }}
                                             @if($isJobAssignment)
                                                 <span class="badge bg-info ms-1">Auto-Generated</span>
                                             @endif
                                         </td>
-                                        <td>{{ $expense->description }}</td>
-                                        <td>{{ number_format($expense->amount) }}</td>
-                                        <td>
+                                        <td data-label="Description">{{ $expense->description }}</td>
+                                        <td data-label="Amount">{{ number_format($expense->amount) }}</td>
+                                        <td data-label="Action">
                                             @if($isJobAssignment)
                                                 <span class="text-muted small">
                                                     <i class="fas fa-lock me-1"></i>Protected Entry

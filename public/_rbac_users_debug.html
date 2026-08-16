@@ -1,0 +1,733 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0">
+    <meta name="csrf-token" content="">
+    <meta name="keywords">
+    <title>Inter Decor Dashboard</title>
+
+       <!-- Favicon -->
+    <link rel="shortcut icon" type="image/x-icon" href="http://127.0.0.1:8001/assets/img/favicon.png">
+
+    <!-- Bootstrap & Animations -->
+    <link rel="stylesheet" href="http://127.0.0.1:8001/assets/css/bootstrap.min.css">
+    <link rel="stylesheet" href="http://127.0.0.1:8001/assets/css/animate.css">
+    <link rel="stylesheet" href="http://127.0.0.1:8001/assets/css/dataTables.bootstrap4.min.css">
+
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="http://127.0.0.1:8001/assets/plugins/fontawesome/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/all.min.css">
+
+    <!-- Select2 -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
+    <!-- Custom Style -->
+    <link rel="stylesheet" href="http://127.0.0.1:8001/assets/css/style.css">
+
+    <!-- Green Vision Theme Override (60/30/10) -->
+    <link rel="stylesheet" href="http://127.0.0.1:8001/assets/css/green-vision-theme.css?v=2">
+
+
+</head>
+
+<body>
+    <div id="global-loader">
+        <div class="whirly-loader"> </div>
+    </div>
+<div class="main-wrapper">
+    <div class="header">
+	<div class="header-left active">
+		<a href="#" class="logo">
+			<h6>Inter Decor</h6>
+		</a>
+		<a href="#" class="logo-small">
+							<img src="/storage/logos/logo.png" alt="Inter Decor" style="max-height: 30px;">
+					</a>
+		<a id="toggle_btn" href="javascript:void(0);">
+			<i class="fas fa-align-left"></i>
+		</a>
+	</div>
+	<a id="mobile_btn" class="mobile_btn" href="#sidebar">
+		<span class="bar-icon">
+			<span></span>
+			<span></span>
+			<span></span>
+		</span>
+	</a>
+
+	<ul class="nav user-menu">
+		<!-- Delivery Notifications -->
+		<li class="nav-item dropdown">
+			<a href="javascript:void(0);" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">
+				<i class="fa fa-bell" style="font-size: 24px; color: #1c9262;"></i>
+													<span class="badge bg-danger" style="position: absolute; top: 5px; right: 5px; font-size: 10px; padding: 2px 6px; border-radius: 10px;">
+						5
+					</span>
+							</a>
+			<div class="dropdown-menu dropdown-menu-end" style="min-width: 350px; max-height: 400px; overflow-y: auto;">
+				<div class="dropdown-header bg-primary text-white">
+					<strong><i class="fa fa-truck me-2"></i>Upcoming Deliveries</strong>
+				</div>
+																					<a href="http://127.0.0.1:8001/all-local-sale" class="dropdown-item bg-danger text-white">
+							<div class="d-flex justify-content-between align-items-start">
+								<div>
+									<strong>JOb-no-002</strong><br>
+									<small>againCustomer</small><br>
+									<small class="text-muted">
+										<i class="fa fa-calendar"></i> 07 Aug 2026
+									</small>
+								</div>
+								<div class="text-end">
+																			<span class="badge bg-white text-danger">
+											<i class="fa fa-exclamation-triangle"></i> Overdue
+										</span>
+																	</div>
+							</div>
+						</a>
+						<hr class="dropdown-divider my-1">
+																	<a href="http://127.0.0.1:8001/all-local-sale" class="dropdown-item bg-danger text-white">
+							<div class="d-flex justify-content-between align-items-start">
+								<div>
+									<strong>JOb-no-008</strong><br>
+									<small>againCustomer</small><br>
+									<small class="text-muted">
+										<i class="fa fa-calendar"></i> 07 Aug 2026
+									</small>
+								</div>
+								<div class="text-end">
+																			<span class="badge bg-white text-danger">
+											<i class="fa fa-exclamation-triangle"></i> Overdue
+										</span>
+																	</div>
+							</div>
+						</a>
+						<hr class="dropdown-divider my-1">
+																	<a href="http://127.0.0.1:8001/all-local-sale" class="dropdown-item bg-danger text-white">
+							<div class="d-flex justify-content-between align-items-start">
+								<div>
+									<strong>JOb-no-011</strong><br>
+									<small>demoCustomer</small><br>
+									<small class="text-muted">
+										<i class="fa fa-calendar"></i> 13 Aug 2026
+									</small>
+								</div>
+								<div class="text-end">
+																			<span class="badge bg-white text-danger">
+											<i class="fa fa-exclamation-triangle"></i> Overdue
+										</span>
+																	</div>
+							</div>
+						</a>
+						<hr class="dropdown-divider my-1">
+																	<a href="http://127.0.0.1:8001/all-local-sale" class="dropdown-item bg-danger text-white">
+							<div class="d-flex justify-content-between align-items-start">
+								<div>
+									<strong>JOb-no-012</strong><br>
+									<small>demoCustomer</small><br>
+									<small class="text-muted">
+										<i class="fa fa-calendar"></i> 13 Aug 2026
+									</small>
+								</div>
+								<div class="text-end">
+																			<span class="badge bg-white text-danger">
+											<i class="fa fa-exclamation-triangle"></i> Overdue
+										</span>
+																	</div>
+							</div>
+						</a>
+						<hr class="dropdown-divider my-1">
+																	<a href="http://127.0.0.1:8001/all-local-sale" class="dropdown-item bg-danger text-white">
+							<div class="d-flex justify-content-between align-items-start">
+								<div>
+									<strong>JOb-no-016</strong><br>
+									<small>demoCustomer</small><br>
+									<small class="text-muted">
+										<i class="fa fa-calendar"></i> 12 Aug 2026
+									</small>
+								</div>
+								<div class="text-end">
+																			<span class="badge bg-white text-danger">
+											<i class="fa fa-exclamation-triangle"></i> Overdue
+										</span>
+																	</div>
+							</div>
+						</a>
+						<hr class="dropdown-divider my-1">
+										<a href="http://127.0.0.1:8001/delivery-notifications" class="dropdown-item text-center text-primary">
+						<strong>View All Notifications</strong>
+					</a>
+							</div>
+		</li>
+
+		<li class="nav-item">
+			<h5 class="mt-3 d-none d-md-block">
+												Admin Dashboard
+											</h5>
+		</li>
+		<li class="nav-item dropdown has-arrow main-drop">
+			<a href="javascript:void(0);" class="dropdown-toggle nav-link userset" data-bs-toggle="dropdown">
+				<span class="user-img"><img src="http://127.0.0.1:8001/assets/img/profiles/manager.png" alt="">
+					<span class="status online"></span></span>
+			</a>
+			<div class="dropdown-menu menu-drop-user">
+				<div class="profilename">
+					<div class="profileset">
+						<span class="user-img"><img src="http://127.0.0.1:8001/assets/img/profiles/manager.png" alt="">
+							<span class="status online"></span></span>
+						<div class="profilesets">
+							<h6>waleed</h6>
+							<h5>Admin</h5>
+						</div>
+					</div>
+					<hr class="m-0">
+					<hr class="m-0">
+					<form method="POST" action="http://127.0.0.1:8001/logout">
+						<input type="hidden" name="_token" value="" autocomplete="off">						<a href="http://127.0.0.1:8001/logout" onclick="event.preventDefault(); this.closest('form').submit();" class="dropdown-item ai-icon"> Logout </a>
+					</form>
+				</div>
+			</div>
+		</li>
+	</ul>
+
+	<div class="dropdown mobile-user-menu">
+		<a href="javascript:void(0);" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false"><i class="fa fa-ellipsis-v"></i></a>
+		<div class="dropdown-menu dropdown-menu-right">
+			<form method="POST" action="http://127.0.0.1:8001/logout">
+				<input type="hidden" name="_token" value="" autocomplete="off">				<a href="http://127.0.0.1:8001/logout" onclick="event.preventDefault(); this.closest('form').submit();" class="dropdown-item ai-icon"> Logout </a>
+			</form>
+		</div>
+	</div>
+</div>
+
+<script>
+document.addEventListener('keydown', function(e) {
+    if (e.ctrlKey && e.altKey && (e.key === 's' || e.key === 'S')) {
+        e.preventDefault();
+        window.location.href = "http://127.0.0.1:8001/local-sale";
+    }
+});
+</script>
+    <style>
+    /* Active Link Styles */
+    #sidebar-menu ul li.active > a {
+        background-color: rgba(40, 167, 69, 0.15) !important; /* Transparent dark green background */
+        color: #ffffff !important; /* White text */
+        font-weight: 600;
+        border-radius: 6px;
+    }
+    #sidebar-menu ul li.active > a i {
+        color: #28a745 !important; /* Green icon */
+    }
+    
+    /* Submenu Active Styles */
+    #sidebar-menu ul li.submenu ul li.active > a {
+        background-color: transparent !important;
+        color: #28a745 !important;
+    }
+</style>
+
+<div class="sidebar" id="sidebar">
+    <div class="sidebar-inner slimscroll">
+        <div id="sidebar-menu" class="sidebar-menu">
+                            <ul>
+                    <!-- Dashboard -->
+                    <li class="">
+                        <a href="http://127.0.0.1:8001/home"><i class="fas fa-home"></i><span> Dashboard</span> </a>
+                    </li>
+
+                    
+
+
+
+                    <!-- Business Report -->
+                                        <li>
+                        <a href="http://127.0.0.1:8001/business-report"><i class="fas fa-chart-pie"></i><span> Business Report</span></a>
+                    </li>
+                                                            <li>
+                        <a href="http://127.0.0.1:8001/journal-voucher"><i class="fas fa-receipt"></i><span> All Vouchers</span></a>
+                    </li>
+                    
+                    <!-- Price List -->
+                                        <li>
+                        <a href="http://127.0.0.1:8001/price-list"><i class="fas fa-tags"></i><span>Price List</span></a>
+                    </li>
+                    
+                    <!-- Product Management -->
+                                        <li>
+                        <a href="http://127.0.0.1:8001/product"><i class="fas fa-box-open"></i> <span>Product </span> </a>
+                    </li>
+                    
+                    <!-- Vendors -->
+                                        <li class="submenu">
+                        <a href="javascript:void(0);"><i class="fas fa-user-friends"></i><span> Vendors</span> <span
+                                class="menu-arrow"></span></a>
+                        <ul>
+                                                        <li><a href="http://127.0.0.1:8001/vendors">All Vendors</a></li>
+                                                                                    <li><a href="http://127.0.0.1:8001/vendors-ledger">Vendors Ledger </a></li>
+                                                    </ul>
+                    </li>
+                    
+                    <!-- Purchase -->
+                                        <li class="submenu">
+                        <a href="javascript:void(0);"><i class="fas fa-shopping-basket"></i><span> Purchase</span> <span
+                                class="menu-arrow"></span></a>
+                        <ul>
+                                                        <li><a href="http://127.0.0.1:8001/Purchase">Add Purchase</a></li>
+                                                                                    <li><a href="http://127.0.0.1:8001/all-Purchases">All Purchase</a></li>
+                                                                                    <li><a href="http://127.0.0.1:8001/all-purchase-return"> Purchase Returns</a></li>
+                                                    </ul>
+                    </li>
+                    
+                    <!-- Customers -->
+                                        <li class="submenu">
+                        <a href="javascript:void(0);"><i class="fas fa-users"></i><span> Customer</span>
+                            <span class="menu-arrow"></span></a>
+                        <ul>
+                                                        <li><a href="http://127.0.0.1:8001/customer">All Customers</a></li>
+                                                                                    <li><a href="http://127.0.0.1:8001/customer-ledger">Customer Ledger</a></li>
+                                                                                    <li><a href="http://127.0.0.1:8001/customer-recovery">Customer Recoveries</a></li>
+                                                    </ul>
+                    </li>
+                    
+                    <!-- Sale -->
+                                        <li class="submenu">
+                        <a href="javascript:void(0);"><i class="fas fa-shopping-bag"></i><span>Sale</span> <span
+                                class="menu-arrow"></span></a>
+                        <ul>
+                                                        <li><a href="http://127.0.0.1:8001/local-sale">Add Sale</a></li>
+                                                                                    <li><a href="http://127.0.0.1:8001/all-local-sale">All Sales</a></li>
+                                                                                    <li><a href="http://127.0.0.1:8001/all-sale-return">Return Sales</a></li>
+                                                    </ul>
+                    </li>
+                    
+                    <!-- Stock Out -->
+                                        <li>
+                        <a href="http://127.0.0.1:8001/stockout"><i class="fas fa-level-down-alt"></i><span> Stock Out</span></a>
+                    </li>
+                    
+                    <!-- Job Assignment -->
+                    
+                    
+                   
+
+                    <!-- Contractor -->
+                    
+
+                    <!-- Staff -->
+                    
+
+                    <!-- Staff Attendance -->
+                    
+
+                    <!-- Chart of Accounts -->
+                    <li>
+                        <a href="http://127.0.0.1:8001/chart-of-accounts" class="">
+                            <i class="fas fa-sitemap"></i><span> Chart of Accounts</span>
+                        </a>
+                    </li>
+
+                    <!-- Cash Book / Ledger -->
+                    
+
+                    <!-- Expenses -->
+                                        <li class="submenu">
+                        <a href="javascript:void(0);"><i class="fas fa-money-bill-wave"></i><span> Expense Categories</span> <span
+                                class="menu-arrow"></span></a>
+                        <ul>
+                                                        <li><a href="http://127.0.0.1:8001/expense">Manage Categories</a></li>
+                                                                                    <li><a href="http://127.0.0.1:8001/add-expenses">All Expenses</a></li>
+                                                    </ul>
+                    </li>
+                    
+                    <!-- Reports -->
+                                             <li class="submenu">
+                        <a href="javascript:void(0);"><i class="fas fa-chart-line"></i><span> Reports</span> <span
+                                class="menu-arrow"></span></a>
+                        <ul>
+                                                        <li><a href="http://127.0.0.1:8001/vendor-Ledger-Record">Vendor Ledger</a></li>                            <li><a href="http://127.0.0.1:8001/Customer-Ledger-Record">Customer Ledger</a></li>                            <li><a href="http://127.0.0.1:8001/date-wise-purcahse-report">Purchase Report</a></li>                            <li><a href="http://127.0.0.1:8001/vendor-wise-purcahse-report">Vendor Purchase</a></li>                            <li><a href="http://127.0.0.1:8001/Date-wise-Sales-Report">Sales Report</a></li>                            <li><a href="http://127.0.0.1:8001/Product-wise-Sales-Report">Product Sales</a></li>                            <!-- <li><a href="http://127.0.0.1:8001/contractor-wise-report">Contractor Report</a></li>                             -->
+                        </ul>
+                    </li>
+                     
+
+                    <!-- User Management -->
+                                        <li class="submenu">
+                        <a href="javascript:void(0);"><i class="fas fa-users-cog"></i><span> User Management</span> <span class="menu-arrow"></span></a>
+                        <ul>
+                                                        <li><a href="http://127.0.0.1:8001/admin/users"><i class="fas fa-user"></i> Users</a></li>
+                                                                                    <li><a href="http://127.0.0.1:8001/admin/roles"><i class="fas fa-user-tag"></i> Roles</a></li>
+                                                                                    <li><a href="http://127.0.0.1:8001/admin/permissions"><i class="fas fa-shield-alt"></i> Permissions</a></li>
+                                                    </ul>
+                    </li>
+                    
+                    <!-- Company Settings -->
+                                        <li>
+                        <a href="http://127.0.0.1:8001/settings/company"><i class="fas fa-cog"></i><span> Company Settings</span></a>
+                    </li>
+                    
+                    <!-- Reporting -->
+                     <!-- <li class="submenu">
+                        <a href="javascript:void(0);"><i class="fas fa-chart-pie"></i><span>Reports</span> <span
+                                class="menu-arrow"></span></a>
+                        <ul>
+                            <li><a href="http://127.0.0.1:8001/stock-Record">Item Stock Report </a></li>
+                            <li><a href="http://127.0.0.1:8001/job-profit-report">General Report </a></li>
+                            <li><a href="http://127.0.0.1:8001/vendor-Ledger-Record">Vendor Ledger Record </a></li>
+                            <li><a href="http://127.0.0.1:8001/Customer-Ledger-Record">Customer Ledger Record </a></li>
+                            <li><a href="http://127.0.0.1:8001/date-wise-recovery-report">Date Wise Recovery Report </a></li>
+                            <li><a href="http://127.0.0.1:8001/date-wise-purcahse-report">Date wise Purchase Report </a></li>
+                            <li><a href="http://127.0.0.1:8001/vendor-wise-purcahse-report">Vendor wise Purchase Report </a></li>
+                            
+                            
+                            <li><a href="http://127.0.0.1:8001/Date-wise-Sales-Report">Date wise Sales Report </a></li>
+                            <li><a href="http://127.0.0.1:8001/Product-wise-Sales-Report">Product Wise Sales Report </a></li>
+                        </ul>
+                    </li>  -->
+
+                    <!-- QA Testing Section -->
+                     
+                </ul>
+            
+                                </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    var currentPath = window.location.pathname;
+
+    // Remove static active classes
+    var staticActives = document.querySelectorAll('#sidebar-menu li.active');
+    staticActives.forEach(function(li) {
+        li.classList.remove('active');
+    });
+    
+    var staticActiveLinks = document.querySelectorAll('#sidebar-menu a.active');
+    staticActiveLinks.forEach(function(a) {
+        a.classList.remove('active');
+    });
+
+    // Find and set active link
+    var links = document.querySelectorAll('#sidebar-menu a');
+    var isMatched = false;
+
+    links.forEach(function(link) {
+        var linkHref = link.getAttribute('href');
+        if (linkHref && linkHref !== 'javascript:void(0);' && linkHref !== '#') {
+            var linkPath = '';
+            try {
+                linkPath = new URL(link.href, window.location.origin).pathname;
+            } catch(e) {}
+            
+            if (linkPath === currentPath) {
+                link.parentElement.classList.add('active');
+                link.classList.add('active'); // Add to a tag too if needed
+            
+            // If it's a submenu child, highlight parent and open the submenu
+            var parentUl = link.closest('ul');
+            if (parentUl && parentUl.parentElement.tagName === 'LI' && parentUl.parentElement.classList.contains('submenu')) {
+                parentUl.parentElement.classList.add('active');
+                
+                var parentA = parentUl.parentElement.querySelector('a');
+                if (parentA) {
+                    parentA.classList.add('active');
+                    parentA.classList.add('subdrop');
+                }
+                
+                parentUl.style.display = 'block'; // Make submenu visible
+            }
+            isMatched = true;
+            }
+        }
+    });
+
+    // Fallback: if no match, highlight dashboard
+    if (!isMatched) {
+        var dashLink = document.querySelector('#sidebar-menu a[href="http://127.0.0.1:8001/home"]');
+        if (dashLink) {
+            dashLink.parentElement.classList.add('active');
+            dashLink.classList.add('active');
+        }
+    }
+});
+</script>
+    <div class="page-wrapper">
+        <div class="content">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
+                    <h4 class="fw-bold mb-0">Users</h4>
+                    <a href="http://127.0.0.1:8001/admin/users/create" class="btn btn-success btn-sm"><i class="fas fa-plus"></i> Create User</a>
+                </div>
+                <div class="card-body">
+                    
+                    <form method="GET" class="row g-2 mb-3">
+                        <div class="col-md-4"><input type="text" name="search" class="form-control" placeholder="Search name, username, email..." value=""></div>
+                        <div class="col-md-3">
+                            <select name="role_id" class="form-control">
+                                <option value="">All Roles</option>
+                                                                    <option value="1" >Super Admin</option>
+                                                                    <option value="2" >Administrator</option>
+                                                                    <option value="3" >Distributor</option>
+                                                                    <option value="4" >Salesman</option>
+                                                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <select name="status" class="form-control">
+                                <option value="">All Status</option>
+                                <option value="active" >Active</option>
+                                <option value="inactive" >Inactive</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <button class="btn btn-outline-secondary me-1" type="submit"><i class="fas fa-search"></i> Filter</button>
+                            <a href="http://127.0.0.1:8001/admin/users" class="btn btn-outline-danger"><i class="fas fa-undo"></i> Reset</a>
+                        </div>
+                    </form>
+
+                    <div class="table-responsive rbac-users-wrap">
+                        <style>
+                            .rbac-users-wrap { overflow-x: hidden; }
+                            .rbac-users-wrap .table { width: 100%; table-layout: fixed; margin-bottom: 0; }
+                            .rbac-users-wrap .table thead th,
+                            .rbac-users-wrap .table tbody td { white-space: nowrap; vertical-align: middle; overflow: hidden; text-overflow: ellipsis; padding-left: 6px; padding-right: 6px; }
+                            .rbac-users-wrap .table thead th:nth-child(1), .rbac-users-wrap .table tbody td:nth-child(1) { width: 9%; }
+                            .rbac-users-wrap .table thead th:nth-child(2), .rbac-users-wrap .table tbody td:nth-child(2) { width: 13%; }
+                            .rbac-users-wrap .table thead th:nth-child(3), .rbac-users-wrap .table tbody td:nth-child(3) { width: 13%; }
+                            .rbac-users-wrap .table thead th:nth-child(4), .rbac-users-wrap .table tbody td:nth-child(4) { width: 8%; }
+                            .rbac-users-wrap .table thead th:nth-child(5), .rbac-users-wrap .table tbody td:nth-child(5) { width: 10%; }
+                            .rbac-users-wrap .table thead th:nth-child(6), .rbac-users-wrap .table tbody td:nth-child(6) { width: 14%; }
+                            .rbac-users-wrap .table thead th:nth-child(7), .rbac-users-wrap .table tbody td:nth-child(7) { width: 11%; }
+                            .rbac-users-wrap .table thead th:nth-child(8), .rbac-users-wrap .table tbody td:nth-child(8) { width: 22%; }
+                            .rbac-users-wrap .table tbody tr td:last-child .btn { padding: .2rem .45rem; font-size: .75rem; }
+                            .rbac-users-wrap .table tbody td .badge { padding: .3em .55em; font-size: .72em; }
+                            .rbac-users-wrap .table tbody tr td:first-child .d-flex { flex-wrap: nowrap; }
+                            .rbac-users-wrap .table tbody tr td:first-child .d-flex > div:last-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+                            @media (max-width: 767.98px) {
+                                .rbac-users-wrap { overflow: hidden; }
+                                .rbac-users-wrap .table { display: block; width: 100%; min-width: 0; }
+                                .rbac-users-wrap .table tbody { display: block; width: 100%; }
+                                .rbac-users-wrap thead { display: none; }
+                                .rbac-users-wrap tbody tr {
+                                    display: block;
+                                    background: #fff;
+                                    border: 1px solid #e9ecef;
+                                    border-radius: 8px;
+                                    padding: 12px;
+                                    margin-bottom: 12px;
+                                    box-shadow: 0 1px 3px rgba(0, 0, 0, .08);
+                                }
+                                .rbac-users-wrap tbody tr td {
+                                    display: flex;
+                                    justify-content: space-between;
+                                    align-items: center;
+                                    width: auto !important;
+                                    gap: 12px;
+                                    padding: 6px 0;
+                                    border: none;
+                                    white-space: normal;
+                                    overflow: visible;
+                                    text-overflow: clip;
+                                }
+                                .rbac-users-wrap tbody tr td::before {
+                                    content: attr(data-label);
+                                    font-weight: 600;
+                                    color: #6c757d;
+                                    flex-shrink: 0;
+                                }
+                                .rbac-users-wrap tbody tr td:not(:last-child) { border-bottom: 1px dashed #dee2e6; }
+                                .rbac-users-wrap tbody tr td:last-child { padding-bottom: 2px; }
+                                .rbac-users-wrap tbody tr td[colspan] {
+                                    display: block;
+                                    text-align: center;
+                                    border: none;
+                                }
+                                .rbac-users-wrap tbody tr td[colspan]::before { content: none; }
+                                .rbac-users-wrap .table tbody tr td:last-child .btn { padding: .25rem .5rem; font-size: .8rem; }
+                                .rbac-users-wrap .table tbody tr td:first-child .d-flex > div:last-child { overflow: visible; text-overflow: clip; }
+                            }
+                        </style>
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>User</th>
+                                    <th>Username</th>
+                                    <th>Email</th>
+                                    <th>Role</th>
+                                    <th>Status</th>
+                                    <th>Last Login</th>
+                                    <th>Created</th>
+                                    <th class="text-end">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                                                <tr>
+                                    <td data-label="User">
+                                        <div class="d-flex align-items-center">
+                                            <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center me-2" style="width:36px;height:36px;font-size:14px;">
+                                                W
+                                            </div>
+                                            <div>waleed</div>
+                                        </div>
+                                    </td>
+                                    <td data-label="Username">admin</td>
+                                    <td data-label="Email">admin@gmail.com</td>
+                                    <td data-label="Role"><span class="badge bg-primary">Super Admin</span></td>
+                                    <td data-label="Status">
+                                        <a href="http://127.0.0.1:8001/admin/users/1/toggle-status" class="badge bg-success text-decoration-none">
+                                            active
+                                        </a>
+                                    </td>
+                                    <td data-label="Last Login">33 minutes ago</td>
+                                    <td data-label="Created">06 Aug 2026</td>
+                                    <td class="text-end" data-label="Actions">
+                                        <a href="http://127.0.0.1:8001/admin/users/1" class="btn btn-sm btn-outline-info"><i class="fas fa-eye"></i></a>
+                                        <a href="http://127.0.0.1:8001/admin/users/1/edit" class="btn btn-sm btn-outline-primary"><i class="fas fa-edit"></i></a>
+                                        <button class="btn btn-sm btn-outline-warning" data-bs-toggle="modal" data-bs-target="#resetPwdModal1"><i class="fas fa-key"></i></button>
+                                        <form action="http://127.0.0.1:8001/admin/users/1" method="POST" class="d-inline" onsubmit="return confirm('Delete this user?')">
+                                            <input type="hidden" name="_token" value="" autocomplete="off"> <input type="hidden" name="_method" value="DELETE">                                            <button class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i></button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                <div class="modal fade" id="resetPwdModal1" tabindex="-1">
+                                    <div class="modal-dialog">
+                                        <form method="POST" action="http://127.0.0.1:8001/admin/users/1/reset-password" class="modal-content" autocomplete="off">
+                                            <input type="hidden" name="_token" value="" autocomplete="off">                                            <div class="modal-header"><h5 class="modal-title">Reset Password - waleed</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                                            <div class="modal-body">
+                                                <div class="mb-3">
+                                                    <label class="form-label">New Password</label>
+                                                    <div class="input-group">
+                                                        <input type="password" id="passwordReset1" name="password" class="form-control" required autocomplete="new-password">
+                                                        <button class="btn btn-outline-secondary" type="button" onclick="toggleResetPasswordVisibility(1)"><i class="fas fa-eye" id="toggleIconReset1"></i></button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer"><button type="submit" class="btn btn-primary">Reset</button></div>
+                                        </form>
+                                    </div>
+                                </div>
+                                                                <tr>
+                                    <td data-label="User">
+                                        <div class="d-flex align-items-center">
+                                            <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center me-2" style="width:36px;height:36px;font-size:14px;">
+                                                T
+                                            </div>
+                                            <div>Test User</div>
+                                        </div>
+                                    </td>
+                                    <td data-label="Username">testuser</td>
+                                    <td data-label="Email">user@gmail.com</td>
+                                    <td data-label="Role"><span class="badge bg-primary">Administrator</span></td>
+                                    <td data-label="Status">
+                                        <a href="http://127.0.0.1:8001/admin/users/2/toggle-status" class="badge bg-success text-decoration-none">
+                                            active
+                                        </a>
+                                    </td>
+                                    <td data-label="Last Login">Never</td>
+                                    <td data-label="Created">06 Aug 2026</td>
+                                    <td class="text-end" data-label="Actions">
+                                        <a href="http://127.0.0.1:8001/admin/users/2" class="btn btn-sm btn-outline-info"><i class="fas fa-eye"></i></a>
+                                        <a href="http://127.0.0.1:8001/admin/users/2/edit" class="btn btn-sm btn-outline-primary"><i class="fas fa-edit"></i></a>
+                                        <button class="btn btn-sm btn-outline-warning" data-bs-toggle="modal" data-bs-target="#resetPwdModal2"><i class="fas fa-key"></i></button>
+                                        <form action="http://127.0.0.1:8001/admin/users/2" method="POST" class="d-inline" onsubmit="return confirm('Delete this user?')">
+                                            <input type="hidden" name="_token" value="" autocomplete="off"> <input type="hidden" name="_method" value="DELETE">                                            <button class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i></button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                <div class="modal fade" id="resetPwdModal2" tabindex="-1">
+                                    <div class="modal-dialog">
+                                        <form method="POST" action="http://127.0.0.1:8001/admin/users/2/reset-password" class="modal-content" autocomplete="off">
+                                            <input type="hidden" name="_token" value="" autocomplete="off">                                            <div class="modal-header"><h5 class="modal-title">Reset Password - Test User</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                                            <div class="modal-body">
+                                                <div class="mb-3">
+                                                    <label class="form-label">New Password</label>
+                                                    <div class="input-group">
+                                                        <input type="password" id="passwordReset2" name="password" class="form-control" required autocomplete="new-password">
+                                                        <button class="btn btn-outline-secondary" type="button" onclick="toggleResetPasswordVisibility(2)"><i class="fas fa-eye" id="toggleIconReset2"></i></button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer"><button type="submit" class="btn btn-primary">Reset</button></div>
+                                        </form>
+                                    </div>
+                                </div>
+                                                            </tbody>
+                        </table>
+                    </div>
+                    <div class="d-flex justify-content-end"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+function toggleResetPasswordVisibility(userId) {
+    const pwd = document.getElementById('passwordReset' + userId);
+    const icon = document.getElementById('toggleIconReset' + userId);
+    if (pwd.type === 'password') {
+        pwd.type = 'text';
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+    } else {
+        pwd.type = 'password';
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+    }
+}
+</script>
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<!-- jQuery -->
+<script src="http://127.0.0.1:8001/assets/js/jquery-3.6.0.min.js"></script>
+
+<!-- Bootstrap & Plugins -->
+<script src="http://127.0.0.1:8001/assets/js/bootstrap.bundle.min.js"></script>
+<script src="http://127.0.0.1:8001/assets/js/feather.min.js"></script>
+<script src="http://127.0.0.1:8001/assets/js/jquery.slimscroll.min.js"></script>
+
+<!-- DataTables -->
+<script src="http://127.0.0.1:8001/assets/js/jquery.dataTables.min.js"></script>
+<script src="http://127.0.0.1:8001/assets/js/dataTables.bootstrap4.min.js"></script>
+
+<!-- ApexCharts -->
+<script src="http://127.0.0.1:8001/assets/plugins/apexchart/apexcharts.min.js"></script>
+<script src="http://127.0.0.1:8001/assets/plugins/apexchart/chart-data.js"></script>
+
+<!-- Select2 -->
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<!-- Custom JS -->
+<script src="http://127.0.0.1:8001/assets/js/script.js?v=3"></script>
+
+<script>
+    $(document).ready(function () {
+        // Initialize Select2
+        $('.search').select2({
+            placeholder: "Search Or Select",
+            allowClear: true,
+            width: '100%'  // Fit with Bootstrap
+        });
+
+        // Hide global loader once page is ready
+        let globalLoader = document.getElementById("global-loader");
+        if (globalLoader) {
+            globalLoader.style.display = "none";
+        }
+
+        // Initialize Feather Icons
+        if (typeof feather !== 'undefined') {
+            feather.replace();
+        }
+
+        // Optional: Initialize DataTables for tables with class 'datatable'
+        if ($.fn.DataTable) {
+            $('.datatable').DataTable({
+                retrieve: true
+            });
+        }
+    });
+</script>
+
+</body>
+</html>

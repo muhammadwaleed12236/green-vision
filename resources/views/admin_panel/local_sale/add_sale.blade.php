@@ -212,6 +212,133 @@
     }
     .sel-clear:hover { color: #e03131; background: #ffe3e3; }
     .item-input.ac-hidden { display: none; }
+
+    /* ============================================
+       RESPONSIVE LAYOUT (mirror of admin dashboard)
+       ============================================ */
+
+    /* Sale items table never scrolls horizontally - cells wrap to fit */
+    .ls-wrap {
+        overflow-x: hidden;
+    }
+    .ls-wrap .sale-table {
+        table-layout: fixed;
+        width: 100%;
+        min-width: 0;
+    }
+    .ls-wrap .sale-table th,
+    .ls-wrap .sale-table td {
+        white-space: normal !important;
+        word-break: break-word;
+        overflow-wrap: break-word;
+    }
+    .ls-wrap .sale-table th:nth-child(1), .ls-wrap .sale-table td:nth-child(1) { width: 5%; }
+    .ls-wrap .sale-table th:nth-child(2), .ls-wrap .sale-table td:nth-child(2) { width: 35%; }
+    .ls-wrap .sale-table th:nth-child(3), .ls-wrap .sale-table td:nth-child(3) { width: 10%; }
+    .ls-wrap .sale-table th:nth-child(4), .ls-wrap .sale-table td:nth-child(4) { width: 15%; }
+    .ls-wrap .sale-table th:nth-child(5), .ls-wrap .sale-table td:nth-child(5) { width: 8%; }
+    .ls-wrap .sale-table th:nth-child(6), .ls-wrap .sale-table td:nth-child(6) { width: 11%; }
+    .ls-wrap .sale-table th:nth-child(7), .ls-wrap .sale-table td:nth-child(7) { width: 11%; }
+    .ls-wrap .sale-table th:nth-child(8), .ls-wrap .sale-table td:nth-child(8) { width: 5%; }
+
+    /* ---------- Page header (Estimate/Sale/Booking + date) ---------- */
+    @media (max-width: 575.98px) {
+        .sale-head {
+            flex-direction: column;
+            align-items: flex-start !important;
+            gap: 10px;
+        }
+        .sale-head-actions {
+            width: 100%;
+            flex-direction: column;
+            align-items: stretch !important;
+            gap: 10px;
+        }
+        .sale-head-actions .btn-group {
+            width: 100%;
+            flex-wrap: wrap;
+        }
+        .sale-head-actions .btn-group .sale-type-label {
+            flex: 1;
+        }
+        .sale-head-actions .date-box {
+            width: 100%;
+            max-width: 100% !important;
+        }
+        .page-title h4 { font-size: 1.05rem; }
+        .page-title h6 { font-size: 0.85rem; }
+    }
+
+    /* ---------- Sale items table -> stacked cards (phone & small tablet) ---------- */
+    @media (max-width: 767.98px) {
+        .ls-wrap .sale-table thead {
+            display: none;
+        }
+        .ls-wrap .sale-table,
+        .ls-wrap .sale-table tbody,
+        .ls-wrap .sale-table tr,
+        .ls-wrap .sale-table td {
+            display: block;
+            width: 100% !important;
+            box-sizing: border-box;
+        }
+        .ls-wrap .sale-table {
+            border: 0 !important;
+        }
+        .ls-wrap .sale-table tbody {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .ls-wrap .sale-table tbody tr {
+            background: #fff;
+            border: 1px solid #eef2f7;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            padding: 6px 12px;
+            margin: 0 !important;
+        }
+        .ls-wrap .sale-table tbody tr:hover {
+            background: #fff;
+        }
+        .ls-wrap .sale-table td {
+            display: flex !important;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 7px 0 !important;
+            border: 0 !important;
+            border-bottom: 1px dashed #eef2f7 !important;
+            background: transparent !important;
+            font-size: 0.85rem;
+            color: #1e293b;
+            text-align: right;
+            white-space: normal;
+            word-break: break-word;
+        }
+        .ls-wrap .sale-table td:last-child {
+            border-bottom: 0 !important;
+        }
+        .ls-wrap .sale-table td::before {
+            content: attr(data-label);
+            flex-shrink: 0;
+            color: #94a3b8;
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            text-align: left;
+        }
+        .ls-wrap .sale-table td .form-control,
+        .ls-wrap .sale-table td .input-group,
+        .ls-wrap .sale-table td .qty-box {
+            width: 100%;
+            max-width: 100%;
+        }
+        .ls-wrap .sale-table td .qty-box .qty {
+            flex: 1;
+        }
+    }
 </style>
 
 <div class="main-wrapper">
@@ -227,9 +354,9 @@
                     <input type="hidden" name="estimate_id" value="{{ $cloneEstimate->id }}">
                 @endif
 
-                <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-3 sale-head">
                     <h4 class="mb-0">🧾 Job Order / Sale</h4>
-                    <div class="d-flex gap-3 align-items-center">
+                    <div class="d-flex gap-3 align-items-center sale-head-actions">
                         <div class="btn-group" role="group">
                             <input type="radio" class="btn-check" name="sale_type" id="sale_type_estimate" value="estimate" {{ old('sale_type') == 'estimate' ? 'checked' : '' }} autocomplete="off">
                             <label class="btn btn-outline-secondary px-3 sale-type-label" for="sale_type_estimate">Estimate</label>
@@ -240,7 +367,7 @@
                             <input type="radio" class="btn-check" name="sale_type" id="sale_type_booking" value="booking" {{ old('sale_type', 'booking') == 'booking' ? 'checked' : '' }} autocomplete="off">
                             <label class="btn btn-outline-secondary px-3 sale-type-label" for="sale_type_booking">Booking</label>
                         </div>
-                        <div style="max-width: 260px;">
+                        <div class="date-box" style="max-width: 260px;">
                             <label class="small text-muted d-block mb-0">Sale Date & Time</label>
                             <input type="datetime-local" name="sale_date" class="form-control form-control-sm" value="{{ old('sale_date', date('Y-m-d\TH:i')) }}">
                         </div>
@@ -328,7 +455,7 @@
 
                 <div class="card mb-3">
                     <div class="card-body p-0">
-                        <div class="table-responsive">
+                        <div class="table-responsive ls-wrap">
                             <table class="table table-borderless mb-0 sale-table">
                                 <thead>
                                     <tr class="bg-light">
@@ -356,8 +483,8 @@
                                  @endphp
                                  @for($i=0; $i < $rowCount; $i++)
                                      <tr class="sale-row">
-                                         <td class="text-center"><span class="row-index">{{ $i + 1 }}</span></td>
-                                         <td style="position:relative;">
+                                         <td class="text-center" data-label="#"> <span class="row-index">{{ $i + 1 }}</span></td>
+                                         <td style="position:relative;" data-label="Product">
                                              <input type="hidden" name="item_id[]" class="item-id" value="{{ old('item_id.' . $i) }}">
                                              <input type="hidden" name="item_image_val[]" class="item-image-val" value="">
                                              <input type="hidden" name="item_sku_val[]" class="item-sku-val" value="">
@@ -370,22 +497,22 @@
                                              <div class="selected-display d-none"></div>
                                              <div class="autocomplete-list d-none"></div>
                                          </td>
-                                         <td>
+                                         <td data-label="Avail Stock">
                                              <input type="text" name="avail_stock[]" class="form-control avail-stock p-1 text-center readonly-box" value="" readonly tabindex="-1" placeholder="-">
                                          </td>
-                                         <td>
+                                         <td data-label="Qty">
                                              <div class="qty-box">
                                                  <button type="button" class="btn qty-minus">−</button>
                                                  <input name="qty[]" class="form-control qty text-center" value="{{ old('qty.' . $i) ?? ($cloneQtys[$i] ?? 0) }}" placeholder="0">
                                                  <button type="button" class="btn qty-plus">+</button>
                                              </div>
                                          </td>
-                                         <td>
+                                         <td data-label="Unit">
                                              <input type="text" name="unit[]" class="form-control unit p-1 text-center" placeholder="Unit" value="{{ old('unit.' . $i) ?? ($cloneUnits[$i] ?? '') }}" readonly>
                                          </td>
-                                         <td><input name="rate[]" class="form-control rate text-end" placeholder="0.00" value="{{ old('rate.' . $i) ?? ($cloneRates[$i] ?? '') }}"></td>
-                                         <td><input name="amount[]" class="form-control item-total text-end" value="{{ old('amount.' . $i) ?? ($cloneAmounts[$i] ?? '0.00') }}" readonly></td>
-                                         <td>
+                                         <td data-label="Price"><input name="rate[]" class="form-control rate text-end" placeholder="0.00" value="{{ old('rate.' . $i) ?? ($cloneRates[$i] ?? '') }}"></td>
+                                         <td data-label="Amount"><input name="amount[]" class="form-control item-total text-end" value="{{ old('amount.' . $i) ?? ($cloneAmounts[$i] ?? '0.00') }}" readonly></td>
+                                         <td data-label="Action">
                                              <div class="d-flex gap-1 justify-content-center">
                                                  <button type="button" class="btn btn-success btn-action add-row">+</button>
                                                  <button type="button" class="btn btn-danger btn-action remove-row">×</button>

@@ -261,15 +261,15 @@
                                     @endphp
 
                                     <tr>
-                                        <td>{{ $loop->iteration }}</td>
+                                        <td data-label="#"> {{ $loop->iteration }}</td>
 
-                                        <td>
+                                        <td data-label="Job Number">
                                             <span class="badge bg-primary">
                                                 {{ $ls->invoice_number ?? 'N/A' }}
                                             </span>
                                         </td>
 
-                                        <td>
+                                        <td data-label="Customer">
                                             @php
                                                 if ($ls) {
                                                     if ($ls->party_type === 'customer') {
@@ -285,17 +285,17 @@
                                             @endphp
                                         </td>
 
-                                        <td><span class="badge bg-info">{{ $summary->item_count }} Items</span></td>
+                                        <td data-label="Items"><span class="badge bg-info">{{ $summary->item_count }} Items</span></td>
 
-                                        <td>
+                                        <td data-label="Stock Out">
                                             <span class="badge bg-danger">
                                                 {{ number_format($summary->total_stock_out, 0) }}
                                             </span>
                                         </td>
 
-                                        <td>{{ \Carbon\Carbon::parse($summary->latest_date)->format('d-M-Y') }}</td>
+                                        <td data-label="Date">{{ \Carbon\Carbon::parse($summary->latest_date)->format('d-M-Y') }}</td>
 
-                                        <td>
+                                        <td data-label="Action">
                                             <a href="{{ route('stockout-details', $summary->local_sales_id) }}"
                                                class="btn btn-sm text-white btn-info">
                                                 Details
@@ -365,8 +365,8 @@
                     </div>
 
                     {{-- PRODUCTS TABLE --}}
-                    <div class="table-responsive">
-                        <table class="table table-bordered">
+                    <div class="table-responsive so-modal-wrap">
+                        <table class="table table-bordered so-products">
                             <thead class="table-light">
                                 <tr>
                                     <th>Product</th>
@@ -532,17 +532,17 @@ $(document).ready(function () {
 
                     tbody.append(`
                         <tr>
-                            <td>
+                            <td data-label="Product">
                                 <input type="hidden" name="products[${index}][product_id]" value="${product.product_id}">
                                 <input type="text" class="form-control bg-light" value="${product.item_name}" readonly>
                                 ${manualNote}
                             </td>
-                            <td><input type="text" class="form-control bg-light" value="${product.unit}" readonly></td>
-                            <td><input type="text" class="form-control bg-light available-stock" value="${stockDisplay}" readonly></td>
-                            <td><input type="number" class="form-control bg-light" value="${product.job_quantity}" readonly></td>
-                            <td>${usedStockHtml}</td>
-                            <td><input type="number" class="form-control bg-light" value="${product.unit_price}" readonly></td>
-                            <td><input type="number" class="form-control bg-light" value="${product.total_price}" readonly></td>
+                            <td data-label="Unit"><input type="text" class="form-control bg-light" value="${product.unit}" readonly></td>
+                            <td data-label="Avail Stock"><input type="text" class="form-control bg-light available-stock" value="${stockDisplay}" readonly></td>
+                            <td data-label="Job Qty"><input type="number" class="form-control bg-light" value="${product.job_quantity}" readonly></td>
+                            <td data-label="Used Qty">${usedStockHtml}</td>
+                            <td data-label="Unit Price"><input type="number" class="form-control bg-light" value="${product.unit_price}" readonly></td>
+                            <td data-label="Total Price"><input type="number" class="form-control bg-light" value="${product.total_price}" readonly></td>
                         </tr>
                     `);
                 });

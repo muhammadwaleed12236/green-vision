@@ -37,7 +37,68 @@
                         </div>
                     </form>
 
-                    <div class="table-responsive">
+                    <div class="table-responsive rbac-users-wrap">
+                        <style>
+                            .rbac-users-wrap { overflow-x: hidden; }
+                            .rbac-users-wrap .table { width: 100%; table-layout: fixed; margin-bottom: 0; }
+                            .rbac-users-wrap .table thead th,
+                            .rbac-users-wrap .table tbody td { white-space: nowrap; vertical-align: middle; overflow: hidden; text-overflow: ellipsis; padding-left: 6px; padding-right: 6px; }
+                            .rbac-users-wrap .table thead th:nth-child(1), .rbac-users-wrap .table tbody td:nth-child(1) { width: 9%; }
+                            .rbac-users-wrap .table thead th:nth-child(2), .rbac-users-wrap .table tbody td:nth-child(2) { width: 13%; }
+                            .rbac-users-wrap .table thead th:nth-child(3), .rbac-users-wrap .table tbody td:nth-child(3) { width: 13%; }
+                            .rbac-users-wrap .table thead th:nth-child(4), .rbac-users-wrap .table tbody td:nth-child(4) { width: 8%; }
+                            .rbac-users-wrap .table thead th:nth-child(5), .rbac-users-wrap .table tbody td:nth-child(5) { width: 10%; }
+                            .rbac-users-wrap .table thead th:nth-child(6), .rbac-users-wrap .table tbody td:nth-child(6) { width: 14%; }
+                            .rbac-users-wrap .table thead th:nth-child(7), .rbac-users-wrap .table tbody td:nth-child(7) { width: 11%; }
+                            .rbac-users-wrap .table thead th:nth-child(8), .rbac-users-wrap .table tbody td:nth-child(8) { width: 22%; }
+                            .rbac-users-wrap .table tbody tr td:last-child .btn { padding: .2rem .45rem; font-size: .75rem; }
+                            .rbac-users-wrap .table tbody td .badge { padding: .3em .55em; font-size: .72em; }
+                            .rbac-users-wrap .table tbody tr td:first-child .d-flex { flex-wrap: nowrap; }
+                            .rbac-users-wrap .table tbody tr td:first-child .d-flex > div:last-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+                            @media (max-width: 767.98px) {
+                                .rbac-users-wrap { overflow: hidden; }
+                                .rbac-users-wrap .table { display: block; width: 100%; min-width: 0; }
+                                .rbac-users-wrap .table tbody { display: block; width: 100%; }
+                                .rbac-users-wrap thead { display: none; }
+                                .rbac-users-wrap tbody tr {
+                                    display: block;
+                                    background: #fff;
+                                    border: 1px solid #e9ecef;
+                                    border-radius: 8px;
+                                    padding: 12px;
+                                    margin-bottom: 12px;
+                                    box-shadow: 0 1px 3px rgba(0, 0, 0, .08);
+                                }
+                                .rbac-users-wrap tbody tr td {
+                                    display: flex;
+                                    justify-content: space-between;
+                                    align-items: center;
+                                    width: auto !important;
+                                    gap: 12px;
+                                    padding: 6px 0;
+                                    border: none;
+                                    white-space: normal;
+                                    overflow: visible;
+                                    text-overflow: clip;
+                                }
+                                .rbac-users-wrap tbody tr td::before {
+                                    content: attr(data-label);
+                                    font-weight: 600;
+                                    color: #6c757d;
+                                    flex-shrink: 0;
+                                }
+                                .rbac-users-wrap tbody tr td:not(:last-child) { border-bottom: 1px dashed #dee2e6; }
+                                .rbac-users-wrap tbody tr td:last-child { padding-bottom: 2px; }
+                                .rbac-users-wrap tbody tr td[colspan] {
+                                    display: block;
+                                    text-align: center;
+                                    border: none;
+                                }
+                                .rbac-users-wrap tbody tr td[colspan]::before { content: none; }
+                                .rbac-users-wrap .table tbody tr td:last-child .btn { padding: .25rem .5rem; font-size: .8rem; }
+                                .rbac-users-wrap .table tbody tr td:first-child .d-flex > div:last-child { overflow: visible; text-overflow: clip; }
+                            }
+                        </style>
                         <table class="table table-hover">
                             <thead class="table-light">
                                 <tr>
@@ -54,7 +115,7 @@
                             <tbody>
                                 @forelse($users as $user)
                                 <tr>
-                                    <td>
+                                    <td data-label="User">
                                         <div class="d-flex align-items-center">
                                             <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center me-2" style="width:36px;height:36px;font-size:14px;">
                                                 {{ strtoupper(substr($user->name, 0, 1)) }}
@@ -62,17 +123,17 @@
                                             <div>{{ $user->name }}</div>
                                         </div>
                                     </td>
-                                    <td>{{ $user->username ?? '-' }}</td>
-                                    <td>{{ $user->email }}</td>
-                                    <td><span class="badge bg-primary">{{ $user->role->name ?? 'N/A' }}</span></td>
-                                    <td>
+                                    <td data-label="Username">{{ $user->username ?? '-' }}</td>
+                                    <td data-label="Email">{{ $user->email }}</td>
+                                    <td data-label="Role"><span class="badge bg-primary">{{ $user->role->name ?? 'N/A' }}</span></td>
+                                    <td data-label="Status">
                                         <a href="{{ route('rbac.users.toggle-status', $user) }}" class="badge {{ $user->status === 'active' ? 'bg-success' : 'bg-secondary' }} text-decoration-none">
                                             {{ $user->status ?? 'active' }}
                                         </a>
                                     </td>
-                                    <td>{{ $user->last_login_at ? \Carbon\Carbon::parse($user->last_login_at)->diffForHumans() : 'Never' }}</td>
-                                    <td>{{ $user->created_at->format('d M Y') }}</td>
-                                    <td class="text-end">
+                                    <td data-label="Last Login">{{ $user->last_login_at ? \Carbon\Carbon::parse($user->last_login_at)->diffForHumans() : 'Never' }}</td>
+                                    <td data-label="Created">{{ $user->created_at->format('d M Y') }}</td>
+                                    <td class="text-end" data-label="Actions">
                                         <a href="{{ route('rbac.users.show', $user) }}" class="btn btn-sm btn-outline-info"><i class="fas fa-eye"></i></a>
                                         <a href="{{ route('rbac.users.edit', $user) }}" class="btn btn-sm btn-outline-primary"><i class="fas fa-edit"></i></a>
                                         <button class="btn btn-sm btn-outline-warning" data-bs-toggle="modal" data-bs-target="#resetPwdModal{{ $user->id }}"><i class="fas fa-key"></i></button>

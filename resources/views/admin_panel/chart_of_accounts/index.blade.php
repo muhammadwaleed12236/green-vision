@@ -5,7 +5,7 @@
     
 <div class="page-wrapper">
     <div class="content">
-        <div class="page-header">
+        <div class="page-header coa-head">
             <div class="page-title">
                 <h4>Chart of Accounts</h4>
                 <h6>Manage your financial accounts and categories</h6>
@@ -19,6 +19,99 @@
                 </a>
             </div>
         </div>
+
+        <style>
+            .coa-head .page-btn {
+                flex-wrap: wrap;
+                gap: 8px;
+                justify-content: center;
+            }
+            .coa-wrap {
+                overflow-x: hidden;
+            }
+            .coa-wrap .table {
+                table-layout: fixed;
+                width: 100%;
+                min-width: 0;
+            }
+            .coa-wrap .table th,
+            .coa-wrap .table td {
+                white-space: normal;
+                word-break: break-word;
+                overflow-wrap: break-word;
+            }
+            .coa-wrap .table th:nth-child(1) { width: 16%; }
+            .coa-wrap .table th:nth-child(2) { width: 24%; }
+            .coa-wrap .table th:nth-child(3) { width: 12%; }
+            .coa-wrap .table th:nth-child(4) { width: 10%; }
+            .coa-wrap .table th:nth-child(5) { width: 10%; }
+            .coa-wrap .table th:nth-child(6) { width: 28%; }
+            .coa-wrap .coa-val {
+                display: contents;
+            }
+            .coa-wrap .table .coa-actions a,
+            .coa-wrap .table .coa-actions .btn {
+                white-space: nowrap;
+            }
+
+            @media (max-width: 767.98px) {
+                .coa-wrap .table,
+                .coa-wrap .table tbody,
+                .coa-wrap .table tbody tr {
+                    display: block;
+                }
+                .coa-wrap .table thead {
+                    display: none;
+                }
+                .coa-wrap .table tbody tr {
+                    margin-bottom: 12px;
+                    border: 1px solid #eef2f7 !important;
+                    border-radius: 8px;
+                    background: #fff;
+                }
+                .coa-wrap .table tbody tr td {
+                    display: flex !important;
+                    width: 100% !important;
+                    align-items: center;
+                    justify-content: space-between;
+                    gap: 10px;
+                    padding: 7px 10px !important;
+                    border: 0 !important;
+                    border-bottom: 1px dashed #eef2f7 !important;
+                    text-align: right;
+                }
+                .coa-wrap .table tbody tr td:last-child {
+                    border-bottom: 0 !important;
+                }
+                .coa-wrap .table tbody tr td[data-label]::before {
+                    content: attr(data-label);
+                    flex-shrink: 0;
+                    color: #94a3b8;
+                    font-size: 0.68rem;
+                    font-weight: 700;
+                    text-transform: uppercase;
+                    letter-spacing: 0.05em;
+                    text-align: left;
+                }
+                .coa-wrap .table tbody tr td .coa-val {
+                    display: block;
+                    flex: 1 1 auto;
+                    min-width: 0;
+                    text-align: right;
+                    overflow-wrap: break-word;
+                }
+                .coa-wrap .table tbody tr td.coa-blank {
+                    display: none;
+                }
+                .coa-wrap .table tbody tr td.coa-actions .coa-val {
+                    display: flex;
+                    justify-content: flex-end;
+                    flex-wrap: wrap;
+                    gap: 8px;
+                    align-items: center;
+                }
+            }
+        </style>
 
         @if(session('success'))
         <div class="alert alert-success">
@@ -38,7 +131,7 @@
 
         <div class="card">
             <div class="card-body">
-                <div class="table-responsive">
+                <div class="table-responsive coa-wrap">
                     <table class="table table-hover">
                         <thead>
                             <tr>
@@ -53,16 +146,20 @@
                         <tbody>
                             @forelse($categories as $category)
                                 <tr class="bg-light">
-                                    <td colspan="5" class="fw-bold text-primary">
-                                        {{ $category->name }}
-                                        @if($category->description)
-                                            <span class="text-muted small fw-normal ms-2">({{ $category->description }})</span>
-                                        @endif
+                                    <td colspan="5" class="fw-bold text-primary" data-label="Category">
+                                        <span class="coa-val">
+                                            {{ $category->name }}
+                                            @if($category->description)
+                                                <span class="text-muted small fw-normal ms-2">({{ $category->description }})</span>
+                                            @endif
+                                        </span>
                                     </td>
-                                    <td class="text-end">
-                                        <a class="me-3" href="javascript:void(0);" data-bs-toggle="modal" data-bs-target="#editCategoryModal{{ $category->id }}">
-                                            <img src="{{ asset('assets/img/icons/edit.svg') }}" alt="img">
-                                        </a>
+                                    <td class="text-end coa-actions" data-label="Actions">
+                                        <span class="coa-val">
+                                            <a class="me-3" href="javascript:void(0);" data-bs-toggle="modal" data-bs-target="#editCategoryModal{{ $category->id }}">
+                                                <img src="{{ asset('assets/img/icons/edit.svg') }}" alt="img">
+                                            </a>
+                                        </span>
                                     </td>
                                 </tr>
                                 
@@ -98,31 +195,37 @@
 
                                 @forelse($category->accounts as $account)
                                 <tr>
-                                    <td></td>
-                                    <td>
-                                        {{ $account->name }}
-                                        <div class="small text-muted mt-1">Opening: {{ number_format($account->opening_balance, 2) }}</div>
-                                    </td>
-                                    <td class="fw-bold">{{ number_format($account->calculated_balance, 2) }}</td>
-                                    <td><span class="badge {{ $account->balance_type == 'debit' ? 'bg-info' : 'bg-secondary' }}">{{ ucfirst($account->balance_type) }}</span></td>
-                                    <td>
-                                        <span class="badge {{ $account->status ? 'bg-success' : 'bg-danger' }}">
-                                            {{ $account->status ? 'Active' : 'Inactive' }}
+                                    <td class="coa-blank" data-label="Category"></td>
+                                    <td data-label="Account">
+                                        <span class="coa-val">
+                                            {{ $account->name }}
+                                            <div class="small text-muted mt-1">Opening: {{ number_format($account->opening_balance, 2) }}</div>
                                         </span>
                                     </td>
-                                    <td class="text-end">
-                                        <a class="me-3" href="{{ route('chart-of-accounts.ledger', $account->id) }}" title="View Ledger">
-                                            <i class="fas fa-book text-info" style="font-size: 1.2rem;"></i>
-                                        </a>
-                                        <a class="me-3" href="javascript:void(0);" data-bs-toggle="modal" data-bs-target="#editAccountModal{{ $account->id }}">
-                                            <img src="{{ asset('assets/img/icons/edit.svg') }}" alt="img">
-                                        </a>
-                                        <form action="{{ route('chart-of-accounts.account.toggle', $account->id) }}" method="POST" class="d-inline">
-                                            @csrf
-                                            <button type="submit" class="btn btn-sm btn-outline-{{ $account->status ? 'danger' : 'success' }}" title="{{ $account->status ? 'Deactivate' : 'Activate' }}">
-                                                <i class="fas fa-{{ $account->status ? 'ban' : 'check' }}"></i> {{ $account->status ? 'Deactivate' : 'Activate' }}
-                                            </button>
-                                        </form>
+                                    <td class="fw-bold" data-label="Current Balance"><span class="coa-val">{{ number_format($account->calculated_balance, 2) }}</span></td>
+                                    <td data-label="Type"><span class="coa-val"><span class="badge {{ $account->balance_type == 'debit' ? 'bg-info' : 'bg-secondary' }}">{{ ucfirst($account->balance_type) }}</span></span></td>
+                                    <td data-label="Status">
+                                        <span class="coa-val">
+                                            <span class="badge {{ $account->status ? 'bg-success' : 'bg-danger' }}">
+                                                {{ $account->status ? 'Active' : 'Inactive' }}
+                                            </span>
+                                        </span>
+                                    </td>
+                                    <td class="text-end coa-actions" data-label="Actions">
+                                        <span class="coa-val">
+                                            <a class="me-3" href="{{ route('chart-of-accounts.ledger', $account->id) }}" title="View Ledger">
+                                                <i class="fas fa-book text-info" style="font-size: 1.2rem;"></i>
+                                            </a>
+                                            <a class="me-3" href="javascript:void(0);" data-bs-toggle="modal" data-bs-target="#editAccountModal{{ $account->id }}">
+                                                <img src="{{ asset('assets/img/icons/edit.svg') }}" alt="img">
+                                            </a>
+                                            <form action="{{ route('chart-of-accounts.account.toggle', $account->id) }}" method="POST" class="d-inline">
+                                                @csrf
+                                                <button type="submit" class="btn btn-sm btn-outline-{{ $account->status ? 'danger' : 'success' }}" title="{{ $account->status ? 'Deactivate' : 'Activate' }}">
+                                                    <i class="fas fa-{{ $account->status ? 'ban' : 'check' }}"></i> {{ $account->status ? 'Deactivate' : 'Activate' }}
+                                                </button>
+                                            </form>
+                                        </span>
                                     </td>
                                 </tr>
 

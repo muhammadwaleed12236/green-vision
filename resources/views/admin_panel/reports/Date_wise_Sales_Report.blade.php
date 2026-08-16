@@ -58,24 +58,26 @@
 
                     <div class="title mt-4">DATE WISE SALE REPORT</div>
                     <div id="salesmanHeading" class="text-left fw-bold mb-2" style="font-size: 16px;"></div>
-                    <table id="recoveryTable">
-                        <thead>
-                            <tr>
-                                <th>SN#</th>
-                                <th>Invoice#</th>
-                                <th>Date</th>
-                                <th>Party Name</th>
-                                <th>Area</th>
-                                <th>Remarks</th>
-                                <th>Sales Amount</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td colspan="7" class="text-center">No Data Available</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                    <div class="table-responsive dwsr-wrap">
+                        <table id="recoveryTable">
+                            <thead>
+                                <tr>
+                                    <th>SN#</th>
+                                    <th>Invoice#</th>
+                                    <th>Date</th>
+                                    <th>Party Name</th>
+                                    <th>Area</th>
+                                    <th>Remarks</th>
+                                    <th>Sales Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td colspan="7" class="text-center">No Data Available</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
 
 
                 </div>
@@ -114,6 +116,45 @@
         font-size: 20px;
         font-weight: bold;
         margin-bottom: 10px;
+    }
+
+    /* ============ RESPONSIVE (mirror of dashboard) ============ */
+    html, body {
+        overflow-x: hidden;
+        width: 100%;
+        margin: 0;
+    }
+
+    .table-responsive.dwsr-wrap {
+        overflow-x: hidden;
+    }
+    .dwsr-wrap #recoveryTable {
+        table-layout: fixed;
+        width: 100%;
+        min-width: 0;
+    }
+    .dwsr-wrap #recoveryTable th,
+    .dwsr-wrap #recoveryTable td {
+        white-space: normal;
+        word-break: break-word;
+        overflow-wrap: break-word;
+    }
+    .dwsr-wrap #recoveryTable th:nth-child(1) { width: 5%; }
+    .dwsr-wrap #recoveryTable th:nth-child(2) { width: 12%; }
+    .dwsr-wrap #recoveryTable th:nth-child(3) { width: 12%; }
+    .dwsr-wrap #recoveryTable th:nth-child(4) { width: 20%; }
+    .dwsr-wrap #recoveryTable th:nth-child(5) { width: 12%; }
+    .dwsr-wrap #recoveryTable th:nth-child(6) { width: 24%; }
+    .dwsr-wrap #recoveryTable th:nth-child(7) { width: 15%; }
+
+    @media (max-width: 575.98px) {
+        .dwsr-wrap #recoveryTable {
+            font-size: 11px;
+        }
+        .dwsr-wrap #recoveryTable th,
+        .dwsr-wrap #recoveryTable td {
+            padding: 4px;
+        }
     }
 </style>
 <script>
@@ -161,13 +202,13 @@
                             totalAmount += amount;
 
                             let row = `<tr>
-                            <td>${index + 1}</td>
-                            <td>${item.invoice_number}</td> <!-- Invoice Number yahan aayega -->
-                            <td>${formattedDate}</td>
-                            <td>${item.party_name}</td>
-                            <td>${item.area}</td>
-                            <td>${item.remarks}</td>
-                            <td>${item.amount_paid}</td>
+                            <td data-label="SN#">${index + 1}</td>
+                            <td data-label="Invoice#">${item.invoice_number}</td> <!-- Invoice Number yahan aayega -->
+                            <td data-label="Date">${formattedDate}</td>
+                            <td data-label="Party Name">${item.party_name}</td>
+                            <td data-label="Area">${item.area}</td>
+                            <td data-label="Remarks">${item.remarks}</td>
+                            <td data-label="Sales Amount">${item.amount_paid}</td>
                         </tr>`;
                             tableBody.innerHTML += row;
                         });
@@ -227,13 +268,13 @@
 
                             tableBody.innerHTML += `
                             <tr>
-                                <td>${index + 1}</td>
-                                <td>${item.invoice_number}</td>
-                                <td>${formattedDate}</td>
-                                <td>${item.party_name}</td>
-                                <td>${item.area}</td>
-                                <td>${item.remarks}</td>
-                                <td>${item.amount_paid}</td>
+                                <td data-label="SN#">${index + 1}</td>
+                                <td data-label="Invoice#">${item.invoice_number}</td>
+                                <td data-label="Date">${formattedDate}</td>
+                                <td data-label="Party Name">${item.party_name}</td>
+                                <td data-label="Area">${item.area}</td>
+                                <td data-label="Remarks">${item.remarks}</td>
+                                <td data-label="Sales Amount">${item.amount_paid}</td>
                             </tr>`;
                         });
 

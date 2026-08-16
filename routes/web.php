@@ -3,7 +3,7 @@
 use App\Http\Controllers\Business_tpyeController;
 use App\Http\Controllers\CategoryAndSubCategoryController;
 use App\Http\Controllers\CityAndAreaController;
-use App\Http\Controllers\ContractorController;
+// use App\Http\Controllers\ContractorController;
 use App\Http\Controllers\CreateBillController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DistributorController;
@@ -26,7 +26,7 @@ use App\Http\Controllers\SaleReturnController;
 use App\Http\Controllers\SalesmanController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\SizeController;
-use App\Http\Controllers\StaffAttendenceController;
+// use App\Http\Controllers\StaffAttendenceController;
 use App\Http\Controllers\StockOutController;
 use App\Http\Controllers\VendorController;
 use App\Models\Product;
@@ -125,11 +125,11 @@ Route::get('/get-job-products/{id}', [StockOutController::class, 'getJobProducts
 Route::get('/get-products', [StockOutController::class, 'getProducts'])->name('get-products');
 
 // ========================= CASH BOOK / LEDGER ROUTES =========================
-Route::get('/cash-book', [App\Http\Controllers\CashBookController::class, 'index'])->name('cash-book');
-Route::get('/cash-book/history', [App\Http\Controllers\CashBookController::class, 'history'])->name('cash-book.history');
-Route::post('/cash-book/store', [App\Http\Controllers\CashBookController::class, 'store'])->name('cash-book.store');
-Route::post('/cash-book/update', [App\Http\Controllers\CashBookController::class, 'update'])->name('cash-book.update');
-Route::delete('/cash-book/delete/{id}', [App\Http\Controllers\CashBookController::class, 'delete'])->name('cash-book.delete');
+// Route::get('/cash-book', [App\Http\Controllers\CashBookController::class, 'index'])->name('cash-book');
+// Route::get('/cash-book/history', [App\Http\Controllers\CashBookController::class, 'history'])->name('cash-book.history');
+// Route::post('/cash-book/store', [App\Http\Controllers\CashBookController::class, 'store'])->name('cash-book.store');
+// Route::post('/cash-book/update', [App\Http\Controllers\CashBookController::class, 'update'])->name('cash-book.update');
+// Route::delete('/cash-book/delete/{id}', [App\Http\Controllers\CashBookController::class, 'delete'])->name('cash-book.delete');
 
 // ========================= PRODUCT ROUTES =========================
 Route::get('/product', [ProductController::class, 'product'])->name('product');
@@ -159,16 +159,16 @@ Route::post('/purchase-return/store', [PurchaseReturnController::class, 'store']
 Route::get('/all-purchase-return', [PurchaseReturnController::class, 'all_purchase_return'])->name('all-purchase-return');
 
 // ========================= CONTRACTOR ROUTES =========================
-Route::get('/contractor', [ContractorController::class, 'index'])->name('contractor');
-Route::post('/contractor/store', [ContractorController::class, 'store'])->name('contractor.store');
-Route::get('/contractor/edit/{id}', [ContractorController::class, 'getContractorData'])->name('contractor.edit');
-Route::post('/contractor/update', [ContractorController::class, 'update'])->name('contractor.update');
-Route::delete('/contractor/delete/{id}', [ContractorController::class, 'destroy'])->name('delete-contractor');
+// Route::get('/contractor', [ContractorController::class, 'index'])->name('contractor');
+// Route::post('/contractor/store', [ContractorController::class, 'store'])->name('contractor.store');
+// Route::get('/contractor/edit/{id}', [ContractorController::class, 'getContractorData'])->name('contractor.edit');
+// Route::post('/contractor/update', [ContractorController::class, 'update'])->name('contractor.update');
+// Route::delete('/contractor/delete/{id}', [ContractorController::class, 'destroy'])->name('delete-contractor');
 
-Route::get('/contractor-ledger', [ContractorController::class, 'contractor_ledger'])->name('contractor-ledger');
-Route::post('/contractor-recovery-store', [ContractorController::class, 'contractor_recovery_store'])->name('contractor-recovery-store');
-Route::get('/contractor-recovery', [ContractorController::class, 'contractor_recovery'])->name('contractor-recovery');
-Route::put('/contractor-recovery/{id}', [ContractorController::class, 'updateRecovery'])->name('contractor_recovery.update');
+// Route::get('/contractor-ledger', [ContractorController::class, 'contractor_ledger'])->name('contractor-ledger');
+// Route::post('/contractor-recovery-store', [ContractorController::class, 'contractor_recovery_store'])->name('contractor-recovery-store');
+// Route::get('/contractor-recovery', [ContractorController::class, 'contractor_recovery'])->name('contractor-recovery');
+// Route::put('/contractor-recovery/{id}', [ContractorController::class, 'updateRecovery'])->name('contractor_recovery.update');
 
 // ========================= SALE ROUTES =========================
 Route::get('/add-sale', [SaleController::class, 'add_sale'])->name('add-sale');
@@ -197,12 +197,12 @@ Route::post('/salesman/update', [SalesmanController::class, 'update_salesman'])-
 Route::get('/fetch-cities', [SalesmanController::class, 'fetchCities'])->name('fetch-cities');
 Route::delete('/salesman/delete/{id}', [SalesmanController::class, 'delete'])->name('delete-salesman');
 
-    Route::get('/staff-salary-ledger/{id}', [SalesmanController::class, 'staff_salary_ledger'])->name('staff-salary-ledger');
-    Route::get('/staff-ledger', [SalesmanController::class, 'staff_ledger'])->name('staff-ledger');
-Route::post('/staff-recovery-store', [SalesmanController::class, 'staff_recovery_store'])->name('staff-recovery-store');
-Route::get('/staff-recovery', [SalesmanController::class, 'staff_recovery'])->name('staff-recovery');
-Route::put('/staff-recovery/{id}', [SalesmanController::class, 'updateStaffRecovery'])->name('staff-recovery.update');
-Route::post('/salesman/toggle-status', [SalesmanController::class, 'toggleStatus'])->name('toggle-salesman-status');
+//     Route::get('/staff-salary-ledger/{id}', [SalesmanController::class, 'staff_salary_ledger'])->name('staff-salary-ledger');
+//     Route::get('/staff-ledger', [SalesmanController::class, 'staff_ledger'])->name('staff-ledger');
+// Route::post('/staff-recovery-store', [SalesmanController::class, 'staff_recovery_store'])->name('staff-recovery-store');
+// Route::get('/staff-recovery', [SalesmanController::class, 'staff_recovery'])->name('staff-recovery');
+// Route::put('/staff-recovery/{id}', [SalesmanController::class, 'updateStaffRecovery'])->name('staff-recovery.update');
+// Route::post('/salesman/toggle-status', [SalesmanController::class, 'toggleStatus'])->name('toggle-salesman-status');
 
 // ========================= DESIGNATION ROUTES =========================
 Route::get('/designation', [SalesmanController::class, 'designation'])->name('designation');
@@ -285,14 +285,14 @@ Route::post('/sales/mark-completed/{id}', [JobOrderController::class, 'markSaleC
 Route::get('/Distributor-Ledger-Record', [ReportController::class, 'Distributor_Ledger_Record'])->name('Distributor-Ledger-Record');
 Route::get('/fetch-distributor-ledger', [ReportController::class, 'fetchDistributorLedger'])->name('fetch-distributor-ledger');
 
-Route::get('/vendor-Ledger-Record', [ReportController::class, 'vendor_Ledger_Record'])->name('vendor-Ledger-Record');
-Route::get('/fetch-vendor-ledger', [ReportController::class, 'fetchvendorLedger'])->name('fetch-vendor-ledger');
+ Route::get('/vendor-Ledger-Record', [ReportController::class, 'vendor_Ledger_Record'])->name('vendor-Ledger-Record');
+ Route::get('/fetch-vendor-ledger', [ReportController::class, 'fetchvendorLedger'])->name('fetch-vendor-ledger');
 
 Route::get('/job-profit-report', [GeneralReportController::class, 'index'])->name('job.profit.report');
 Route::get('/job-profit-report/fetch', [GeneralReportController::class, 'fetch'])->name('job.profit.report.fetch');
 
-Route::get('/Customer-Ledger-Record', [ReportController::class, 'Customer_Ledger_Record'])->name('Customer-Ledger-Record');
-Route::get('/fetch-Customer-ledger', [ReportController::class, 'fetchCustomerLedger'])->name('fetch-Customer-ledger');
+ Route::get('/Customer-Ledger-Record', [ReportController::class, 'Customer_Ledger_Record'])->name('Customer-Ledger-Record');
+ Route::get('/fetch-Customer-ledger', [ReportController::class, 'fetchCustomerLedger'])->name('fetch-Customer-ledger');
 
 Route::get('/stock-Record', [ReportController::class, 'stock_Record'])->name('stock-Record');
 Route::get('/get-items-report/{subcategory}', [ReportController::class, 'getItems'])->name('get.items.report');
@@ -310,11 +310,11 @@ Route::post('/fetch-vendor-purchase-report', [ReportController::class, 'fetchVen
 Route::get('/contractor-wise-report', [ReportController::class, 'contractor_wise_report'])->name('contractor-wise-report');
 Route::post('/fetch-contractor-report', [ReportController::class, 'fetchContractorReport'])->name('fetch.contractor.report');
 
-Route::get('/staff-wise-report', [ReportController::class, 'staff_wise_report'])->name('staff-wise-report');
-Route::post('/staff-weekly-history', [ReportController::class, 'staffWeeklyHistory'])->name('staff.weekly.history');
-Route::post('/staff-weekly-attendance', [ReportController::class, 'getStaffWeeklyAttendance'])->name('staff.weekly.attendance');
-Route::post('staff/weekly/save', [ReportController::class, 'saveStaffWeekly'])->name('staff.weekly.save');
-Route::get('/staff-all-summary', [ReportController::class, 'getAllStaffSummary'])->name('staff.all.summary');
+// Route::get('/staff-wise-report', [ReportController::class, 'staff_wise_report'])->name('staff-wise-report');
+// Route::post('/staff-weekly-history', [ReportController::class, 'staffWeeklyHistory'])->name('staff.weekly.history');
+// Route::post('/staff-weekly-attendance', [ReportController::class, 'getStaffWeeklyAttendance'])->name('staff.weekly.attendance');
+// Route::post('staff/weekly/save', [ReportController::class, 'saveStaffWeekly'])->name('staff.weekly.save');
+// Route::get('/staff-all-summary', [ReportController::class, 'getAllStaffSummary'])->name('staff.all.summary');
 
 Route::get('/Area-wise-Customer-payments', [ReportController::class, 'Area_wise_Customer_payments'])->name('Area-wise-Customer-payments');
 Route::get('/receivable-report', [ReportController::class, 'fetchReceivableReport'])->name('fetch.receivable.report');
@@ -325,35 +325,35 @@ Route::get('/receivable-salesman-marketreport', [ReportController::class, 'recei
 Route::get('/Date-wise-Sales-Report', [ReportController::class, 'Date_wise_Sales_Report'])->name('Date-wise-Sales-Report');
 Route::post('/get-sales-report', [ReportController::class, 'getsalesreport'])->name('get-sales-report');
 
-Route::get('/Product-wise-Sales-Report', [ReportController::class, 'Product_wise_Sales_Report'])->name('Product-wise-Sales-Report');
-Route::post('/get-Product-sales-report', [ReportController::class, 'getProductsalesreport'])->name('get-Product-sales-report');
+ Route::get('/Product-wise-Sales-Report', [ReportController::class, 'Product_wise_Sales_Report'])->name('Product-wise-Sales-Report');
+ Route::post('/get-Product-sales-report', [ReportController::class, 'getProductsalesreport'])->name('get-Product-sales-report');
 
 // ========================= STAFF ATTENDANCE ROUTES =========================
-Route::get('/staff-attendance', [StaffAttendenceController::class, 'index'])->name('staff-attendance.index');
-Route::post('/staff-attendance/save', [StaffAttendenceController::class, 'store'])->name('staff-attendance.store');
-Route::get('/staff-attendance/edit/{id}', [StaffAttendenceController::class, 'edit'])->name('staff-attendance.edit');
-Route::post('/staff-attendance/update', [StaffAttendenceController::class, 'update'])->name('staff-attendance.update');
-Route::delete('/staff-attendance/delete/{id}', [StaffAttendenceController::class, 'destroy'])->name('staff-attendance.delete');
-Route::get('/staff-attendance/history/{staffId}', [StaffAttendenceController::class, 'history'])->name('staff-attendance.history');
-Route::get('/staff-attendance/export-pdf', [StaffAttendenceController::class, 'exportPDF'])->name('staff-attendance.export-pdf');
+// Route::get('/staff-attendance', [StaffAttendenceController::class, 'index'])->name('staff-attendance.index');
+// Route::post('/staff-attendance/save', [StaffAttendenceController::class, 'store'])->name('staff-attendance.store');
+// Route::get('/staff-attendance/edit/{id}', [StaffAttendenceController::class, 'edit'])->name('staff-attendance.edit');
+// Route::post('/staff-attendance/update', [StaffAttendenceController::class, 'update'])->name('staff-attendance.update');
+// Route::delete('/staff-attendance/delete/{id}', [StaffAttendenceController::class, 'destroy'])->name('staff-attendance.delete');
+// Route::get('/staff-attendance/history/{staffId}', [StaffAttendenceController::class, 'history'])->name('staff-attendance.history');
+// Route::get('/staff-attendance/export-pdf', [StaffAttendenceController::class, 'exportPDF'])->name('staff-attendance.export-pdf');
 
 // ========================= STAFF ADVANCE ROUTES =========================
-Route::get('/staff-advance', [App\Http\Controllers\StaffAdvanceController::class, 'index'])->name('staff-advance.index');
-Route::post('/staff-advance/store', [App\Http\Controllers\StaffAdvanceController::class, 'store'])->name('staff-advance.store');
-Route::get('/staff-advance/balance/{staffId}', [App\Http\Controllers\StaffAdvanceController::class, 'getBalance'])->name('staff-advance.balance');
-Route::post('/staff-advance/recover', [App\Http\Controllers\StaffAdvanceController::class, 'recover'])->name('staff-advance.recover');
-Route::delete('/staff-advance/delete/{id}', [App\Http\Controllers\StaffAdvanceController::class, 'destroy'])->name('staff-advance.delete');
+// Route::get('/staff-advance', [App\Http\Controllers\StaffAdvanceController::class, 'index'])->name('staff-advance.index');
+// Route::post('/staff-advance/store', [App\Http\Controllers\StaffAdvanceController::class, 'store'])->name('staff-advance.store');
+// Route::get('/staff-advance/balance/{staffId}', [App\Http\Controllers\StaffAdvanceController::class, 'getBalance'])->name('staff-advance.balance');
+// Route::post('/staff-advance/recover', [App\Http\Controllers\StaffAdvanceController::class, 'recover'])->name('staff-advance.recover');
+// Route::delete('/staff-advance/delete/{id}', [App\Http\Controllers\StaffAdvanceController::class, 'destroy'])->name('staff-advance.delete');
 
-Route::get('/staff-ledger-view', [App\Http\Controllers\StaffAdvanceController::class, 'ledger'])->name('staff-ledger-view');
+// Route::get('/staff-ledger-view', [App\Http\Controllers\StaffAdvanceController::class, 'ledger'])->name('staff-ledger-view');
 
 // ========================= STAFF SALARY ROUTES =========================
-Route::get('/staff-salary', [App\Http\Controllers\StaffSalaryController::class, 'index'])->name('staff-salary.index');
-Route::get('/staff-salary/info/{staffId}', [App\Http\Controllers\StaffSalaryController::class, 'getInfo'])->name('staff-salary.info');
-Route::post('/staff-salary/store', [App\Http\Controllers\StaffSalaryController::class, 'store'])->name('staff-salary.store');
-Route::get('/staff-salary/receipt/{id}', [App\Http\Controllers\StaffSalaryController::class, 'receipt'])->name('staff-salary.receipt');
-Route::get('/staff-salary/{id}', [App\Http\Controllers\StaffSalaryController::class, 'show'])->name('staff-salary.show');
-Route::put('/staff-salary/{id}', [App\Http\Controllers\StaffSalaryController::class, 'update'])->name('staff-salary.update');
-Route::delete('/staff-salary/{id}', [App\Http\Controllers\StaffSalaryController::class, 'destroy'])->name('staff-salary.destroy');
+// Route::get('/staff-salary', [App\Http\Controllers\StaffSalaryController::class, 'index'])->name('staff-salary.index');
+// Route::get('/staff-salary/info/{staffId}', [App\Http\Controllers\StaffSalaryController::class, 'getInfo'])->name('staff-salary.info');
+// Route::post('/staff-salary/store', [App\Http\Controllers\StaffSalaryController::class, 'store'])->name('staff-salary.store');
+// Route::get('/staff-salary/receipt/{id}', [App\Http\Controllers\StaffSalaryController::class, 'receipt'])->name('staff-salary.receipt');
+// Route::get('/staff-salary/{id}', [App\Http\Controllers\StaffSalaryController::class, 'show'])->name('staff-salary.show');
+// Route::put('/staff-salary/{id}', [App\Http\Controllers\StaffSalaryController::class, 'update'])->name('staff-salary.update');
+// Route::delete('/staff-salary/{id}', [App\Http\Controllers\StaffSalaryController::class, 'destroy'])->name('staff-salary.destroy');
 
 // ========================= PAYMENT ROUTES =========================
 Route::get('/vendors-payments', [PaymentController::class, 'vendors_payments'])->name('vendors-payments');
@@ -366,10 +366,10 @@ Route::get('/get-customer-balance/{id}', [PaymentController::class, 'getCustomer
 Route::post('/customer-payment/store', [PaymentController::class, 'storeCustomerPayment'])->name('customer.payment.store');
 Route::get('customer/payment/receipt/{customer_id}/{amount}', [PaymentController::class, 'showCustomerPaymentReceipt'])->name('Customer.payment.receipt');
 
-Route::get('/staff-payments', [PaymentController::class, 'staff_payments'])->name('staff-payments');
-Route::get('/get-staff-balance/{id}', [PaymentController::class, 'getStaffBalance'])->name('get.staff.balance');
-Route::post('/staff-payment/store', [PaymentController::class, 'storeStaffPayment'])->name('staff.payment.store');
-Route::get('staff/payment/receipt/{staff_id}/{amount}', [PaymentController::class, 'showStaffPaymentReceipt'])->name('Staff.payment.receipt');
+// Route::get('/staff-payments', [PaymentController::class, 'staff_payments'])->name('staff-payments');
+// Route::get('/get-staff-balance/{id}', [PaymentController::class, 'getStaffBalance'])->name('get.staff.balance');
+// Route::post('/staff-payment/store', [PaymentController::class, 'storeStaffPayment'])->name('staff.payment.store');
+// Route::get('staff/payment/receipt/{staff_id}/{amount}', [PaymentController::class, 'showStaffPaymentReceipt'])->name('Staff.payment.receipt');
 
 Route::get('/Distributor-payments', [PaymentController::class, 'Distributor_payments'])->name('Distributor-payments');
 Route::get('/get-Distributor-balance/{id}', [PaymentController::class, 'getDistributorBalance'])->name('get.Distributor.balance');
