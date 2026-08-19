@@ -169,24 +169,36 @@ class HomeController extends Controller
         $totals = [];
 
         foreach ($allSales as $sale) {
-            $items = json_decode($sale->item, true);       // e.g., ["glass", "almonium"]
-            $amounts = json_decode($sale->amount, true);   // e.g., [1500, 10.42]
+            $items = is_array($sale->item) ? $sale->item : json_decode($sale->item, true);
+            $amounts = is_array($sale->amount) ? $sale->amount : json_decode($sale->amount, true);
+            $qtys = is_array($sale->qty) ? $sale->qty : json_decode($sale->qty, true);
 
-            if (!$items || !$amounts) continue;
+            if (!is_array($items)) continue;
 
             foreach ($items as $index => $itemName) {
+                if (empty($itemName)) continue;
+
                 if (!isset($totals[$itemName])) {
                     $totals[$itemName] = [
-                        'total_sales' => 0,
-                        'total_qty' => 0
+                        'total_sales' => 0.0,
+                        'total_qty' => 0.0
                     ];
                 }
 
-                $totals[$itemName]['total_sales'] += $amounts[$index] ?? 0;
+                if (is_array($amounts) && isset($amounts[$index])) {
+                    $cleanedAmount = str_replace(',', '', (string)$amounts[$index]);
+                    if (is_numeric($cleanedAmount)) {
+                        $totals[$itemName]['total_sales'] += (float)$cleanedAmount;
+                    }
+                }
 
                 // Optionally sum quantity if qty array exists
-                $qtys = json_decode($sale->qty, true); // assuming qty column has array
-                $totals[$itemName]['total_qty'] += $qtys[$index] ?? 0;
+                if (is_array($qtys) && isset($qtys[$index])) {
+                    $cleanedQty = str_replace(',', '', (string)$qtys[$index]);
+                    if (is_numeric($cleanedQty)) {
+                        $totals[$itemName]['total_qty'] += (float)$cleanedQty;
+                    }
+                }
             }
         }
 
