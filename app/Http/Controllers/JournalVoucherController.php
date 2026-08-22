@@ -697,22 +697,26 @@ class JournalVoucherController extends Controller
     // ✅ Get Daily Business Metrics
     private function getDailyBusinessMetrics($date, $userId)
     {
-        // 1. Local Sales (Total Jobs and Amount) - آپ کے jobs local_sales میں ہیں
+        // 1. Local Sales (Total Jobs and Amount) - Excluding Estimates
         $totalJobs = LocalSale::where('admin_or_user_id', $userId)
+            ->where('sale_type', '!=', 'estimate')
             ->whereDate('created_at', $date)
             ->count();
 
         $totalJobAmount = LocalSale::where('admin_or_user_id', $userId)
+            ->where('sale_type', '!=', 'estimate')
             ->whereDate('created_at', $date)
             ->sum('net_amount'); // net_amount field use کر رہے ہیں
 
-        // 2. Job Status Analysis from local_sales
+        // 2. Job Status Analysis from local_sales (excluding estimates)
         $completedJobs = LocalSale::where('admin_or_user_id', $userId)
+            ->where('sale_type', '!=', 'estimate')
             ->whereDate('created_at', $date)
             ->where('job_status', 'completed')
             ->count();
 
         $pendingJobs = LocalSale::where('admin_or_user_id', $userId)
+            ->where('sale_type', '!=', 'estimate')
             ->whereDate('created_at', $date)
             ->where('job_status', 'pending')
             ->count();

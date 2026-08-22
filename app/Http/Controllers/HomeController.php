@@ -44,8 +44,8 @@ class HomeController extends Controller
         // Total Sales Due
         $totalSalesDue = \App\Models\CustomerLedger::sum('closing_balance');
 
-        // Total Sale Revenue (Net Amount AFTER discount - EXCLUDING DELETED)
-        $totalSaleAmount = LocalSale::sum('net_amount');
+        // Total Sale Revenue (Net Amount AFTER discount - EXCLUDING DELETED & ESTIMATES)
+        $totalSaleAmount = LocalSale::where('sale_type', '!=', 'estimate')->sum('net_amount');
 
         // Total Stock Investment
         $totalStockInvestment = \App\Models\Purchase::sum('grand_total');
@@ -78,19 +78,19 @@ class HomeController extends Controller
         $overallSettled = JournalVoucher::where('voucher_type', 'payment')->sum('debit_amount') 
             + CashBook::sum('credit');
 
-        // Today's Sales & Purchases
-        $todaySales = LocalSale::whereDate('created_at', now()->toDateString())->sum('net_amount');
+        // Today's Sales & Purchases (Excluding Estimates)
+        $todaySales = LocalSale::where('sale_type', '!=', 'estimate')->whereDate('created_at', now()->toDateString())->sum('net_amount');
         $todayPurchases = \App\Models\Purchase::whereDate('created_at', now()->toDateString())->sum('grand_total');
 
         // Counts
         $customersCount = \App\Models\Customer::count();
         $vendorsCount = \App\Models\Vendor::count();
         $purchaseInvoiceCount = \App\Models\Purchase::count();
-        $local_salesInvoiceCount = LocalSale::count();
+        $local_salesInvoiceCount = LocalSale::where('sale_type', '!=', 'estimate')->count();
         $productsCount = \App\Models\Product::count();
         $staffCount = \App\Models\Salesman::count();
 
-        // Monthly Sales & Purchases (Last 12 Months) - Using net_amount for accurate revenue
+        // Monthly Sales & Purchases (Last 12 Months) - Using net_amount for accurate revenue (Excluding Estimates)
         $rawMonthlySales = DB::table('local_sales')
             ->select(
                 DB::raw('MONTH(created_at) as month'),
@@ -98,6 +98,7 @@ class HomeController extends Controller
                 DB::raw('SUM(net_amount) as total')
             )
             ->whereNull('deleted_at')
+            ->where('sale_type', '!=', 'estimate')
             ->where('created_at', '>=', now()->subMonths(12))
             ->groupBy('year', 'month')
             ->orderBy('year', 'asc')
@@ -165,7 +166,7 @@ class HomeController extends Controller
         // =========================
         // Top Selling Items & Products
         // =========================
-        $allSales = LocalSale::whereNull('deleted_at')->get();
+        $allSales = LocalSale::whereNull('deleted_at')->where('sale_type', '!=', 'estimate')->get();
         $totals = [];
 
         foreach ($allSales as $sale) {
@@ -223,6 +224,7 @@ class HomeController extends Controller
         // Recent Sales
         // =========================
         $recentlocal_sales = LocalSale::leftJoin('customers', 'local_sales.customer_id', '=', 'customers.id')
+            ->where('local_sales.sale_type', '!=', 'estimate')
             ->select('local_sales.*', DB::raw('COALESCE(customers.customer_name, local_sales.customer_shopname, "Walk-in Customer") as customer_name'))
             ->orderBy('local_sales.id', 'desc')
             ->limit(10)
@@ -232,9 +234,9 @@ class HomeController extends Controller
         // Payment Status
         // =========================
         $paymentStatus = [
-            'paid' => LocalSale::where('job_status', 'paid')->count(),
-            'unpaid' => LocalSale::where('job_status', 'unpaid')->count(),
-            'pending' => LocalSale::where('job_status', 'pending')->count(),
+            'paid' => LocalSale::where('sale_type', '!=', 'estimate')->where('job_status', 'paid')->count(),
+            'unpaid' => LocalSale::where('sale_type', '!=', 'estimate')->where('job_status', 'unpaid')->count(),
+            'pending' => LocalSale::where('sale_type', '!=', 'estimate')->where('job_status', 'pending')->count(),
         ];
 
         // =========================

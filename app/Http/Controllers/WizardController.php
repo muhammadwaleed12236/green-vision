@@ -109,120 +109,169 @@ class WizardController extends Controller
             DB::beginTransaction();
 
             $userId = Auth::id();
-            $vendorId = (int) $request->vendor_id;
-            $vendor = Vendor::findOrFail($vendorId);
-            $invoiceNo = Purchase::generateInvoiceNo();
             $purchaseDate = date('Y-m-d');
-
             $products = $request->products ?? []; // Expecting array of objects from frontend
+            $vendorPaymentsInput = $request->vendor_payments ?? []; // Keyed by vendor_id or array of objects
 
             if (count($products) === 0) {
                 return response()->json(['success' => false, 'message' => 'No products provided for purchase']);
             }
 
-            $item_names = [];
-            $rates = [];
-            $product_modes = [];
-            $pcs = [];
-            $discounts = [];
-            $amounts = [];
-            $pcs_cartons = [];
+            // Normalize vendor payments input
+            $vendorPaymentsMap = [];
+            if (is_array($vendorPaymentsInput)) {
+                foreach ($vendorPaymentsInput as $key => $val) {
+                    if (isset($val['vendor_id'])) {
+                        $vendorPaymentsMap[(int)$val['vendor_id']] = $val;
+                    } else {
+                        $vendorPaymentsMap[(int)$key] = $val;
+                    }
+                }
+            }
 
-            $grandTotal = 0;
+            // Group products by vendor_id
+            $vendorGroups = [];
 
             foreach ($products as $prod) {
-                $item_names[] = $prod['item_name'];
-                $rates[] = $prod['rate'];
-                $product_modes[] = $prod['unit'] ?? '';
-                $pcs[] = $prod['pcs'] ?? 0;
-                $discounts[] = 0; // Assuming no discount on wizard purchase for now
-                
-                $amount = (float)$prod['rate'] * (int)($prod['pcs'] ?? 0); // Simplified amount calc
-                $amounts[] = $amount;
-                $grandTotal += $amount;
-                
-                $pcs_cartons[] = 0; // Default or calculate if provided
+                $vendorId = (int) ($prod['vendor_id'] ?? $request->vendor_id ?? 0);
+                if (!$vendorId) {
+                    return response()->json(['success' => false, 'message' => 'Please select a vendor for product: ' . ($prod['item_name'] ?? 'Item')]);
+                }
+                $rate = floatval($prod['rate'] ?? 0);
+                $pcs = floatval($prod['pcs'] ?? 0);
+                $amount = $rate * $pcs;
+
+                if (!isset($vendorGroups[$vendorId])) {
+                    $vendorGroups[$vendorId] = [
+                        'vendor' => Vendor::findOrFail($vendorId),
+                        'products' => [],
+                        'total' => 0,
+                    ];
+                }
+                $vendorGroups[$vendorId]['products'][] = $prod;
+                $vendorGroups[$vendorId]['total'] += $amount;
             }
 
-            // Create Purchase
-            $purchase = Purchase::create([
-                'admin_or_user_id' => $userId,
-                'vendor_id' => $vendorId,
-                'invoice_number' => $invoiceNo,
-                'purchase_date' => $purchaseDate,
-                'party_code' => $vendor->Party_code,
-                'party_name' => $vendor->id,
-                'item' => json_encode($item_names),
-                'rate' => json_encode($rates),
-                'product_mode' => json_encode($product_modes),
-                'pcs' => json_encode($pcs),
-                'discount' => json_encode($discounts),
-                'amount' => json_encode($amounts),
-                'pcs_carton' => json_encode($pcs_cartons),
-                'grand_total' => $grandTotal,
-            ]);
+            $createdPurchaseIds = [];
 
-            // Update Vendor Ledger
-            $ledger = VendorLedger::where('vendor_id', $vendorId)->latest()->first();
-            $openingBalance = $vendor->opening_balance ?? 0;
+            foreach ($vendorGroups as $vendorId => $group) {
+                $vendor = $group['vendor'];
+                $vendorProducts = $group['products'];
+                $vendorTotal = $group['total'];
 
-            $paymentAmount = (float) ($request->payment_amount ?? 0);
-            $accountId = $request->account_id ?? null;
+                // Read payment specifically for this vendor
+                $vPayInfo = $vendorPaymentsMap[$vendorId] ?? [];
+                $vendorPaymentAmount = floatval($vPayInfo['payment_amount'] ?? 0);
+                $vendorAccountId = $vPayInfo['account_id'] ?? null;
 
-            if ($ledger) {
-                $previousBalance = $ledger->closing_balance;
-                $closingBalance = $previousBalance + $grandTotal - $paymentAmount;
+                if ($vendorPaymentAmount > 0 && !$vendorAccountId) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => "Please select a payment account for {$vendor->Party_name}"
+                    ]);
+                }
 
-                $ledger->update([
-                    'previous_balance' => $previousBalance,
-                    'closing_balance' => $closingBalance,
-                ]);
-            } else {
-                VendorLedger::create([
+                $item_names = [];
+                $rates = [];
+                $product_modes = [];
+                $pcs = [];
+                $discounts = [];
+                $amounts = [];
+                $pcs_cartons = [];
+
+                foreach ($vendorProducts as $prod) {
+                    $item_names[] = $prod['item_name'];
+                    $rates[] = $prod['rate'];
+                    $product_modes[] = $prod['unit'] ?? '';
+                    $pcs[] = $prod['pcs'] ?? 0;
+                    $discounts[] = 0;
+                    $amt = (float)$prod['rate'] * (float)($prod['pcs'] ?? 0);
+                    $amounts[] = $amt;
+                    $pcs_cartons[] = 0;
+                }
+
+                $invoiceNo = Purchase::generateInvoiceNo();
+                $purchase = Purchase::create([
                     'admin_or_user_id' => $userId,
                     'vendor_id' => $vendorId,
-                    'opening_balance' => $openingBalance,
-                    'previous_balance' => $openingBalance,
-                    'closing_balance' => $openingBalance + $grandTotal - $paymentAmount,
+                    'invoice_number' => $invoiceNo,
+                    'purchase_date' => $purchaseDate,
+                    'party_code' => $vendor->Party_code,
+                    'party_name' => $vendor->id,
+                    'item' => json_encode($item_names),
+                    'rate' => json_encode($rates),
+                    'product_mode' => json_encode($product_modes),
+                    'pcs' => json_encode($pcs),
+                    'discount' => json_encode($discounts),
+                    'amount' => json_encode($amounts),
+                    'pcs_carton' => json_encode($pcs_cartons),
+                    'grand_total' => $vendorTotal,
                 ]);
+                $createdPurchaseIds[] = $purchase->id;
+
+                // Update Vendor Ledger for THIS specific vendor
+                $ledger = VendorLedger::where('vendor_id', $vendorId)->latest()->first();
+                $openingBalance = $vendor->opening_balance ?? 0;
+
+                if ($ledger) {
+                    $previousBalance = $ledger->closing_balance;
+                    $closingBalance = $previousBalance + $vendorTotal - $vendorPaymentAmount;
+
+                    $ledger->update([
+                        'previous_balance' => $previousBalance,
+                        'closing_balance' => $closingBalance,
+                    ]);
+                } else {
+                    VendorLedger::create([
+                        'admin_or_user_id' => $userId,
+                        'vendor_id' => $vendorId,
+                        'opening_balance' => $openingBalance,
+                        'previous_balance' => $openingBalance,
+                        'closing_balance' => $openingBalance + $vendorTotal - $vendorPaymentAmount,
+                    ]);
+                }
+
+                // Record payment entry & Journal Voucher for this vendor if payment made
+                if ($vendorPaymentAmount > 0) {
+                    \App\Models\VendorPayment::create([
+                        'admin_or_user_id' => $userId,
+                        'vendor_id' => $vendorId,
+                        'amount' => $vendorPaymentAmount,
+                        'payment_date' => $purchaseDate,
+                        'remarks' => 'Wizard Payment for Purchase ID: ' . $purchase->id,
+                    ]);
+
+                    // Create Journal Voucher (payment) for this vendor payment
+                    $voucherNo = \App\Models\JournalVoucher::generateVoucherNo('payment');
+                    \App\Models\JournalVoucher::create([
+                        'admin_or_user_id' => $userId,
+                        'account_id' => $vendorAccountId,
+                        'voucher_no' => $voucherNo,
+                        'voucher_date' => $purchaseDate,
+                        'voucher_type' => 'payment',
+                        'party_type' => 'vendor',
+                        'party_id' => $vendorId,
+                        'party_name' => $vendor->Party_name,
+                        'account_head' => 'Purchase',
+                        'debit_amount' => $vendorPaymentAmount,
+                        'credit_amount' => 0,
+                        'payment_method' => 'cash',
+                        'reference_type' => 'purchase',
+                        'reference_id' => $purchase->id,
+                        'narration' => 'Wizard Purchase - ' . $purchase->invoice_number . ' (' . $vendor->Party_name . ')',
+                        'status' => 'approved',
+                    ]);
+                }
             }
 
-            if ($paymentAmount > 0) {
-                \App\Models\VendorPayment::create([
-                    'admin_or_user_id' => $userId,
-                    'vendor_id' => $vendorId,
-                    'amount' => $paymentAmount,
-                    'payment_date' => $purchaseDate,
-                    'remarks' => 'Wizard Payment for Purchase ID: ' . $purchase->id,
-                ]);
-
-                // Create Journal Voucher (payment) for this vendor payment
-                $voucherNo = \App\Models\JournalVoucher::generateVoucherNo('payment');
-                \App\Models\JournalVoucher::create([
-                    'admin_or_user_id' => $userId,
-                    'account_id' => $accountId,
-                    'voucher_no' => $voucherNo,
-                    'voucher_date' => $purchaseDate,
-                    'voucher_type' => 'payment',
-                    'party_type' => 'vendor',
-                    'party_id' => $vendorId,
-                    'party_name' => $vendor->Party_name,
-                    'account_head' => 'Purchase',
-                    'debit_amount' => $paymentAmount,
-                    'credit_amount' => 0,
-                    'payment_method' => 'cash',
-                    'reference_type' => 'purchase',
-                    'reference_id' => $purchase->id,
-                    'narration' => 'Wizard Purchase - ' . $purchase->invoice_number . ' (' . $vendor->Party_name . ')',
-                    'status' => 'approved',
-                ]);
-            }
-
-            // Stock update logic can be added here if needed, 
-            // but generally we assume products are immediately sold in this flow.
-            
             DB::commit();
-            return response()->json(['success' => true, 'message' => 'Purchase created successfully', 'purchase_id' => $purchase->id]);
+            return response()->json([
+                'success' => true,
+                'message' => count($createdPurchaseIds) > 1 
+                    ? count($createdPurchaseIds) . ' purchase bills created and ledgers updated successfully for respective vendors!'
+                    : 'Purchase created and vendor ledger updated successfully!',
+                'purchase_id' => $createdPurchaseIds[0] ?? null
+            ]);
 
         } catch (\Exception $e) {
             DB::rollBack();

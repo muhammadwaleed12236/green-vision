@@ -32,18 +32,21 @@ class BusinessReportController extends Controller
 
         // ==================== TOP SUMMARY BOXES ====================
 
-        // 1. Total Jobs (from local_sales - invoices)
+        // 1. Total Jobs (from local_sales - invoices, excluding estimates)
         $totalJobs = LocalSale::where('admin_or_user_id', $userId)
+            ->where('sale_type', '!=', 'estimate')
             ->whereDate('sale_date', '>=', $fromDate)
             ->whereDate('sale_date', '<=', $toDate)
             ->count();
 
         $totalJobsAmount = LocalSale::where('admin_or_user_id', $userId)
+            ->where('sale_type', '!=', 'estimate')
             ->whereDate('sale_date', '>=', $fromDate)
             ->whereDate('sale_date', '<=', $toDate)
             ->sum('net_amount'); // FIXED: Use net_amount (after discount) instead of grand_total
 
         $totalJobsReceivedAdvance = LocalSale::where('admin_or_user_id', $userId)
+            ->where('sale_type', '!=', 'estimate')
             ->whereDate('sale_date', '>=', $fromDate)
             ->whereDate('sale_date', '<=', $toDate)
             ->sum('advance_amount');
@@ -204,12 +207,14 @@ class BusinessReportController extends Controller
         while ($currentDate <= $endDate) {
             $date = $currentDate->format('Y-m-d');
 
-            // Jobs for this date
+            // Jobs for this date (excluding estimates)
             $dayJobs = LocalSale::where('admin_or_user_id', $userId)
+                ->where('sale_type', '!=', 'estimate')
                 ->whereDate('sale_date', $date)
                 ->count();
 
             $dayJobsAmount = LocalSale::where('admin_or_user_id', $userId)
+                ->where('sale_type', '!=', 'estimate')
                 ->whereDate('sale_date', $date)
                 ->sum('net_amount'); // FIXED: Use net_amount (after discount)
 

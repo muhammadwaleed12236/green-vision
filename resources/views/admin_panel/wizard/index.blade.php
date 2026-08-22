@@ -376,17 +376,25 @@
 
                 <!-- Step 2: Purchase -->
                 <div class="wizard-content" id="step2">
-                    <h5 class="mb-4">Create Purchase for Items</h5>
-                    
-                    <div class="row mb-4">
+                    <div class="row align-items-center mb-4 g-2">
                         <div class="col-md-6">
-                            <label>Select Vendor <span class="text-danger">*</span></label>
-                            <select id="vendor_selector" class="form-control select2">
-                                <option value="">-- Select Vendor --</option>
-                                @foreach($vendors as $vendor)
-                                    <option value="{{ $vendor->id }}">{{ $vendor->Party_name }} ({{ $vendor->Party_code }})</option>
-                                @endforeach
-                            </select>
+                            <h5 class="m-0 fw-bold text-dark">Create Purchase for Items</h5>
+                            <p class="text-muted mb-0" style="font-size: 0.82rem;">Select vendor and purchase rate for each item</p>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center justify-content-md-end">
+                                <label for="vendor_selector" class="me-2 mb-0 fw-semibold text-nowrap text-secondary" style="font-size: 0.85rem;">
+                                    <i class="fas fa-magic text-primary me-1"></i> Apply Vendor to All:
+                                </label>
+                                <div style="width: 240px; max-width: 100%;">
+                                    <select id="vendor_selector" class="form-control select2">
+                                        <option value="">-- Select Default Vendor --</option>
+                                        @foreach($vendors as $vendor)
+                                            <option value="{{ $vendor->id }}">{{ $vendor->Party_name }} ({{ $vendor->Party_code }})</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -394,10 +402,11 @@
                         <table class="table table-bordered wizard-table">
                             <thead class="table-light">
                                 <tr>
-                                    <th>Item Name</th>
-                                    <th>Required Qty (from Sale)</th>
-                                    <th>Purchase Rate <span class="text-danger">*</span></th>
-                                    <th>Total Amount</th>
+                                    <th style="width: 25%;">Item Name</th>
+                                    <th style="width: 30%;">Vendor <span class="text-danger">*</span></th>
+                                    <th style="width: 15%;">Required Qty</th>
+                                    <th style="width: 15%;">Purchase Rate <span class="text-danger">*</span></th>
+                                    <th style="width: 15%;">Total Amount</th>
                                 </tr>
                             </thead>
                             <tbody id="purchase_products_table">
@@ -405,32 +414,45 @@
                             </tbody>
                             <tfoot>
                                 <tr>
-                                    <th colspan="3" class="text-end">Grand Total:</th>
+                                    <th colspan="4" class="text-end">Grand Total:</th>
                                     <th id="purchase_grand_total">0.00</th>
                                 </tr>
                             </tfoot>
                         </table>
                     </div>
 
-                    <div class="row mb-4 mt-3">
-                        <div class="col-md-4">
-                            <label>Purchase Price</label>
-                            <input type="text" id="purchase_price_readonly" class="form-control" readonly value="0.00">
+                    <!-- Vendor Payment Breakdown Section -->
+                    <div class="card mt-4 border shadow-sm" id="vendor_breakdown_card" style="border-radius: 8px;">
+                        <div class="card-header bg-light d-flex justify-content-between align-items-center py-2">
+                            <h6 class="m-0 text-primary fw-bold"><i class="fas fa-money-check-alt me-1"></i> Vendor-wise Payment & Ledger Breakdown</h6>
+                            <span class="badge bg-secondary" id="vendor_count_badge">0 Vendors</span>
                         </div>
-                        <div class="col-md-4">
-                            <label>Amount Being Paid Now</label>
-                            <input type="number" id="purchase_payment_amount" class="form-control" placeholder="0.00">
-                        </div>
-                        <div class="col-md-4">
-                            <label>Account <span class="text-danger">*</span></label>
-                            <select id="purchase_account_id" class="form-control select2">
-                                <option value="">-- Select Account --</option>
-                                @if(isset($accounts))
-                                    @foreach($accounts as $account)
-                                        <option value="{{ $account->id }}">{{ $account->Account_name ?? $account->name }}</option>
-                                    @endforeach
-                                @endif
-                            </select>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-bordered mb-0 align-middle">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Vendor</th>
+                                            <th style="width: 18%;">Total Bill (Rs)</th>
+                                            <th style="width: 22%;">Amount Paid Now (Rs)</th>
+                                            <th style="width: 18%;">Balance Due (Rs)</th>
+                                            <th style="width: 24%;">Payment Account</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="vendor_payment_breakdown_tbody">
+                                        <tr><td colspan="5" class="text-center text-muted py-3">Please select vendors for products above to view ledger & payment breakdown</td></tr>
+                                    </tbody>
+                                    <tfoot class="table-light fw-bold">
+                                        <tr>
+                                            <td>Total:</td>
+                                            <td id="breakdown_total_bill">0.00</td>
+                                            <td id="breakdown_total_paid">0.00</td>
+                                            <td id="breakdown_total_balance" class="text-danger">0.00</td>
+                                            <td></td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
                         </div>
                     </div>
 
@@ -500,23 +522,28 @@
     </div>
 </div>
 
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+@push('scripts')
 <script>
     let currentSaleId = null;
     let saleProducts = [];
     let saleDetails = null;
     
     $(document).ready(function() {
+        if ($.fn.select2) {
+            $('.select2').select2({ width: '100%' });
+        }
+
         // Toggle new sale inline
-        $('#btn-toggle-new-sale').click(function() {
+        $(document).on('click', '#btn-toggle-new-sale', function() {
             $('#newSaleSection').slideToggle();
         });
         
         // Quick Sale Logic
-        $('#qs_add_row').click(function() {
+        $(document).on('click', '#qs_add_row', function(e) {
+            e.preventDefault();
             const row = `<tr>
                 <td data-label="Product">
-                    <select class="form-control qs-product">
+                    <select class="form-control select2 qs-product">
                         <option value="">Select Product</option>
                         @foreach($products as $prod)
                             <option value="{{ $prod->item_name }}" data-rate="{{ $prod->retail_price ?? 0 }}">{{ $prod->item_name }}</option>
@@ -528,9 +555,11 @@
                 <td data-label="Amount"><span class="qs-amt fw-bold text-end">0.00</span></td>
                 <td data-label="Action"><button type="button" class="btn btn-sm btn-danger qs-remove"><i class="fas fa-times"></i></button></td>
             </tr>`;
-            $('#qs_table tbody').append(row);
-            // Reinitialize select2 for dynamic rows if you use it globally
-            $('.qs-product').select2();
+            const $newRow = $(row);
+            $('#qs_table tbody').append($newRow);
+            if ($.fn.select2) {
+                $newRow.find('.select2').select2({ width: '100%' });
+            }
         });
 
         $(document).on('change', '.qs-product', function() {
@@ -572,7 +601,7 @@
             }
         });
 
-        $('#btn_qs_save').click(function() {
+        $(document).on('click', '#btn_qs_save', function() {
             const party_type = $('#qs_party_type').val();
             let customer_id = '';
             let walkin_name = '';
@@ -673,35 +702,49 @@
             }
         });
         
-        $('#btn-next-1').click(function() {
+        $(document).on('click', '#btn-next-1', function() {
             populatePurchaseTable();
             nextStep(2);
         });
         
-        // Step 2: Purchase Creation
+        // Step 2: Purchase Creation & Vendor Breakdown
         $(document).on('input', '.purchase-rate', function() {
             calculatePurchaseTotal();
+            updateVendorBreakdown();
+        });
+
+        $(document).on('change', '.purchase-vendor', function() {
+            updateVendorBreakdown();
+        });
+
+        $(document).on('input change', '.v-paid-input', function() {
+            calcBreakdownTotals();
+        });
+
+        $(document).on('change', '#vendor_selector', function() {
+            const selectedVendor = $(this).val();
+            if (selectedVendor) {
+                $('.purchase-vendor').val(selectedVendor).trigger('change');
+            }
         });
         
-        $('#btn-create-purchase').click(function() {
-            const vendorId = $('#vendor_selector').val();
-            if(!vendorId) {
-                showAlert('Please select a vendor', 'danger');
-                return;
-            }
-
-            const accountId = $('#purchase_account_id').val();
-            if(!accountId) {
-                showAlert('Please select an account', 'danger');
-                return;
-            }
-            
+        $(document).on('click', '#btn-create-purchase', function() {
             let purchaseItems = [];
             let isValid = true;
+            let missingVendor = false;
             
             $('.purchase-row').each(function(index) {
-                const rate = $(this).find('.purchase-rate').val();
-                if(!rate || rate <= 0) {
+                const vendorId = $(this).find('.purchase-vendor').val();
+                const rate = parseFloat($(this).find('.purchase-rate').val()) || 0;
+                
+                if (!vendorId) {
+                    missingVendor = true;
+                    $(this).find('.purchase-vendor').addClass('is-invalid');
+                } else {
+                    $(this).find('.purchase-vendor').removeClass('is-invalid');
+                }
+
+                if (rate <= 0) {
                     isValid = false;
                     $(this).find('.purchase-rate').addClass('is-invalid');
                 } else {
@@ -710,35 +753,70 @@
                 
                 purchaseItems.push({
                     item_name: saleProducts[index].item_name,
-                    pcs: saleProducts[index].qty, // map qty to pcs for purchase
+                    vendor_id: vendorId,
+                    pcs: saleProducts[index].qty,
                     unit: saleProducts[index].unit,
                     rate: rate
                 });
             });
             
-            if(!isValid) {
+            if (missingVendor) {
+                showAlert('Please select a vendor for all items in the table', 'danger');
+                return;
+            }
+
+            if (!isValid) {
                 showAlert('Please enter a valid purchase rate for all items', 'danger');
+                return;
+            }
+
+            // Collect per-vendor payments & accounts
+            let vendorPayments = {};
+            let missingAccount = false;
+            let missingAccountVendorName = '';
+
+            $('.vendor-breakdown-row').each(function() {
+                const vId = $(this).data('vendor-id');
+                const vName = $(this).find('strong').text();
+                const paid = parseFloat($(this).find('.v-paid-input').val()) || 0;
+                const accountId = $(this).find('.v-account-select').val();
+
+                if (paid > 0 && !accountId) {
+                    missingAccount = true;
+                    missingAccountVendorName = vName;
+                    $(this).find('.v-account-select').addClass('is-invalid');
+                } else {
+                    $(this).find('.v-account-select').removeClass('is-invalid');
+                }
+
+                vendorPayments[vId] = {
+                    vendor_id: vId,
+                    payment_amount: paid,
+                    account_id: accountId
+                };
+            });
+
+            if (missingAccount) {
+                showAlert(`Please select a Payment Account for vendor: ${missingAccountVendorName}`, 'danger');
                 return;
             }
             
             // Disable button during AJAX
             const btn = $(this);
-            btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Creating...');
+            btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Creating Purchases...');
             
             $.ajax({
                 url: '{{ route("wizard.api.purchase.create") }}',
                 type: 'POST',
                 data: {
                     _token: '{{ csrf_token() }}',
-                    vendor_id: vendorId,
                     products: purchaseItems,
-                    payment_amount: $('#purchase_payment_amount').val(),
-                    account_id: $('#purchase_account_id').val()
+                    vendor_payments: vendorPayments
                 },
                 success: function(res) {
                     btn.prop('disabled', false).html('Create Purchase & Next <i class="fas fa-arrow-right ms-1"></i>');
-                    if(res.success) {
-                        showAlert('Purchase created successfully!', 'success');
+                    if (res.success) {
+                        showAlert(res.message || 'Purchases created and ledgers updated successfully!', 'success');
                         populatePaymentStep();
                         nextStep(3);
                     } else {
@@ -753,7 +831,7 @@
         });
         
         // Step 3: Payment
-        $('#btn-complete').click(function() {
+        $(document).on('click', '#btn-complete', function() {
             const amount = $('#pay_amount').val();
             const discount = $('#pay_discount').val();
             
@@ -858,31 +936,148 @@
         });
     }
     
+    const vendorOptionsList = `<option value="">-- Select Vendor --</option>@foreach($vendors as $vendor)<option value="{{ $vendor->id }}">{{ $vendor->Party_name }} ({{ $vendor->Party_code }})</option>@endforeach`;
+
     function populatePurchaseTable() {
         let tbody = '';
+        const defaultVendor = $('#vendor_selector').val() || '';
         saleProducts.forEach((prod, index) => {
-            tbody += `<tr class="purchase-row">
-                <td data-label="Item Name">${prod.item_name}</td>
+            tbody += `<tr class="purchase-row" data-index="${index}">
+                <td data-label="Item Name"><strong>${prod.item_name}</strong></td>
+                <td data-label="Vendor">
+                    <select class="form-control form-control-sm purchase-vendor select2">
+                        ${vendorOptionsList}
+                    </select>
+                </td>
                 <td data-label="Required Qty">${prod.qty} ${prod.unit}</td>
-                <td data-label="Purchase Rate"><input type="number" class="form-control form-control-sm purchase-rate" value="${prod.purchase_rate}" readonly></td>
+                <td data-label="Purchase Rate"><input type="number" step="any" class="form-control form-control-sm purchase-rate" value="${prod.purchase_rate || 0}"></td>
                 <td data-label="Total Amount"><span class="purchase-amount fw-bold">0.00</span></td>
             </tr>`;
         });
         $('#purchase_products_table').html(tbody);
+        if ($.fn.select2) {
+            $('#purchase_products_table .select2').select2({ width: '100%' });
+        }
+        if (defaultVendor) {
+            $('.purchase-vendor').val(defaultVendor).trigger('change');
+        }
         calculatePurchaseTotal();
+        updateVendorBreakdown();
     }
     
     function calculatePurchaseTotal() {
         let grandTotal = 0;
         $('.purchase-row').each(function(index) {
             const rate = parseFloat($(this).find('.purchase-rate').val()) || 0;
-            const qty = parseFloat(saleProducts[index].qty) || 0;
+            const qty = parseFloat(saleProducts[index]?.qty || 0);
             const amount = rate * qty;
             $(this).find('.purchase-amount').text(amount.toFixed(2));
             grandTotal += amount;
         });
         $('#purchase_grand_total').text(grandTotal.toFixed(2));
-        $('#purchase_price_readonly').val(grandTotal.toFixed(2));
+    }
+
+    const accountOptionsList = `<option value="">-- Select Account --</option>@if(isset($accounts))@foreach($accounts as $account)<option value="{{ $account->id }}">{{ $account->Account_name ?? $account->name }}</option>@endforeach @endif`;
+
+    function updateVendorBreakdown() {
+        const vendorState = {}; // { vendor_id: { paid: ..., account_id: ... } }
+        
+        // Preserve existing inputs from current DOM
+        $('#vendor_payment_breakdown_tbody tr.vendor-breakdown-row').each(function() {
+            const vId = $(this).data('vendor-id');
+            if (vId) {
+                vendorState[vId] = {
+                    paid: $(this).find('.v-paid-input').val(),
+                    account_id: $(this).find('.v-account-select').val() || ''
+                };
+            }
+        });
+
+        // Group totals per vendor from purchase table
+        const activeVendors = {};
+        $('.purchase-row').each(function(index) {
+            const vendorSelect = $(this).find('.purchase-vendor');
+            const vId = vendorSelect.val();
+            const vName = vendorSelect.find('option:selected').text();
+            const rate = parseFloat($(this).find('.purchase-rate').val()) || 0;
+            const qty = parseFloat(saleProducts[index]?.qty || 0);
+            const amount = rate * qty;
+
+            if (vId) {
+                if (!activeVendors[vId]) {
+                    activeVendors[vId] = {
+                        id: vId,
+                        name: vName.replace(/^[-\s]+/, ''),
+                        total: 0,
+                        paid: vendorState[vId]?.paid !== undefined ? vendorState[vId].paid : '',
+                        account_id: vendorState[vId]?.account_id || ''
+                    };
+                }
+                activeVendors[vId].total += amount;
+            }
+        });
+
+        const vKeys = Object.keys(activeVendors);
+        $('#vendor_count_badge').text(vKeys.length + (vKeys.length === 1 ? ' Vendor' : ' Vendors'));
+
+        let tbodyHtml = '';
+        if (vKeys.length === 0) {
+            tbodyHtml = `<tr><td colspan="5" class="text-center text-muted py-3">Please select vendors for products above to view ledger & payment breakdown</td></tr>`;
+        } else {
+            vKeys.forEach(vId => {
+                const v = activeVendors[vId];
+                const paidVal = parseFloat(v.paid) || 0;
+                const balance = Math.max(0, v.total - paidVal);
+                tbodyHtml += `<tr class="vendor-breakdown-row" data-vendor-id="${v.id}">
+                    <td><strong>${v.name}</strong></td>
+                    <td><span class="v-total-bill fw-bold">${v.total.toFixed(2)}</span></td>
+                    <td>
+                        <input type="number" step="any" min="0" max="${v.total}" class="form-control form-control-sm v-paid-input" value="${v.paid !== '' ? v.paid : ''}" placeholder="0.00">
+                    </td>
+                    <td><span class="v-balance-due text-danger fw-bold">${balance.toFixed(2)}</span></td>
+                    <td>
+                        <select class="form-control form-control-sm v-account-select select2">
+                            ${accountOptionsList}
+                        </select>
+                    </td>
+                </tr>`;
+            });
+        }
+
+        $('#vendor_payment_breakdown_tbody').html(tbodyHtml);
+
+        // Restore selected accounts and initialize select2
+        vKeys.forEach(vId => {
+            const v = activeVendors[vId];
+            if (v.account_id) {
+                $(`.vendor-breakdown-row[data-vendor-id="${vId}"] .v-account-select`).val(v.account_id);
+            }
+        });
+
+        if ($.fn.select2) {
+            $('#vendor_payment_breakdown_tbody .select2').select2({ width: '100%' });
+        }
+
+        calcBreakdownTotals();
+    }
+
+    function calcBreakdownTotals() {
+        let totalBill = 0;
+        let totalPaid = 0;
+
+        $('.vendor-breakdown-row').each(function() {
+            const bill = parseFloat($(this).find('.v-total-bill').text()) || 0;
+            const paid = parseFloat($(this).find('.v-paid-input').val()) || 0;
+            const balance = Math.max(0, bill - paid);
+            $(this).find('.v-balance-due').text(balance.toFixed(2));
+            
+            totalBill += bill;
+            totalPaid += paid;
+        });
+
+        $('#breakdown_total_bill').text(totalBill.toFixed(2));
+        $('#breakdown_total_paid').text(totalPaid.toFixed(2));
+        $('#breakdown_total_balance').text((totalBill - totalPaid).toFixed(2));
     }
     
     function closeNewSaleAndRefresh() {
@@ -906,6 +1101,10 @@
             $(`#step${i}-indicator`).addClass('completed');
         }
         $(`#step${stepNum}-indicator`).addClass('active').removeClass('completed');
+
+        if ($.fn.select2) {
+            $(`#step${stepNum} .select2`).select2({ width: '100%' });
+        }
     }
     
     function prevStep(stepNum) {
@@ -917,6 +1116,10 @@
             $(`#step${i}-indicator`).addClass('completed');
         }
         $(`#step${stepNum}-indicator`).addClass('active');
+
+        if ($.fn.select2) {
+            $(`#step${stepNum} .select2`).select2({ width: '100%' });
+        }
     }
     
     function showAlert(msg, type) {
@@ -928,5 +1131,6 @@
         }, 5000);
     }
 </script>
+@endpush
 
 @include('admin_panel.include.footer_include')
