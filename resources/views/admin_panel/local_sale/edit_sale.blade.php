@@ -573,6 +573,7 @@
             $('#deliveryPaymentPanel').addClass('d-none');
             $('#discountContainer').removeClass('d-none');
             $('#advanceContainer').removeClass('d-none');
+            $('#accountContainer').removeClass('d-none');
             $('#remainingContainer').removeClass('d-none');
             $('#remainingContainer label').text('Remaining');
             $('[name="delivery_date"]').prop('required', false).val('');
@@ -581,6 +582,7 @@
             $('#deliveryPaymentPanel').addClass('d-none');
             $('#discountContainer').removeClass('d-none');
             $('#advanceContainer').addClass('d-none');
+            $('#accountContainer').addClass('d-none');
             $('#remainingContainer').removeClass('d-none');
             $('#remainingContainer label').text('Net Total');
             $('[name="delivery_date"]').prop('required', false).val('');
@@ -589,6 +591,7 @@
             $('#deliveryPaymentPanel').removeClass('d-none');
             $('#discountContainer').removeClass('d-none');
             $('#advanceContainer').removeClass('d-none');
+            $('#accountContainer').removeClass('d-none');
             $('#remainingContainer').removeClass('d-none');
             $('#remainingContainer label').text('Remaining');
             $('[name="delivery_date"]').prop('required', true);
@@ -634,9 +637,10 @@
             return false;
         }
 
+        let saleType = $('input[name="sale_type"]:checked').val();
         let advance = parseFloat($('#advance').val()) || 0;
         let partyType = $('#partyType').val();
-        if ((advance > 0 || partyType === 'walkin') && !$('select[name="account_id"]').val()) {
+        if (saleType !== 'estimate' && (advance > 0 || partyType === 'walkin') && !$('select[name="account_id"]').val()) {
             errors.push('Please select a Payment Account.');
         }
 
@@ -658,9 +662,10 @@
 
     $(document).ready(function() {
         function updateAccountLabel() {
+            let saleType = $('input[name="sale_type"]:checked').val();
             let adv = parseFloat($('#advance').val()) || 0;
             let partyType = $('#partyType').val();
-            if (adv > 0 || partyType === 'walkin') {
+            if (saleType !== 'estimate' && (adv > 0 || partyType === 'walkin')) {
                 $('#paymentAccountLabel').html('Payment Account <span class="text-danger">*</span>');
             } else {
                 $('#paymentAccountLabel').html('Payment Account');
@@ -669,6 +674,7 @@
 
         $('#advance').on('input change', updateAccountLabel);
         $('#partyType').on('change', updateAccountLabel);
+        $('input[name="sale_type"]').on('change', updateAccountLabel);
         updateAccountLabel();
 
         handleSaleTypeToggle();

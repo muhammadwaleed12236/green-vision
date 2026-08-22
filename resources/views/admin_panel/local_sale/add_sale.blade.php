@@ -591,9 +591,10 @@
             }
         });
 
+        let saleType = $('input[name="sale_type"]:checked').val();
         let advance = parseFloat($('#advance').val()) || 0;
         let partyType = $('#partyType').val();
-        if ((advance > 0 || partyType === 'walkin') && !$('select[name="account_id"]').val()) {
+        if (saleType !== 'estimate' && (advance > 0 || partyType === 'walkin') && !$('select[name="account_id"]').val()) {
             errors.push('Please select a Payment Account.');
         }
 
@@ -620,9 +621,10 @@
 
     $(document).ready(function() {
         function updateAccountLabel() {
+            let saleType = $('input[name="sale_type"]:checked').val();
             let adv = parseFloat($('#advance').val()) || 0;
             let partyType = $('#partyType').val();
-            if (adv > 0 || partyType === 'walkin') {
+            if (saleType !== 'estimate' && (adv > 0 || partyType === 'walkin')) {
                 $('#paymentAccountLabel').html('Payment Account <span class="text-danger">*</span>');
             } else {
                 $('#paymentAccountLabel').html('Payment Account');
@@ -631,6 +633,7 @@
 
         $('#advance').on('input change', updateAccountLabel);
         $('#partyType').on('change', updateAccountLabel);
+        $('input[name="sale_type"]').on('change', updateAccountLabel);
         updateAccountLabel();
 
         updateRowNumbers();
@@ -649,6 +652,7 @@
                 $('#deliveryPaymentPanel').hide();
                 $('#discountContainer').show();
                 $('#advanceContainer').show();
+                $('#accountContainer').show();
                 $('#remainingContainer').show();
                 $('#remainingContainer label').text('Remaining');
                 $('[name="delivery_date"]').prop('required', false).val('');
@@ -658,6 +662,7 @@
                 $('#deliveryPaymentPanel').hide();
                 $('#discountContainer').show();
                 $('#advanceContainer').hide();
+                $('#accountContainer').hide();
                 $('#remainingContainer').show();
                 $('#remainingContainer label').text('Net Total');
                 $('[name="delivery_date"]').prop('required', false).val('');
@@ -667,6 +672,7 @@
                 $('#deliveryPaymentPanel').show();
                 $('#discountContainer').show();
                 $('#advanceContainer').show();
+                $('#accountContainer').show();
                 $('#remainingContainer').show();
                 $('#remainingContainer label').text('Remaining');
                 $('[name="delivery_date"]').prop('required', true);
