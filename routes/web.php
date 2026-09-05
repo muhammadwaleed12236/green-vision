@@ -251,6 +251,7 @@ Route::get('/all-local-sale', [LocalSaleController::class, 'all_local_sale'])->n
 Route::get('/delivery-notifications', [LocalSaleController::class, 'deliveryNotifications'])->name('delivery-notifications');
 Route::get('/show-local-sale/{id}', [LocalSaleController::class, 'show_local_sale'])->name('show-local-sale');
 Route::get('/local/sale/invoice/{id}', [LocalSaleController::class, 'localsaleInvoice'])->name('local.sale.invoice');
+Route::get('/local/sale/receipt/{id}', [LocalSaleController::class, 'localsaleReceipt'])->name('local.sale.receipt');
 Route::get('/local/sale/delete/{id}', [LocalSaleController::class, 'delete_localsale'])->name('local.sale.delete');
 Route::get('/local/sale/edit/{id}', [LocalSaleController::class, 'localsaleEdit'])->name('local.sale.edit');
 Route::put('/local/sale/update/{id}', [LocalSaleController::class, 'localsaleupdate'])->name('local.sale.update');

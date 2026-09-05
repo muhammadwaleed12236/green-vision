@@ -18,27 +18,17 @@
         padding: 8px 5px !important;
     }
 
-    /* Column Widths - Search headers (8 cols) */
-    .sale-table .search-head th:nth-child(1) { width: 5%; }  /* # */
-    .sale-table .search-head th:nth-child(2) { width: 35%; } /* Product Name */
-    .sale-table .search-head th:nth-child(3) { width: 10%; } /* Avail Stock */
-    .sale-table .search-head th:nth-child(4) { width: 15%; } /* Quantity */
-    .sale-table .search-head th:nth-child(5) { width: 8%; }  /* Unit */
-    .sale-table .search-head th:nth-child(6) { width: 11%; } /* Price/unit */
-    .sale-table .search-head th:nth-child(7) { width: 11%; } /* amount */
-    .sale-table .search-head th:nth-child(8) { width: 5%; }  /* Action */
-
-    /* Column Widths - Manual headers (10 cols) */
-    .sale-table .manual-head th:nth-child(1) { width: 4%; }  /* # */
-    .sale-table .manual-head th:nth-child(2) { width: 28%; } /* Product Name */
-    .sale-table .manual-head th:nth-child(3) { width: 7%; }  /* Avail Stock */
-    .sale-table .manual-head th:nth-child(4) { width: 8%; }  /* H */
-    .sale-table .manual-head th:nth-child(5) { width: 8%; }  /* W */
-    .sale-table .manual-head th:nth-child(6) { width: 10%; } /* Qty/Feet */
-    .sale-table .manual-head th:nth-child(7) { width: 7%; }  /* Unit */
-    .sale-table .manual-head th:nth-child(8) { width: 10%; } /* Price/unit */
-    .sale-table .manual-head th:nth-child(9) { width: 10%; } /* amount */
-    .sale-table .manual-head th:nth-child(10) { width: 5%; } /* Action */
+    /* Column Widths - unified (10 cols; H/W reserved in both modes) */
+    .sale-table th:nth-child(1) { width: 4%; }  /* # */
+    .sale-table th:nth-child(2) { width: 25%; } /* Product Name */
+    .sale-table th:nth-child(3) { width: 7%; }  /* Avail Stock */
+    .sale-table th:nth-child(4) { width: 8%; }  /* H */
+    .sale-table th:nth-child(5) { width: 8%; }  /* W */
+    .sale-table th:nth-child(6) { width: 10%; } /* Qty/Feet */
+    .sale-table th:nth-child(7) { width: 8%; }  /* Unit */
+    .sale-table th:nth-child(8) { width: 11%; } /* Price/unit */
+    .sale-table th:nth-child(9) { width: 11%; } /* amount */
+    .sale-table th:nth-child(10) { width: 8%; } /* Action */
 
     /* Input & Select Styling */
     .sale-table .form-control {
@@ -244,14 +234,20 @@
         word-break: break-word;
         overflow-wrap: break-word;
     }
-    .ls-wrap .sale-table th:nth-child(1), .ls-wrap .sale-table td:nth-child(1) { width: 5%; }
-    .ls-wrap .sale-table th:nth-child(2), .ls-wrap .sale-table td:nth-child(2) { width: 35%; }
-    .ls-wrap .sale-table th:nth-child(3), .ls-wrap .sale-table td:nth-child(3) { width: 10%; }
-    .ls-wrap .sale-table th:nth-child(4), .ls-wrap .sale-table td:nth-child(4) { width: 15%; }
+    .ls-wrap .sale-table th:nth-child(1), .ls-wrap .sale-table td:nth-child(1) { width: 4%; }
+    .ls-wrap .sale-table th:nth-child(2), .ls-wrap .sale-table td:nth-child(2) { width: 25%; }
+    .ls-wrap .sale-table th:nth-child(3), .ls-wrap .sale-table td:nth-child(3) { width: 7%; }
+    .ls-wrap .sale-table th:nth-child(4), .ls-wrap .sale-table td:nth-child(4) { width: 8%; }
     .ls-wrap .sale-table th:nth-child(5), .ls-wrap .sale-table td:nth-child(5) { width: 8%; }
-    .ls-wrap .sale-table th:nth-child(6), .ls-wrap .sale-table td:nth-child(6) { width: 11%; }
-    .ls-wrap .sale-table th:nth-child(7), .ls-wrap .sale-table td:nth-child(7) { width: 11%; }
-    .ls-wrap .sale-table th:nth-child(8), .ls-wrap .sale-table td:nth-child(8) { width: 5%; }
+    .ls-wrap .sale-table th:nth-child(6), .ls-wrap .sale-table td:nth-child(6) { width: 10%; }
+    .ls-wrap .sale-table th:nth-child(7), .ls-wrap .sale-table td:nth-child(7) { width: 8%; }
+    .ls-wrap .sale-table th:nth-child(8), .ls-wrap .sale-table td:nth-child(8) { width: 11%; }
+    .ls-wrap .sale-table th:nth-child(9), .ls-wrap .sale-table td:nth-child(9) { width: 11%; }
+    .ls-wrap .sale-table th:nth-child(10), .ls-wrap .sale-table td:nth-child(10) { width: 8%; }
+
+    /* H/W reserved space in both modes; only visible on manual rows */
+    .sale-table .hw-cell { visibility: hidden; }
+    .sale-table tr.manual-mode .hw-cell { visibility: visible; }
 
     /* ---------- Page header (Estimate/Sale/Booking + date) ---------- */
     @media (max-width: 575.98px) {
@@ -350,6 +346,8 @@
         .ls-wrap .sale-table td .qty-box .qty {
             flex: 1;
         }
+        .ls-wrap .sale-table td.hw-cell { display: none !important; }
+        .ls-wrap .sale-table tr.manual-mode td.hw-cell { display: flex !important; }
     }
 </style>
 
@@ -470,17 +468,7 @@
                         <div class="table-responsive ls-wrap">
                             <table class="table table-borderless mb-0 sale-table">
                                 <thead>
-                                    <tr class="bg-light search-head">
-                                        <th class="text-center">#</th>
-                                        <th>Product Name</th>
-                                        <th class="text-center">Avail. Stock</th>
-                                        <th class="text-center">Quantity</th>
-                                        <th>Unit</th>
-                                        <th class="text-end">Price/unit</th>
-                                        <th class="text-end">amount</th>
-                                        <th class="text-center">Action</th>
-                                    </tr>
-                                    <tr class="bg-light manual-head d-none">
+                                    <tr class="bg-light">
                                         <th class="text-center">#</th>
                                         <th>Product Name</th>
                                         <th class="text-center">Avail. Stock</th>
@@ -526,10 +514,10 @@
                                          <td data-label="Avail Stock">
                                              <input type="text" name="avail_stock[]" class="form-control avail-stock p-1 text-center readonly-box" value="" readonly tabindex="-1" placeholder="-">
                                          </td>
-                                         <td class="hw-cell d-none">
+<td class="hw-cell" data-label="H">
                                              <input type="text" name="height[]" class="form-control h-input p-1 text-center" placeholder="H" value="{{ old('height.' . $i) ?? ($cloneHeights[$i] ?? '') }}">
                                          </td>
-                                         <td class="hw-cell d-none">
+                                         <td class="hw-cell" data-label="W">
                                              <input type="text" name="width[]" class="form-control w-input p-1 text-center" placeholder="W" value="{{ old('width.' . $i) ?? ($cloneWidths[$i] ?? '') }}">
                                          </td>
                                          <td>
@@ -758,7 +746,7 @@
         if (isNaN(qty) || qty < 0) qty = 0;
 
         let saleType = $('input[name="sale_type"]:checked').val();
-        if (saleType === 'sale' && !isNaN(avail)) {
+        if (saleType === 'sale' && !isNaN(avail) && !r.hasClass('manual-mode')) {
             if (qty > avail) {
                 r.find('.qty').addClass('border-danger text-danger');
             } else {
@@ -825,6 +813,7 @@
         r.find('.selected-display').addClass('d-none').empty();
         r.find('.input-group').removeClass('d-none');
         r.find('.item-input').removeClass('ac-hidden').val('');
+        r.removeClass('manual-mode');
         
         // Reset toggle to search mode
         let input = r.find('.item-input');
@@ -833,7 +822,6 @@
         let btn = r.find('.mode-toggle');
         btn.removeClass('btn-outline-primary').addClass('btn-outline-secondary');
         btn.find('.mode-icon').removeClass('fa-keyboard').addClass('fa-search');
-        r.find('.hw-cell').addClass('d-none');
         
         $('#saleTableBody').append(r);
         updateRowNumbers();
@@ -874,8 +862,6 @@
         $('#grandTotalE').val(g.toFixed(2));
         $('#netAmount').val(net.toFixed(2));
         $('#netE').val(net.toFixed(2));
-        $('#saleBookingLayout [name="gross_discount"]').val(d.toFixed(2));
-        $('#estimateLayout [name="gross_discount"]').val(d.toFixed(2));
         
         if ($('#partyType').val() === 'walkin') {
             let saleType = $('input[name="sale_type"]:checked').val();
@@ -898,6 +884,7 @@
         
         let validItems = 0;
         let errors = [];
+        let saleType = $('input[name="sale_type"]:checked').val();
         $('.sale-row').each(function() {
             let row = $(this);
             let input = row.find('.item-input');
@@ -917,9 +904,8 @@
                     errors.push(`Row ${row.find('.row-index').text()}: Quantity for product "${itemName}" must be greater than 0.`);
                 }
                 
-                let saleType = $('input[name="sale_type"]:checked').val();
                 let avail = parseFloat(row.find('.avail-stock').val());
-                if (saleType === 'sale' && !isNaN(avail) && qty > avail) {
+                if (saleType === 'sale' && !isManualMode && !isNaN(avail) && qty > avail) {
                     errors.push(`Row ${row.find('.row-index').text()}: Quantity (${qty}) for product "${itemName}" exceeds Available Stock (${avail}).`);
                 }
             }
@@ -930,6 +916,19 @@
         let hasSplit = (($('#splitPaymentsJson').val() || '') !== '');
         if (saleType !== 'estimate' && (advance > 0 || partyType === 'walkin') && !hasSplit && !$('select[name="account_id"]').val()) {
             errors.push('Please select a Payment Account or add a Split Payment.');
+        }
+
+        // Walk-in: payment must equal the Paid Amount (full amount)
+        if (partyType === 'walkin' && saleType !== 'estimate') {
+            let paidAmount = parseFloat($('#advance').val()) || 0;
+            let splitSum = 0;
+            try {
+                splitSum = (JSON.parse($('#splitPaymentsJson').val() || '[]') || []).reduce((s, d) => s + parseFloat(d.amount || 0), 0);
+            } catch (e) { splitSum = 0; }
+            let payment = splitSum > 0 ? splitSum : paidAmount;
+            if (Math.abs(payment - paidAmount) > 0.01) {
+                errors.push('Walk-in must pay the full amount (RS ' + paidAmount.toFixed(2) + ').');
+            }
         }
 
         if (validItems === 0) {
@@ -955,6 +954,7 @@
 
     $(document).ready(function() {
         function updateAccountLabel() {
+            let saleType = $('input[name="sale_type"]:checked').val();
             let adv = parseFloat($('#advance').val()) || 0;
             let partyType = $('#partyType').val();
             let hasSplit = (($('#splitPaymentsJson').val() || '') !== '');
@@ -985,9 +985,11 @@
                 $('#deliveryPaymentPanel').hide();
                 $('#saleBookingLayout').removeClass('d-none');
                 $('#estimateLayout').addClass('d-none');
-                $('#saleBookingLayout :input').prop('disabled', false);
+$('#saleBookingLayout :input').prop('disabled', false);
+                $('#estimateLayout :input').prop('disabled', true);
                 $('#discountContainer').show();
                 $('#advanceContainer').show();
+                $('#accountContainer').show();
                 $('#remainingContainer').show();
                 $('#remainingContainer span').text('Remaining');
                 $('[name="delivery_date"], [name="notify_days_before"]').prop('required', false).val('').prop('disabled', true);
@@ -996,6 +998,7 @@
                 $('#deliveryPaymentPanel').hide();
                 $('#saleBookingLayout').addClass('d-none');
                 $('#estimateLayout').removeClass('d-none');
+                $('#estimateLayout :input').prop('disabled', false);
                 $('#saleBookingLayout :input').prop('disabled', true);
                 $('[name="delivery_date"], [name="notify_days_before"]').prop('required', false).val('').prop('disabled', true);
                 $('.btn-save-order').text('Save Estimate');
@@ -1004,6 +1007,7 @@
                 $('#saleBookingLayout').removeClass('d-none');
                 $('#estimateLayout').addClass('d-none');
                 $('#saleBookingLayout :input').prop('disabled', false);
+                $('#estimateLayout :input').prop('disabled', true);
                 $('#discountContainer').show();
                 $('#advanceContainer').show();
                 $('#remainingContainer').show();
@@ -1018,11 +1022,16 @@
             $('.sale-row').each(function() {
                 calcRow($(this));
             });
+
+            let discountVal = $('#estimateLayout').hasClass('d-none')
+                ? $('#saleBookingLayout [name="gross_discount"]').val()
+                : $('#estimateLayout [name="gross_discount"]').val();
+            $('#saleBookingLayout [name="gross_discount"]').val(discountVal);
+            $('#estimateLayout [name="gross_discount"]').val(discountVal);
         }
 
         $('input[name="sale_type"]').on('change', handleSaleTypeToggle);
         handleSaleTypeToggle(); // Run on load
-        updateHeadForMode(); // Run on load
 
         // Populate phone/address from old selection
         let selCust = $('#customer').find('option:selected');
@@ -1043,34 +1052,16 @@
                 btn.removeClass('btn-outline-secondary').addClass('btn-outline-primary');
                 input.attr('placeholder', 'Manual Entry');
                 input.closest('td').find('.autocomplete-list').addClass('d-none');
-                input.closest('tr').find('.hw-cell').removeClass('d-none');
+                input.closest('tr').addClass('manual-mode');
             } else {
                 input.attr('data-mode', 'search');
                 icon.removeClass('fa-keyboard').addClass('fa-search');
                 btn.removeClass('btn-outline-primary').addClass('btn-outline-secondary');
                 input.attr('placeholder', 'Search Product');
-                input.closest('tr').find('.hw-cell').addClass('d-none');
+                input.closest('tr').removeClass('manual-mode');
             }
-            updateHeadForMode();
             input.focus();
         });
-
-        // Dynamically switch table headers based on whether any row is in manual mode
-        function updateHeadForMode() {
-            let hasManual = false;
-            $('.sale-row').each(function() {
-                if ($(this).find('.item-input').attr('data-mode') === 'manual') {
-                    hasManual = true;
-                }
-            });
-            if (hasManual) {
-                $('.search-head').addClass('d-none');
-                $('.manual-head').removeClass('d-none');
-            } else {
-                $('.manual-head').addClass('d-none');
-                $('.search-head').removeClass('d-none');
-            }
-        }
 
         // Single global autocomplete dropdown
         let $acList = $('<div class="autocomplete-list d-none"></div>').appendTo('body');
@@ -1263,17 +1254,16 @@
     };
 
     function renderSplitRow(accountId, amount, isFirst) {
-        let row = $('<div class="split-row d-flex gap-1 align-items-center w-100"></div>');
+        let row = $('<div class="split-row d-flex gap-2 align-items-center w-100"></div>');
 
         let $sel = $(splitAccountOptions());
-        $sel.css('flex', '0 0 auto');
-        $sel.css('width', '220px');
+        $sel.css({ 'flex': '1.25 1 0', 'min-width': '0' });
         if (accountId) {
             $sel.val(String(accountId));
         }
 
         let $amt = $('<input type="text" inputmode="decimal" class="form-control form-control-sm split-amount" placeholder="Amt">');
-        $amt.css({ 'flex': '1 1 auto', 'min-width': '0' });
+        $amt.css({ 'flex': '1 1 0', 'min-width': '0' });
         if (amount) $amt.val(amount);
 
         let $btn;
@@ -1335,17 +1325,19 @@
         let total = data.reduce((s, d) => s + parseFloat(d.amount), 0);
         $('#splitTotal').text(total.toFixed(2));
         if (data.length) {
-            $('#advance').val(total);
             // Recalculate Remaining from the split-paid amount
             let net = parseFloat($('#netAmount').val()) || 0;
             if ($('#partyType').val() === 'walkin') {
+                // Walk-in always pays the full amount, so Paid Amount stays = net total
                 let saleType = $('input[name="sale_type"]:checked').val();
+                $('#advance').val(net.toFixed(2));
                 if (saleType === 'estimate') {
                     $('#remaining').val(net.toFixed(2));
                 } else {
                     $('#remaining').val('0');
                 }
             } else {
+                $('#advance').val(total);
                 $('#remaining').val((net - total).toFixed(2));
             }
         }

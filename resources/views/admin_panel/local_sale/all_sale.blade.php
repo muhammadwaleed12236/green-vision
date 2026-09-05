@@ -273,6 +273,11 @@
                         </a>
                     </li>
                     <li>
+                        <a class="dropdown-item" href="{{ route('local.sale.receipt', $sale->id) }}" target="_blank">
+                            <i class="fa fa-receipt me-2"></i>Thermal Receipt
+                        </a>
+                    </li>
+                    <li>
                         <a class="dropdown-item" href="{{ route('local.sale.edit', $sale->id) }}">
                             <i class="fa fa-edit me-2"></i>Update Invoice
                         </a>

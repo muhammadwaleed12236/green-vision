@@ -86,6 +86,7 @@ class LocalSaleController extends Controller
             $manualSqfts = [];
             $rates = [];
             $amounts = [];
+            $manualFlags = [];
 
             foreach ($filteredIndices as $i) {
                 $itemIds[] = $rawItemIds[$i] ?? null;
@@ -97,6 +98,7 @@ class LocalSaleController extends Controller
                 $manualSqfts[] = $rawManualSqft[$i] ?? null;
                 $rates[] = $rawRates[$i] ?? null;
                 $amounts[] = floatval($rawAmounts[$i] ?? 0);
+                $manualFlags[] = !empty($rawHeights[$i] ?? null) || !empty($rawWidths[$i] ?? null);
             }
 
             // Recalculate totals based on filtered items
@@ -154,8 +156,14 @@ class LocalSaleController extends Controller
                 // Pre-validate stock
                 foreach ($items as $index => $itemName) {
                     if (!empty($itemName)) {
+                        if (!empty($manualFlags[$index])) {
+                            continue; // manual rows are exempt from stock validation
+                        }
                         $productModel = Product::where('item_name', $itemName)->first();
-                        $avail = $productModel ? floatval($productModel->initial_stock) : 0;
+                        if (!$productModel) {
+                            continue;
+                        }
+                        $avail = floatval($productModel->initial_stock ?? 0);
                         $qty = floatval($qtys[$index] ?? 0);
                         
                         if ($qty > $avail) {
@@ -167,6 +175,9 @@ class LocalSaleController extends Controller
                 foreach ($items as $index => $itemName) {
                     if (empty($itemName)) {
                         continue;
+                    }
+                    if (!empty($manualFlags[$index])) {
+                        continue; // no stock-out for manual rows
                     }
                     $productId = isset($itemIds[$index]) ? intval($itemIds[$index]) : null;
                     $productModel = null;
@@ -309,11 +320,8 @@ class LocalSaleController extends Controller
 
             DB::commit();
 
-            if ($sale->sale_type === 'booking') {
-                return redirect()->route('show-local-sale', $sale->id)->with('success', 'Booking Saved Successfully');
-            }
-
-            return redirect()->route('show-local-sale', $sale->id)->with('success', 'Job Order Saved Successfully');
+            // Open thermal receipt (auto-print) right after saving
+            return redirect()->route('local.sale.receipt', $sale->id)->with('autoprint', 1);
 
         } catch (\Throwable $e) {
             DB::rollBack();
@@ -486,13 +494,15 @@ class LocalSaleController extends Controller
         return redirect()->back();
     }
 
-    public function localsaleInvoice($id)
+    /**
+     * Build standardised $party and $ledger_info for a local sale.
+     * Shared by A4 invoice, thermal receipt and sale details.
+     */
+    private function resolvePartyAndLedger(LocalSale $sale): array
     {
-        $sale = LocalSale::with(['customer', 'vendor'])->findOrFail($id);
-
         $party = new \stdClass();
         $ledger_info = new \stdClass();
-        
+
         // Default Values
         $current_ledger_balance = 0;
         $invoice_effect_amount = ($sale->sale_type === 'estimate') ? 0 : $sale->remaining_amount;
@@ -504,10 +514,10 @@ class LocalSaleController extends Controller
             $party->address = $sale->customer->address;
             $party->phone = $sale->customer->phone_number;
             $party->label = "Customer";
-            
+
             $ledger = \DB::table('customer_ledgers')->where('customer_id', $sale->customer_id)->first();
             $current_ledger_balance = $ledger->closing_balance ?? 0;
-            
+
             $previous_balance = $current_ledger_balance - $invoice_effect_amount;
 
             $ledger_info->type = 'receivable';
@@ -524,10 +534,10 @@ class LocalSaleController extends Controller
             $party->address = $sale->vendor->address;
             $party->phone = $sale->vendor->phone_number;
             $party->label = "Vendor";
-            
+
             $ledger = \DB::table('contractor_ledgers')->where('contractor_id', $sale->vendor_id)->first();
             $current_ledger_balance = $ledger->closing_balance ?? 0;
-            
+
             $previous_balance = $current_ledger_balance - $invoice_effect_amount;
 
             $ledger_info->type = 'payable';
@@ -539,10 +549,10 @@ class LocalSaleController extends Controller
         }
         // Default fallback
         else {
-            $party->name = "Walk-in Customer";
-            $party->business_name = "Walk-in Customer";
-            $party->address = "N/A";
-            $party->phone = "N/A";
+            $party->name = $sale->customer_shopname ?? "Walk-in Customer";
+            $party->business_name = $sale->customer_shopname ?? "Walk-in Customer";
+            $party->address = $sale->customer_address ?? "N/A";
+            $party->phone = $sale->customer_phone ?? "N/A";
             $party->label = "Customer";
 
             $ledger_info->previous_balance = 0;
@@ -552,7 +562,25 @@ class LocalSaleController extends Controller
             $ledger_info->operator = '+';
         }
 
+        return [$party, $ledger_info];
+    }
+
+    public function localsaleInvoice($id)
+    {
+        $sale = LocalSale::with(['customer', 'vendor'])->findOrFail($id);
+
+        [$party, $ledger_info] = $this->resolvePartyAndLedger($sale);
+
         return view('admin_panel.local_sale.invoice', compact('sale', 'party', 'ledger_info'));
+    }
+
+    public function localsaleReceipt($id)
+    {
+        $sale = LocalSale::with(['customer', 'vendor'])->findOrFail($id);
+
+        [$party, $ledger_info] = $this->resolvePartyAndLedger($sale);
+
+        return view('admin_panel.local_sale.thermal_receipt', compact('sale', 'party', 'ledger_info'));
     }
 
     public function delete_localsale($id)
@@ -678,22 +706,14 @@ class LocalSaleController extends Controller
             // Now, if the new type is a Sale, record new StockOut entries
             $items = $request->item_name ?? [];
             $qtys = $request->qty ?? [];
+            $updHeights = $request->height ?? [];
+            $updWidths = $request->width ?? [];
             if ($newType === 'sale') {
-                // Pre-validate stock
                 foreach ($items as $index => $itemName) {
                     if (!empty($itemName)) {
-                        $productModel = Product::where('item_name', $itemName)->first();
-                        $avail = $productModel ? floatval($productModel->initial_stock) : 0;
-                        $qty = floatval($qtys[$index] ?? 0);
-                        
-                        if ($qty > $avail) {
-                            throw new \Exception("Quantity ({$qty}) for product \"{$itemName}\" exceeds Available Stock ({$avail}).");
+                        if (!empty($updHeights[$index] ?? null) || !empty($updWidths[$index] ?? null)) {
+                            continue; // no stock-out for manual rows
                         }
-                    }
-                }
-
-                foreach ($items as $index => $itemName) {
-                    if (!empty($itemName)) {
                         $productModel = Product::where('item_name', $itemName)->first();
                         if ($productModel) {
                             $openingStock = floatval($productModel->initial_stock ?? 0);
@@ -899,9 +919,8 @@ class LocalSaleController extends Controller
 
             DB::commit();
 
-            return redirect()
-                ->route('local.sale.invoice', $sale->id)
-                ->with('success', 'Invoice updated successfully');
+            // Open thermal receipt (auto-print) right after updating
+            return redirect()->route('local.sale.receipt', $sale->id)->with('autoprint', 1);
 
         } catch (\Throwable $e) {
             DB::rollBack();
@@ -1010,11 +1029,19 @@ class LocalSaleController extends Controller
                 // Pre-validate stock
                 $convItems = json_decode($sale->item, true) ?? [];
                 $convQtys = json_decode($sale->qty, true) ?? [];
+                $convHeights = json_decode($sale->height, true) ?? [];
+                $convWidths = json_decode($sale->width, true) ?? [];
                 
                 foreach ($convItems as $index => $itemName) {
                     if (!empty($itemName)) {
+                        if (!empty($convHeights[$index] ?? null) || !empty($convWidths[$index] ?? null)) {
+                            continue; // manual rows are exempt from stock validation
+                        }
                         $productModel = Product::where('item_name', $itemName)->first();
-                        $avail = $productModel ? floatval($productModel->initial_stock) : 0;
+                        if (!$productModel) {
+                            continue;
+                        }
+                        $avail = floatval($productModel->initial_stock ?? 0);
                         $qty = floatval($convQtys[$index] ?? 0);
                         
                         if ($qty > $avail) {
@@ -1061,9 +1088,14 @@ class LocalSaleController extends Controller
                 // Automatically record StockOut entries and update stock
                 $items = json_decode($sale->item, true) ?? [];
                 $qtys = json_decode($sale->qty, true) ?? [];
+                $heightsOut = json_decode($sale->height, true) ?? [];
+                $widthsOut = json_decode($sale->width, true) ?? [];
 
                 foreach ($items as $index => $itemName) {
                     if (!empty($itemName)) {
+                        if (!empty($heightsOut[$index] ?? null) || !empty($widthsOut[$index] ?? null)) {
+                            continue; // no stock-out for manual rows
+                        }
                         $productModel = Product::where('item_name', $itemName)->first();
                         if ($productModel) {
                             $openingStock = floatval($productModel->initial_stock ?? 0);
