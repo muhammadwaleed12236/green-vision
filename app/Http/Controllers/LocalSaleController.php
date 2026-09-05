@@ -143,6 +143,7 @@ class LocalSaleController extends Controller
                 'advance_amount' => $advance,
                 'remaining_amount' => $remaining,
                 'account_id' => $request->account_id,
+                'split_payments' => $this->parseSplitPayments($request),
                 'job_status' => ($request->sale_type === 'sale') ? 'completed' : 'pending',
                 'delivery_date' => ($request->sale_type === 'sale') ? null : $request->delivery_date,
                 'notify_days_before' => ($request->sale_type === 'sale') ? 0 : ($request->notify_days_before ?? 2),
@@ -210,24 +211,64 @@ class LocalSaleController extends Controller
                 $partyName = $sale->party_name ?? 'Walk-in';
                 $jvPartyType = in_array($partyType, ['customer', 'vendor']) ? $partyType : 'other';
                 $voucherNo = \App\Models\JournalVoucher::generateVoucherNo('receipt');
-                \App\Models\JournalVoucher::create([
-                    'admin_or_user_id' => $userId,
-                    'account_id' => $request->account_id ?? null,
-                    'voucher_no' => $voucherNo,
-                    'voucher_date' => $request->sale_date ?? now(),
-                    'voucher_type' => 'receipt',
-                    'party_type' => $jvPartyType,
-                    'party_id' => $partyType === 'customer' ? $request->customer_id : ($partyType === 'vendor' ? $request->vendor_id : null),
-                    'party_name' => $partyName,
-                    'account_head' => 'Sale',
-                    'debit_amount' => 0,
-                    'credit_amount' => $advance,
-                    'payment_method' => 'cash',
-                    'reference_type' => 'local_sale',
-                    'reference_id' => $sale->id,
-                    'narration' => 'Sale - ' . $sale->invoice_number . ' (' . $partyName . ')',
-                    'status' => 'approved',
-                ]);
+
+                $voucherDate = $request->sale_date ?? now();
+                $partyId = $partyType === 'customer' ? $request->customer_id : ($partyType === 'vendor' ? $request->vendor_id : null);
+                $referenceType = 'local_sale';
+                $referenceId = $sale->id;
+                $narration = 'Sale - ' . $sale->invoice_number . ' (' . $partyName . ')';
+
+                $splitPayments = $this->parseSplitPayments($request);
+
+                if (!empty($splitPayments)) {
+                    // One Journal Voucher (receipt) per payment account
+                    foreach ($splitPayments as $sp) {
+                        $accountId = $sp['account_id'] ?? null;
+                        $amount = floatval($sp['amount'] ?? 0);
+                        if (!$accountId || $amount <= 0) {
+                            continue;
+                        }
+                        $voucherNo = \App\Models\JournalVoucher::generateVoucherNo('receipt');
+                        \App\Models\JournalVoucher::create([
+                            'admin_or_user_id' => $userId,
+                            'account_id' => $accountId,
+                            'voucher_no' => $voucherNo,
+                            'voucher_date' => $voucherDate,
+                            'voucher_type' => 'receipt',
+                            'party_type' => $jvPartyType,
+                            'party_id' => $partyId,
+                            'party_name' => $partyName,
+                            'account_head' => 'Sale',
+                            'debit_amount' => 0,
+                            'credit_amount' => $amount,
+                            'payment_method' => 'cash',
+                            'reference_type' => $referenceType,
+                            'reference_id' => $referenceId,
+                            'narration' => $narration . ' - ' . ($sp['account_name'] ?? ''),
+                            'status' => 'approved',
+                        ]);
+                    }
+                } elseif ($request->account_id) {
+                    // Fallback: single account
+                    \App\Models\JournalVoucher::create([
+                        'admin_or_user_id' => $userId,
+                        'account_id' => $request->account_id,
+                        'voucher_no' => $voucherNo,
+                        'voucher_date' => $voucherDate,
+                        'voucher_type' => 'receipt',
+                        'party_type' => $jvPartyType,
+                        'party_id' => $partyId,
+                        'party_name' => $partyName,
+                        'account_head' => 'Sale',
+                        'debit_amount' => 0,
+                        'credit_amount' => $advance,
+                        'payment_method' => 'cash',
+                        'reference_type' => $referenceType,
+                        'reference_id' => $referenceId,
+                        'narration' => $narration,
+                        'status' => 'approved',
+                    ]);
+                }
             }
 
             // Update Customer Ledger: Previous + Remaining = New Closing
@@ -724,30 +765,57 @@ class LocalSaleController extends Controller
             }
 
             // 2b. Sync Journal Voucher for this sale
-            $existingVoucher = \App\Models\JournalVoucher::where('admin_or_user_id', $userId)
+            $existingVouchers = \App\Models\JournalVoucher::where('admin_or_user_id', $userId)
                 ->where('reference_type', 'local_sale')
                 ->where('reference_id', $sale->id)
-                ->first();
+                ->get();
+
+            $splitPayments = $this->parseSplitPayments($request);
 
             if (($newType === 'sale' || $newType === 'booking') && $advance > 0) {
                 $partyName = $request->party_type === 'walkin'
                     ? ($request->walkin_name ?? 'Walk-in')
                     : ($sale->party_name ?? 'Walk-in');
                 $jvPartyType = in_array($partyType, ['customer', 'vendor']) ? $partyType : 'other';
+                $narration = 'Sale - ' . ($sale->invoice_number ?? $sale->id) . ' (' . $partyName . ')';
 
-                if ($existingVoucher) {
-                    $existingVoucher->update([
-                        'voucher_date' => $request->sale_date ?? $sale->sale_date,
-                        'account_id' => $request->account_id ?? null,
-                        'party_type' => $jvPartyType,
-                        'party_id' => $partyType === 'customer' ? $request->customer_id : ($partyType === 'vendor' ? $request->vendor_id : null),
-                        'party_name' => $partyName,
-                        'debit_amount' => 0,
-                        'credit_amount' => $advance,
-                        'narration' => 'Sale - ' . ($sale->invoice_number ?? $sale->id) . ' (' . $partyName . ')',
-                        'status' => 'approved',
-                    ]);
-                } else {
+                if (!empty($splitPayments)) {
+                    // Delete old vouchers (they will be recreated per current split rows)
+                    foreach ($existingVouchers as $v) {
+                        $v->delete();
+                    }
+                    foreach ($splitPayments as $sp) {
+                        $accountId = $sp['account_id'] ?? null;
+                        $amount = floatval($sp['amount'] ?? 0);
+                        if (!$accountId || $amount <= 0) {
+                            continue;
+                        }
+                        $voucherNo = \App\Models\JournalVoucher::generateVoucherNo('receipt');
+                        \App\Models\JournalVoucher::create([
+                            'admin_or_user_id' => $userId,
+                            'account_id' => $accountId,
+                            'voucher_no' => $voucherNo,
+                            'voucher_date' => $request->sale_date ?? $sale->sale_date,
+                            'voucher_type' => 'receipt',
+                            'party_type' => $jvPartyType,
+                            'party_id' => $partyType === 'customer' ? $request->customer_id : ($partyType === 'vendor' ? $request->vendor_id : null),
+                            'party_name' => $partyName,
+                            'account_head' => 'Sale',
+                            'debit_amount' => 0,
+                            'credit_amount' => $amount,
+                            'payment_method' => 'cash',
+                            'reference_type' => 'local_sale',
+                            'reference_id' => $sale->id,
+                            'narration' => $narration . ' - ' . ($sp['account_name'] ?? ''),
+                            'status' => 'approved',
+                        ]);
+                    }
+                } elseif ($request->account_id) {
+                    if ($existingVouchers->isNotEmpty()) {
+                        foreach ($existingVouchers as $v) {
+                            $v->delete();
+                        }
+                    }
                     $voucherNo = \App\Models\JournalVoucher::generateVoucherNo('receipt');
                     \App\Models\JournalVoucher::create([
                         'admin_or_user_id' => $userId,
@@ -764,12 +832,14 @@ class LocalSaleController extends Controller
                         'payment_method' => 'cash',
                         'reference_type' => 'local_sale',
                         'reference_id' => $sale->id,
-                        'narration' => 'Sale - ' . ($sale->invoice_number ?? $sale->id) . ' (' . $partyName . ')',
+                        'narration' => $narration,
                         'status' => 'approved',
                     ]);
                 }
-            } elseif ($existingVoucher) {
-                $existingVoucher->delete();
+            } elseif ($existingVouchers->isNotEmpty()) {
+                foreach ($existingVouchers as $v) {
+                    $v->delete();
+                }
             }
 
             // Filter out empty items from request arrays
@@ -823,6 +893,8 @@ class LocalSaleController extends Controller
                 'job_status' => ($newType === 'sale') ? 'completed' : (($oldType === 'sale') ? 'pending' : $sale->job_status),
                 'delivery_date' => ($newType === 'sale') ? null : ($request->delivery_date ?? $sale->delivery_date),
                 'notify_days_before' => ($newType === 'sale') ? 0 : ($request->notify_days_before ?? $sale->notify_days_before ?? 2),
+                'account_id' => $request->account_id,
+                'split_payments' => $this->parseSplitPayments($request),
             ]);
 
             DB::commit();
@@ -1299,5 +1371,61 @@ class LocalSaleController extends Controller
             DB::rollBack();
             return response()->json(['success' => false, 'message' => $e->getMessage()], 400);
         }
+    }
+
+    /**
+     * Parse split payment rows from the request into a normalized array.
+     *
+     * Expected request arrays: split_account_id[], split_amount[], split_account_name[]
+     */
+    protected function parseSplitPayments($request)
+    {
+        $result = [];
+
+        // Prefer explicit JSON payload sent by the split-payment UI
+        $json = $request->split_payments_json;
+        if (!empty($json)) {
+            $decoded = is_string($json) ? json_decode($json, true) : $json;
+            if (is_array($decoded)) {
+                foreach ($decoded as $row) {
+                    $accountId = isset($row['account_id']) && $row['account_id'] !== '' ? intval($row['account_id']) : null;
+                    $amount = floatval($row['amount'] ?? 0);
+                    if (!$accountId || $amount <= 0) {
+                        continue;
+                    }
+                    $account = \App\Models\Account::find($accountId);
+                    $result[] = [
+                        'account_id' => $accountId,
+                        'account_name' => $row['account_name'] ?? ($account->name ?? ''),
+                        'amount' => $amount,
+                    ];
+                }
+                return $result;
+            }
+        }
+
+        $ids = $request->split_account_id ?? [];
+        $amounts = $request->split_amount ?? [];
+        $names = $request->split_account_name ?? [];
+
+        if (!is_array($ids)) {
+            return $result;
+        }
+
+        foreach ($ids as $index => $id) {
+            $accountId = $id !== null && $id !== '' ? intval($id) : null;
+            $amount = floatval($amounts[$index] ?? 0);
+            if (!$accountId || $amount <= 0) {
+                continue;
+            }
+            $account = \App\Models\Account::find($accountId);
+            $result[] = [
+                'account_id' => $accountId,
+                'account_name' => $names[$index] ?? ($account->name ?? ''),
+                'amount' => $amount,
+            ];
+        }
+
+        return $result;
     }
 }

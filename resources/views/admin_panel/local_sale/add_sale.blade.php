@@ -18,15 +18,27 @@
         padding: 8px 5px !important;
     }
 
-    /* Column Widths */
-    .sale-table th:nth-child(1) { width: 5%; }  /* # */
-    .sale-table th:nth-child(2) { width: 35%; } /* Product Name */
-    .sale-table th:nth-child(3) { width: 10%; } /* Avail Stock */
-    .sale-table th:nth-child(4) { width: 15%; } /* Quantity */
-    .sale-table th:nth-child(5) { width: 8%; }  /* Unit */
-    .sale-table th:nth-child(6) { width: 11%; } /* Price/unit */
-    .sale-table th:nth-child(7) { width: 11%; } /* amount */
-    .sale-table th:nth-child(8) { width: 5%; }  /* Action */
+    /* Column Widths - Search headers (8 cols) */
+    .sale-table .search-head th:nth-child(1) { width: 5%; }  /* # */
+    .sale-table .search-head th:nth-child(2) { width: 35%; } /* Product Name */
+    .sale-table .search-head th:nth-child(3) { width: 10%; } /* Avail Stock */
+    .sale-table .search-head th:nth-child(4) { width: 15%; } /* Quantity */
+    .sale-table .search-head th:nth-child(5) { width: 8%; }  /* Unit */
+    .sale-table .search-head th:nth-child(6) { width: 11%; } /* Price/unit */
+    .sale-table .search-head th:nth-child(7) { width: 11%; } /* amount */
+    .sale-table .search-head th:nth-child(8) { width: 5%; }  /* Action */
+
+    /* Column Widths - Manual headers (10 cols) */
+    .sale-table .manual-head th:nth-child(1) { width: 4%; }  /* # */
+    .sale-table .manual-head th:nth-child(2) { width: 28%; } /* Product Name */
+    .sale-table .manual-head th:nth-child(3) { width: 7%; }  /* Avail Stock */
+    .sale-table .manual-head th:nth-child(4) { width: 8%; }  /* H */
+    .sale-table .manual-head th:nth-child(5) { width: 8%; }  /* W */
+    .sale-table .manual-head th:nth-child(6) { width: 10%; } /* Qty/Feet */
+    .sale-table .manual-head th:nth-child(7) { width: 7%; }  /* Unit */
+    .sale-table .manual-head th:nth-child(8) { width: 10%; } /* Price/unit */
+    .sale-table .manual-head th:nth-child(9) { width: 10%; } /* amount */
+    .sale-table .manual-head th:nth-child(10) { width: 5%; } /* Action */
 
     /* Input & Select Styling */
     .sale-table .form-control {
@@ -458,11 +470,23 @@
                         <div class="table-responsive ls-wrap">
                             <table class="table table-borderless mb-0 sale-table">
                                 <thead>
-                                    <tr class="bg-light">
+                                    <tr class="bg-light search-head">
                                         <th class="text-center">#</th>
                                         <th>Product Name</th>
                                         <th class="text-center">Avail. Stock</th>
                                         <th class="text-center">Quantity</th>
+                                        <th>Unit</th>
+                                        <th class="text-end">Price/unit</th>
+                                        <th class="text-end">amount</th>
+                                        <th class="text-center">Action</th>
+                                    </tr>
+                                    <tr class="bg-light manual-head d-none">
+                                        <th class="text-center">#</th>
+                                        <th>Product Name</th>
+                                        <th class="text-center">Avail. Stock</th>
+                                        <th class="text-center">H</th>
+                                        <th class="text-center">W</th>
+                                        <th class="text-center">Qty/Feet</th>
                                         <th>Unit</th>
                                         <th class="text-end">Price/unit</th>
                                         <th class="text-end">amount</th>
@@ -474,6 +498,8 @@
                                  @php
                                      $oldItemNames = old('item_name', []);
                                      $cloneItems = isset($cloneEstimate) ? json_decode($cloneEstimate?->item, true) : [];
+                                     $cloneHeights = isset($cloneEstimate) ? json_decode($cloneEstimate?->height, true) : [];
+                                     $cloneWidths = isset($cloneEstimate) ? json_decode($cloneEstimate?->width, true) : [];
                                      $cloneQtys = isset($cloneEstimate) ? json_decode($cloneEstimate?->qty, true) : [];
                                      $cloneUnits = isset($cloneEstimate) ? json_decode($cloneEstimate?->unit, true) : [];
                                      $cloneRates = isset($cloneEstimate) ? json_decode($cloneEstimate?->rate, true) : [];
@@ -500,7 +526,13 @@
                                          <td data-label="Avail Stock">
                                              <input type="text" name="avail_stock[]" class="form-control avail-stock p-1 text-center readonly-box" value="" readonly tabindex="-1" placeholder="-">
                                          </td>
-                                         <td data-label="Qty">
+                                         <td class="hw-cell d-none">
+                                             <input type="text" name="height[]" class="form-control h-input p-1 text-center" placeholder="H" value="{{ old('height.' . $i) ?? ($cloneHeights[$i] ?? '') }}">
+                                         </td>
+                                         <td class="hw-cell d-none">
+                                             <input type="text" name="width[]" class="form-control w-input p-1 text-center" placeholder="W" value="{{ old('width.' . $i) ?? ($cloneWidths[$i] ?? '') }}">
+                                         </td>
+                                         <td>
                                              <div class="qty-box">
                                                  <button type="button" class="btn qty-minus">−</button>
                                                  <input name="qty[]" class="form-control qty text-center" value="{{ old('qty.' . $i) ?? ($cloneQtys[$i] ?? 0) }}" placeholder="0">
@@ -544,44 +576,86 @@
                  </div>
 
                  <div class="card mb-3">
-                     <div class="card-body">
-                         <div class="row g-3">
-                             <div class="col-md-3">
-                                 <label>Gross Total</label>
-                                 <input id="grandTotal" class="form-control readonly-box" value="{{ $cloneEstimate?->grand_total ?? '' }}" readonly>
-                             </div>
+                     <div class="card-body py-3 px-3">
 
-                             <div class="col-md-3" id="discountContainer">
-                                 <label>Discount</label>
-                                 <input name="gross_discount" class="form-control" value="{{ old('gross_discount') ?? ($cloneEstimate?->discount_value ?? '0') }}">
-                             </div>
+                         {{-- ===== SALE / BOOKING LAYOUT (two cards) ===== --}}
+                         <div id="saleBookingLayout">
+                             <div class="row g-3">
+                                 {{-- LEFT: Payment Account --}}
+                                 <div class="col-md-6">
+                                     <div class="card h-100 border">
+                                         <div class="card-body">
+                                             <h6 class="fw-bold text-primary mb-2" id="paymentAccountLabel">Payment Account</h6>
+                                             <div id="accountContainer">
+                                                 <div id="splitRows" class="d-flex flex-column gap-1"></div>
+                                                 <div class="d-flex align-items-center justify-content-end gap-2 pt-1">
+                                                     <span class="small text-muted">Total</span>
+                                                     <strong id="splitTotal" class="text-primary small">0</strong>
+                                                 </div>
+                                                 <input type="hidden" name="split_payments_json" id="splitPaymentsJson" value="{{ $cloneEstimate?->split_payments ? json_encode($cloneEstimate->split_payments) : '' }}">
+                                             </div>
+                                         </div>
+                                     </div>
+                                 </div>
 
-                            <div class="col-md-3" id="advanceContainer">
-                                <label id="advanceLabel">Advance</label>
-                                <input id="advance" name="advance_amount" class="form-control" value="{{ old('advance_amount') }}">
-                            </div>
-
-                             <div class="col-md-3" id="remainingContainer">
-                                 <label>Remaining</label>
-                                 <input id="remaining" class="form-control readonly-box" value="{{ $cloneEstimate?->remaining_amount ?? '' }}" readonly>
+                                 {{-- RIGHT: Financial Summary --}}
+                                 <div class="col-md-6">
+                                     <div class="card h-100 border">
+                                         <div class="card-body">
+                                             <h6 class="fw-bold text-primary mb-2">Financial Summary</h6>
+                                             <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
+                                                 <span class="small text-muted">Gross Total</span>
+                                                 <input id="grandTotal" class="form-control form-control-sm readonly-box w-50 text-end" value="{{ $cloneEstimate?->grand_total ?? '' }}" readonly>
+                                             </div>
+                                             <div class="d-flex align-items-center justify-content-between gap-2 mb-2" id="discountContainer">
+                                                 <span class="small text-muted">Discount</span>
+                                                 <input name="gross_discount" class="form-control form-control-sm w-50 text-end" value="{{ old('gross_discount') ?? ($cloneEstimate?->discount_value ?? '0') }}">
+                                             </div>
+                                             <div class="d-flex align-items-center justify-content-between gap-2 mb-2" id="advanceContainer">
+                                                 <span class="small text-muted" id="advanceLabel">Advance</span>
+                                                 <input id="advance" name="advance_amount" class="form-control form-control-sm w-50 text-end" value="{{ old('advance_amount') }}">
+                                             </div>
+                                             <div class="d-flex align-items-center justify-content-between gap-2" id="remainingContainer">
+                                                 <span class="small text-muted">Remaining Balance</span>
+                                                 <input id="remaining" class="form-control form-control-sm readonly-box w-50 text-end" value="{{ $cloneEstimate?->remaining_amount ?? '' }}" readonly>
+                                             </div>
+                                         </div>
+                                     </div>
+                                 </div>
                              </div>
+                         </div>
 
-                             <div class="col-md-3" id="accountContainer">
-                                  <label id="paymentAccountLabel">Payment Account</label>
-                                  <select name="account_id" class="form-control">
-                                     <option value="">Select Account</option>
-                                     @foreach($Accounts as $account)
-                                         <option value="{{ $account->id }}" {{ old('account_id') == $account->id ? 'selected' : '' }}>{{ $account->name }}</option>
-                                     @endforeach
-                                 </select>
+                         {{-- ===== ESTIMATE LAYOUT (vertical, no payment) ===== --}}
+                         <div id="estimateLayout" class="d-none">
+                             <div class="card border">
+                                 <div class="card-body">
+                                     <h6 class="fw-bold text-primary mb-3">Financial Summary</h6>
+                                     <div class="row g-3">
+                                         <div class="col-md-4">
+                                             <label class="small text-muted d-block mb-1">Gross Total</label>
+                                             <input id="grandTotalE" class="form-control form-control-sm readonly-box text-end" value="{{ $cloneEstimate?->grand_total ?? '' }}" readonly>
+                                         </div>
+                                         <div class="col-md-4">
+                                             <label class="small text-muted d-block mb-1">Discount</label>
+                                             <input name="gross_discount" id="discountE" class="form-control form-control-sm text-end" value="{{ old('gross_discount') ?? ($cloneEstimate?->discount_value ?? '0') }}">
+                                         </div>
+                                         <div class="col-md-4">
+                                             <label class="small text-muted d-block mb-1">Net Total</label>
+                                             <input id="netE" class="form-control form-control-sm readonly-box text-end" value="{{ $cloneEstimate?->net_amount ?? '' }}" readonly>
+                                         </div>
+                                     </div>
+                                 </div>
                              </div>
+                         </div>
+
+                         {{-- SAVE BUTTON (right aligned) --}}
+                         <div class="d-flex justify-content-end mt-3">
+                             <input type="hidden" name="net_amount" id="netAmount">
+                             <button type="submit" class="btn btn-primary btn-save-order">Save Job Order</button>
                          </div>
                      </div>
                  </div>
-
-                <input type="hidden" name="net_amount" id="netAmount">
-                <button class="btn btn-primary btn-save-order">Save Job Order</button>
-            </form>
+             </form>
         </div>
     </div>
 </div>
@@ -631,7 +705,7 @@
 
         $('#advance').prop('readonly', false);
         $('#advanceLabel').text('Advance');
-        $('#remaining').closest('.col-md-3').removeClass('d-none');
+        $('#remainingContainer').removeClass('d-none');
 
         if (t === 'customer') {
             $('#customerBox').removeClass('d-none');
@@ -647,8 +721,16 @@
             $('#walkinName,#walkinPhone,#walkinAddress').removeClass('d-none');
             $('#advance').val($('#grandTotal').val()).prop('readonly', true);
             $('#advanceLabel').text('Paid Amount');
-            $('#remaining').val('0');
-            $('#remaining').closest('.col-md-3').addClass('d-none');
+            let saleType = $('input[name="sale_type"]:checked').val();
+            if (saleType === 'estimate') {
+                $('#advance').val('');
+                $('#advanceContainer').show();
+                $('#remainingContainer').show();
+                $('#remainingContainer span').text('Net Total');
+            } else {
+                $('#remaining').val('0');
+                $('#remainingContainer').addClass('d-none');
+            }
         }
 
         calcGrand();
@@ -696,6 +778,16 @@
         calcRow($(e.target).closest('tr'));
     });
 
+    // Auto-calc Qty from Height (H) x Width (W) - only in manual mode
+    $(document).on('input change', '.h-input,.w-input', function () {
+        let r = $(this).closest('tr');
+        if (r.find('.item-input').attr('data-mode') !== 'manual') return;
+        let h = parseFloat(r.find('.h-input').val()) || 0;
+        let w = parseFloat(r.find('.w-input').val()) || 0;
+        r.find('.qty').val((h * w).toFixed(2));
+        calcRow(r);
+    });
+
     $(document).on('input change', '.item-total', e => {
         calcGrand();
     });
@@ -724,6 +816,8 @@
         r.find('input').val('');
         r.find('.qty').val(0).removeClass('border-danger text-danger');
         r.find('.avail-stock').val('');
+        r.find('.h-input').val('');
+        r.find('.w-input').val('');
         r.find('.rate').val('');
         r.find('.item-total').val('0.00');
         r.find('.unit').val('');
@@ -739,6 +833,7 @@
         let btn = r.find('.mode-toggle');
         btn.removeClass('btn-outline-primary').addClass('btn-outline-secondary');
         btn.find('.mode-icon').removeClass('fa-keyboard').addClass('fa-search');
+        r.find('.hw-cell').addClass('d-none');
         
         $('#saleTableBody').append(r);
         updateRowNumbers();
@@ -771,12 +866,29 @@
     function calcGrand() {
         let g = 0;
         $('.item-total').each((_, e) => g += +e.value || 0);
-        let d = +$('[name="gross_discount"]').val() || 0;
+        let d = +($('#estimateLayout').hasClass('d-none')
+            ? $('#saleBookingLayout [name="gross_discount"]').val()
+            : $('#estimateLayout [name="gross_discount"]').val()) || 0;
         let net = g - d;
         $('#grandTotal').val(g.toFixed(2));
+        $('#grandTotalE').val(g.toFixed(2));
         $('#netAmount').val(net.toFixed(2));
-        let adv = +$('#advance').val() || 0;
-        $('#remaining').val((net - adv).toFixed(2));
+        $('#netE').val(net.toFixed(2));
+        $('#saleBookingLayout [name="gross_discount"]').val(d.toFixed(2));
+        $('#estimateLayout [name="gross_discount"]').val(d.toFixed(2));
+        
+        if ($('#partyType').val() === 'walkin') {
+            let saleType = $('input[name="sale_type"]:checked').val();
+            if (saleType === 'estimate') {
+                $('#remaining').val(net.toFixed(2));
+            } else {
+                $('#advance').val(net.toFixed(2));
+                $('#remaining').val('0');
+            }
+        } else {
+            let adv = +$('#advance').val() || 0;
+            $('#remaining').val((net - adv).toFixed(2));
+        }
     }
 
     $('#advance,[name="gross_discount"]').on('input', calcGrand);
@@ -815,8 +927,9 @@
 
         let advance = parseFloat($('#advance').val()) || 0;
         let partyType = $('#partyType').val();
-        if ((advance > 0 || partyType === 'walkin') && !$('select[name="account_id"]').val()) {
-            errors.push('Please select a Payment Account.');
+        let hasSplit = (($('#splitPaymentsJson').val() || '') !== '');
+        if (saleType !== 'estimate' && (advance > 0 || partyType === 'walkin') && !hasSplit && !$('select[name="account_id"]').val()) {
+            errors.push('Please select a Payment Account or add a Split Payment.');
         }
 
         if (validItems === 0) {
@@ -844,7 +957,8 @@
         function updateAccountLabel() {
             let adv = parseFloat($('#advance').val()) || 0;
             let partyType = $('#partyType').val();
-            if (adv > 0 || partyType === 'walkin') {
+            let hasSplit = (($('#splitPaymentsJson').val() || '') !== '');
+            if (saleType !== 'estimate' && (adv > 0 || partyType === 'walkin') && !hasSplit) {
                 $('#paymentAccountLabel').html('Payment Account <span class="text-danger">*</span>');
             } else {
                 $('#paymentAccountLabel').html('Payment Account');
@@ -869,29 +983,32 @@
 
             if (saleType === 'sale') {
                 $('#deliveryPaymentPanel').hide();
+                $('#saleBookingLayout').removeClass('d-none');
+                $('#estimateLayout').addClass('d-none');
+                $('#saleBookingLayout :input').prop('disabled', false);
                 $('#discountContainer').show();
                 $('#advanceContainer').show();
                 $('#remainingContainer').show();
-                $('#remainingContainer label').text('Remaining');
-                $('[name="delivery_date"]').prop('required', false).val('');
-                $('[name="notify_days_before"]').val('');
+                $('#remainingContainer span').text('Remaining');
+                $('[name="delivery_date"], [name="notify_days_before"]').prop('required', false).val('').prop('disabled', true);
                 $('.btn-save-order').text('Save Sale');
             } else if (saleType === 'estimate') {
                 $('#deliveryPaymentPanel').hide();
-                $('#discountContainer').show();
-                $('#advanceContainer').hide();
-                $('#remainingContainer').show();
-                $('#remainingContainer label').text('Net Total');
-                $('[name="delivery_date"]').prop('required', false).val('');
-                $('[name="notify_days_before"]').val('');
+                $('#saleBookingLayout').addClass('d-none');
+                $('#estimateLayout').removeClass('d-none');
+                $('#saleBookingLayout :input').prop('disabled', true);
+                $('[name="delivery_date"], [name="notify_days_before"]').prop('required', false).val('').prop('disabled', true);
                 $('.btn-save-order').text('Save Estimate');
             } else { // booking
                 $('#deliveryPaymentPanel').show();
+                $('#saleBookingLayout').removeClass('d-none');
+                $('#estimateLayout').addClass('d-none');
+                $('#saleBookingLayout :input').prop('disabled', false);
                 $('#discountContainer').show();
                 $('#advanceContainer').show();
                 $('#remainingContainer').show();
-                $('#remainingContainer label').text('Remaining');
-                $('[name="delivery_date"]').prop('required', true);
+                $('#remainingContainer span').text('Remaining');
+                $('[name="delivery_date"], [name="notify_days_before"]').prop('required', true).prop('disabled', false);
                 if (!$('[name="notify_days_before"]').val()) {
                     $('[name="notify_days_before"]').val('2');
                 }
@@ -905,6 +1022,7 @@
 
         $('input[name="sale_type"]').on('change', handleSaleTypeToggle);
         handleSaleTypeToggle(); // Run on load
+        updateHeadForMode(); // Run on load
 
         // Populate phone/address from old selection
         let selCust = $('#customer').find('option:selected');
@@ -924,18 +1042,35 @@
                 icon.removeClass('fa-search').addClass('fa-keyboard');
                 btn.removeClass('btn-outline-secondary').addClass('btn-outline-primary');
                 input.attr('placeholder', 'Manual Entry');
-                td.find('.autocomplete-list').addClass('d-none');
-                td.find('.selected-display').addClass('d-none').empty();
-                input.removeClass('ac-hidden').val('');
-                td.closest('tr').find('.item-id').val('');
+                input.closest('td').find('.autocomplete-list').addClass('d-none');
+                input.closest('tr').find('.hw-cell').removeClass('d-none');
             } else {
                 input.attr('data-mode', 'search');
                 icon.removeClass('fa-keyboard').addClass('fa-search');
                 btn.removeClass('btn-outline-primary').addClass('btn-outline-secondary');
                 input.attr('placeholder', 'Search Product');
+                input.closest('tr').find('.hw-cell').addClass('d-none');
             }
+            updateHeadForMode();
             input.focus();
         });
+
+        // Dynamically switch table headers based on whether any row is in manual mode
+        function updateHeadForMode() {
+            let hasManual = false;
+            $('.sale-row').each(function() {
+                if ($(this).find('.item-input').attr('data-mode') === 'manual') {
+                    hasManual = true;
+                }
+            });
+            if (hasManual) {
+                $('.search-head').addClass('d-none');
+                $('.manual-head').removeClass('d-none');
+            } else {
+                $('.manual-head').addClass('d-none');
+                $('.search-head').removeClass('d-none');
+            }
+        }
 
         // Single global autocomplete dropdown
         let $acList = $('<div class="autocomplete-list d-none"></div>').appendTo('body');
@@ -1115,6 +1250,149 @@
         });
 
     });
+
+    // ================= SPLIT PAYMENT (multiple accounts) =================
+    const splitAccountOptions = function () {
+        let html = '<select class="form-control form-control-sm split-account">';
+        html += '<option value="">Select Account</option>';
+        @foreach($Accounts as $account)
+            html += '<option value="{{ $account->id }}" data-name="{{ $account->name }}">{{ $account->name }}</option>';
+        @endforeach
+        html += '</select>';
+        return html;
+    };
+
+    function renderSplitRow(accountId, amount, isFirst) {
+        let row = $('<div class="split-row d-flex gap-1 align-items-center w-100"></div>');
+
+        let $sel = $(splitAccountOptions());
+        $sel.css('flex', '0 0 auto');
+        $sel.css('width', '220px');
+        if (accountId) {
+            $sel.val(String(accountId));
+        }
+
+        let $amt = $('<input type="text" inputmode="decimal" class="form-control form-control-sm split-amount" placeholder="Amt">');
+        $amt.css({ 'flex': '1 1 auto', 'min-width': '0' });
+        if (amount) $amt.val(amount);
+
+        let $btn;
+        if (isFirst) {
+            $btn = $('<button type="button" class="btn btn-outline-primary btn-sm split-add" title="Add another account" style="width:31px;height:31px;flex:0 0 31px;padding:0;display:inline-flex;align-items:center;justify-content:center;border-radius:6px;font-size:16px;line-height:1;">+</button>');
+        } else {
+            $btn = $('<button type="button" class="btn btn-outline-danger btn-sm split-remove" title="Remove this account" style="width:31px;height:31px;flex:0 0 31px;padding:0;display:inline-flex;align-items:center;justify-content:center;border-radius:6px;font-size:15px;line-height:1;">&#128465;</button>');
+        }
+
+        row.append($sel, $amt, $btn);
+        return row;
+    }
+
+    function splitRowCount() {
+        return $('#splitRows .split-row').length;
+    }
+
+    function refreshFirstRowButton() {
+        // First row always shows "+ Add", subsequent rows show trash
+        $('#splitRows .split-row').each(function (i) {
+            let $row = $(this);
+            let $btn = $row.find('.split-add, .split-remove');
+            if (i === 0) {
+                if (!$btn.hasClass('split-add')) {
+                    $row.find('.split-remove').replaceWith(
+                        $('<button type="button" class="btn btn-outline-primary btn-sm split-add" title="Add another account" style="width:31px;height:31px;flex:0 0 31px;padding:0;display:inline-flex;align-items:center;justify-content:center;border-radius:6px;font-size:16px;line-height:1;">+</button>')
+                    );
+                }
+            } else {
+                if (!$btn.hasClass('split-remove')) {
+                    $row.find('.split-add').replaceWith(
+                        $('<button type="button" class="btn btn-outline-danger btn-sm split-remove" title="Remove this account" style="width:31px;height:31px;flex:0 0 31px;padding:0;display:inline-flex;align-items:center;justify-content:center;border-radius:6px;font-size:15px;line-height:1;">&#128465;</button>')
+                    );
+                }
+            }
+        });
+    }
+
+    function ensurePrimaryRow() {
+        if (splitRowCount() === 0) {
+            $('#splitRows').append(renderSplitRow(null, null, true));
+        }
+        refreshFirstRowButton();
+        syncSplitJson();
+    }
+
+    function syncSplitJson() {
+        let data = [];
+        $('#splitRows .split-row').each(function () {
+            let $sel = $(this).find('.split-account');
+            let accountId = $sel.val();
+            let amount = parseFloat($(this).find('.split-amount').val()) || 0;
+            let name = $sel.find('option:selected').data('name') || '';
+            if (accountId && amount > 0) {
+                data.push({ account_id: accountId, account_name: name, amount: amount });
+            }
+        });
+        $('#splitPaymentsJson').val(JSON.stringify(data));
+        let total = data.reduce((s, d) => s + parseFloat(d.amount), 0);
+        $('#splitTotal').text(total.toFixed(2));
+        if (data.length) {
+            $('#advance').val(total);
+            // Recalculate Remaining from the split-paid amount
+            let net = parseFloat($('#netAmount').val()) || 0;
+            if ($('#partyType').val() === 'walkin') {
+                let saleType = $('input[name="sale_type"]:checked').val();
+                if (saleType === 'estimate') {
+                    $('#remaining').val(net.toFixed(2));
+                } else {
+                    $('#remaining').val('0');
+                }
+            } else {
+                $('#remaining').val((net - total).toFixed(2));
+            }
+        }
+        refreshFirstRowButton();
+    }
+
+    // "+ Add" on primary row -> append a new dynamic row
+    $('#splitRows').on('click', '.split-add', function () {
+        if (splitRowCount() >= 10) return;
+        $('#splitRows').append(renderSplitRow(null, null, false));
+        refreshFirstRowButton();
+    });
+
+    $('#splitRows').on('input', '.split-amount', function () {
+        syncSplitJson();
+    });
+
+    $('#splitRows').on('change', '.split-account', function () {
+        syncSplitJson();
+    });
+
+    // Trash button on dynamic rows -> delete that row only (primary row never removable)
+    $('#splitRows').on('click', '.split-remove', function () {
+        $(this).closest('.split-row').remove();
+        ensurePrimaryRow();
+    });
+
+    // Preload existing split payments (e.g. from a cloned estimate)
+    let existingSplit = $('#splitPaymentsJson').val();
+    if (existingSplit) {
+        try {
+            let rows = JSON.parse(existingSplit);
+            if (rows.length) {
+                $('#splitRows').append(renderSplitRow(rows[0].account_id, rows[0].amount, true));
+                for (let i = 1; i < rows.length; i++) {
+                    $('#splitRows').append(renderSplitRow(rows[i].account_id, rows[i].amount, false));
+                }
+            } else {
+                ensurePrimaryRow();
+            }
+            syncSplitJson();
+        } catch (e) {
+            ensurePrimaryRow();
+        }
+    } else {
+        ensurePrimaryRow();
+    }
 </script>
 
 <!-- Quick Add Customer Modal -->

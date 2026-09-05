@@ -178,15 +178,27 @@
 
                             <table class="table table-bordered text-center mb-0">
                                 <thead class="table-light">
-                                    <tr>
+                                    <tr class="search-head">
                                         <th style="width: 5%;">#</th>
-                                        <th style="width: 30%;">Product Name</th>
+                                        <th style="width: 35%;">Product Name</th>
                                         <th style="width: 10%;">Avail. Stock</th>
                                         <th style="width: 15%;">Quantity</th>
-                                        <th style="width: 10%;">Unit</th>
-                                        <th style="width: 12%;">Price/unit</th>
+                                        <th style="width: 8%;">Unit</th>
+                                        <th style="width: 11%;">Price/unit</th>
+                                        <th style="width: 11%;">amount</th>
+                                        <th style="width: 5%;">Action</th>
+                                    </tr>
+                                    <tr class="manual-head d-none">
+                                        <th style="width: 4%;">#</th>
+                                        <th style="width: 28%;">Product Name</th>
+                                        <th style="width: 7%;">Avail. Stock</th>
+                                        <th style="width: 8%;">H</th>
+                                        <th style="width: 8%;">W</th>
+                                        <th style="width: 10%;">Qty/Feet</th>
+                                        <th style="width: 7%;">Unit</th>
+                                        <th style="width: 10%;">Price/unit</th>
                                         <th style="width: 10%;">amount</th>
-                                        <th style="width: 8%;">Action</th>
+                                        <th style="width: 5%;">Action</th>
                                     </tr>
                                 </thead>
 
@@ -209,6 +221,12 @@
                                             <td>
                                                 @php $prod = \App\Models\Product::where('item_name', $item)->first(); $avail = $prod ? $prod->initial_stock : 0; @endphp
                                                 <input type="text" name="avail_stock[]" class="form-control avail-stock p-1 text-center readonly-box" value="{{ $avail }}" readonly tabindex="-1" placeholder="-">
+                                            </td>
+                                            <td class="hw-cell d-none">
+                                                <input type="text" name="height[]" class="form-control h-input p-1 text-center" placeholder="H" value="{{ $heights[$i] ?? '' }}">
+                                            </td>
+                                            <td class="hw-cell d-none">
+                                                <input type="text" name="width[]" class="form-control w-input p-1 text-center" placeholder="W" value="{{ $widths[$i] ?? '' }}">
                                             </td>
                                             <td>
                                                 <div class="qty-box">
@@ -251,6 +269,12 @@
                                         </td>
                                         <td>
                                             <input type="text" name="avail_stock[]" class="form-control avail-stock p-1 text-center readonly-box" value="" readonly tabindex="-1" placeholder="-">
+                                        </td>
+                                        <td class="hw-cell">
+                                            <input type="text" name="height[]" class="form-control h-input p-1 text-center" placeholder="H" value="">
+                                        </td>
+                                        <td class="hw-cell">
+                                            <input type="text" name="width[]" class="form-control w-input p-1 text-center" placeholder="W" value="">
                                         </td>
                                         <td>
                                             <div class="qty-box">
@@ -304,42 +328,43 @@
                 </div>
 
                 {{-- ================= TOTAL ================= --}}
-                <div class="card mb-3">
-                    <div class="card-body">
-                        <div class="row g-3">
+                <div class="card mb-2">
+                    <div class="card-body py-3 px-3" style="padding-bottom: 1.25rem;">
+                        <div class="row g-2 align-items-start">
 
-                            <div class="col-md-3">
-                                <label>Grand Total</label>
-                                <input id="grandTotal" name="grand_total" class="form-control readonly-box"
+                            <div class="col">
+                                <label class="mb-0 small text-muted">Grand Total</label>
+                                <input id="grandTotal" name="grand_total" class="form-control form-control-sm readonly-box"
                                     value="{{ $original->grand_total }}" readonly>
                             </div>
 
-                            <div class="col-md-3" id="discountContainer">
-                                <label>Discount</label>
-                                <input name="gross_discount" class="form-control"
+                            <div class="col" id="discountContainer">
+                                <label class="mb-0 small text-muted">Discount</label>
+                                <input name="gross_discount" class="form-control form-control-sm"
                                     value="{{ $original->discount_value }}">
                             </div>
 
-                            <div class="col-md-3" id="advanceContainer">
-                                <label id="advanceLabel">Advance</label>
-                                <input id="advance" name="advance_amount" class="form-control"
+                            <div class="col" id="advanceContainer">
+                                <label class="mb-0 small text-muted" id="advanceLabel">Advance</label>
+                                <input id="advance" name="advance_amount" class="form-control form-control-sm"
                                     value="{{ $original->advance_amount }}">
                             </div>
 
-                            <div class="col-md-3" id="remainingContainer">
-                                <label>Remaining</label>
-                                <input id="remaining" class="form-control readonly-box"
+                            <div class="col" id="remainingContainer">
+                                <label class="mb-0 small text-muted">Remaining</label>
+                                <input id="remaining" class="form-control form-control-sm readonly-box"
                                     value="{{ $original->remaining_amount }}" readonly>
                             </div>
 
-                            <div class="col-md-3" id="accountContainer">
-                                <label id="paymentAccountLabel">Payment Account</label>
-                                <select name="account_id" class="form-control">
-                                    <option value="">Select Account</option>
-                                    @foreach($Accounts as $account)
-                                        <option value="{{ $account->id }}" {{ (old('account_id') ?? $original->account_id ?? '') == $account->id ? 'selected' : '' }}>{{ $account->name }}</option>
-                                    @endforeach
-                                </select>
+                            <div class="col-4" id="accountContainer">
+                                <label class="mb-1 small text-muted" id="paymentAccountLabel">Payment Account</label>
+                                <div id="splitRows" class="d-flex flex-column gap-1"></div>
+                                <div class="d-flex align-items-center justify-content-end gap-2 pt-1">
+                                    <span class="small text-muted">Total</span>
+                                    <strong id="splitTotal" class="text-primary small">0</strong>
+                                </div>
+                                <input type="hidden" name="split_payments_json" id="splitPaymentsJson"
+                                    value="{{ $original->split_payments ? json_encode($original->split_payments) : '' }}">
                             </div>
 
                         </div>
@@ -400,12 +425,33 @@
         let net = total - discount;
         $('#grandTotal').val(total.toFixed(2));
         $('#netAmount').val(net.toFixed(2));
-        let adv = parseFloat($('#advance').val()) || 0;
-        $('#remaining').val((net - adv).toFixed(2));
+
+        if ($('#partyType').val() === 'walkin') {
+            let saleType = $('input[name="sale_type"]:checked').val();
+            if (saleType === 'estimate') {
+                $('#remaining').val(net.toFixed(2));
+            } else {
+                $('#advance').val(net.toFixed(2));
+                $('#remaining').val('0');
+            }
+        } else {
+            let adv = parseFloat($('#advance').val()) || 0;
+            $('#remaining').val((net - adv).toFixed(2));
+        }
     }
 
     $(document).on('input change', '.rate,.qty', function () {
         calcRow($(this).closest('tr'));
+    });
+
+    // Auto-calc Qty from Height (H) x Width (W) - only in manual mode
+    $(document).on('input change', '.h-input,.w-input', function () {
+        let r = $(this).closest('tr');
+        if (r.find('.item-input').attr('data-mode') !== 'manual') return;
+        let h = parseFloat(r.find('.h-input').val()) || 0;
+        let w = parseFloat(r.find('.w-input').val()) || 0;
+        r.find('.qty').val((h * w).toFixed(2));
+        calcRow(r);
     });
 
     $(document).on('input change', '.item-total, [name="gross_discount"], #advance', function () {
@@ -436,14 +482,34 @@
             btn.removeClass('btn-outline-secondary').addClass('btn-outline-primary');
             input.attr('placeholder', 'Manual Entry');
             input.closest('td').find('.autocomplete-list').addClass('d-none');
+            input.closest('tr').find('.hw-cell').removeClass('d-none');
         } else {
             input.attr('data-mode', 'search');
             icon.removeClass('fa-keyboard').addClass('fa-search');
             btn.removeClass('btn-outline-primary').addClass('btn-outline-secondary');
             input.attr('placeholder', 'Search Product');
+            input.closest('tr').find('.hw-cell').addClass('d-none');
         }
+        updateHeadForMode();
         input.focus();
     });
+
+    // Dynamically switch table headers based on whether any row is in manual mode
+    function updateHeadForMode() {
+        let hasManual = false;
+        $('#saleTableBody .sale-row').each(function() {
+            if ($(this).find('.item-input').attr('data-mode') === 'manual') {
+                hasManual = true;
+            }
+        });
+        if (hasManual) {
+            $('.search-head').addClass('d-none');
+            $('.manual-head').removeClass('d-none');
+        } else {
+            $('.manual-head').addClass('d-none');
+            $('.search-head').removeClass('d-none');
+        }
+    }
 
     // Single global autocomplete dropdown
     let $acList = $('<div class="autocomplete-list d-none"></div>').appendTo('body');
@@ -526,6 +592,7 @@
     function createRowHtml() {
         let r = $('#rowTemplate').clone().removeClass('d-none').removeAttr('id');
         r.find('.qty').removeClass('border-danger text-danger');
+        r.find('.hw-cell').addClass('d-none');
         return r;
     }
 
@@ -575,7 +642,7 @@
             $('#advanceContainer').removeClass('d-none');
             $('#remainingContainer').removeClass('d-none');
             $('#remainingContainer label').text('Remaining');
-            $('[name="delivery_date"]').prop('required', false).val('');
+            $('[name="delivery_date"], [name="notify_days_before"]').prop('required', false).val('').prop('disabled', true);
             advanceLabel.text('Received Amount');
         } else if (saleType === 'estimate') {
             $('#deliveryPaymentPanel').addClass('d-none');
@@ -583,7 +650,7 @@
             $('#advanceContainer').addClass('d-none');
             $('#remainingContainer').removeClass('d-none');
             $('#remainingContainer label').text('Net Total');
-            $('[name="delivery_date"]').prop('required', false).val('');
+            $('[name="delivery_date"], [name="notify_days_before"]').prop('required', false).val('').prop('disabled', true);
             advanceLabel.text('Advance Amount');
         } else {
             $('#deliveryPaymentPanel').removeClass('d-none');
@@ -591,7 +658,7 @@
             $('#advanceContainer').removeClass('d-none');
             $('#remainingContainer').removeClass('d-none');
             $('#remainingContainer label').text('Remaining');
-            $('[name="delivery_date"]').prop('required', true);
+            $('[name="delivery_date"], [name="notify_days_before"]').prop('required', true).prop('disabled', false);
             if (saleType === 'booking') {
                 advanceLabel.text('Advance Amount');
             } else {
@@ -636,8 +703,9 @@
 
         let advance = parseFloat($('#advance').val()) || 0;
         let partyType = $('#partyType').val();
-        if ((advance > 0 || partyType === 'walkin') && !$('select[name="account_id"]').val()) {
-            errors.push('Please select a Payment Account.');
+        let hasSplit = (($('#splitPaymentsJson').val() || '') !== '');
+        if (saleType !== 'estimate' && (advance > 0 || partyType === 'walkin') && !hasSplit && !$('select[name="account_id"]').val()) {
+            errors.push('Please select a Payment Account or add a Split Payment.');
         }
 
         if (errors.length > 0) {
@@ -660,7 +728,8 @@
         function updateAccountLabel() {
             let adv = parseFloat($('#advance').val()) || 0;
             let partyType = $('#partyType').val();
-            if (adv > 0 || partyType === 'walkin') {
+            let hasSplit = (($('#splitPaymentsJson').val() || '') !== '');
+            if (saleType !== 'estimate' && (adv > 0 || partyType === 'walkin') && !hasSplit) {
                 $('#paymentAccountLabel').html('Payment Account <span class="text-danger">*</span>');
             } else {
                 $('#paymentAccountLabel').html('Payment Account');
@@ -673,6 +742,7 @@
 
         handleSaleTypeToggle();
         $('input[name="sale_type"]').on('change', handleSaleTypeToggle);
+        updateHeadForMode();
 
         $('#partyType').on('change', function () {
             let t = this.value;
@@ -682,7 +752,7 @@
 
             $('#advance').prop('readonly', false);
             $('#advanceLabel').text('Advance');
-            $('#remaining').closest('.col-md-3').removeClass('d-none');
+            $('#remainingContainer').removeClass('d-none');
 
             if (t === 'customer') {
                 $('#customerBox').removeClass('d-none');
@@ -698,8 +768,16 @@
                 $('#walkinName,#walkinPhone,#walkinAddress').removeClass('d-none');
                 $('#advance').val($('#grandTotal').val()).prop('readonly', true);
                 $('#advanceLabel').text('Paid Amount');
-                $('#remaining').val('0');
-                $('#remaining').closest('.col-md-3').addClass('d-none');
+                let saleType = $('input[name="sale_type"]:checked').val();
+                if (saleType === 'estimate') {
+                    $('#advance').val('');
+                    $('#advanceContainer').addClass('d-none');
+                    $('#remainingContainer').removeClass('d-none');
+                    $('#remainingContainer label').text('Net Total');
+                } else {
+                    $('#remaining').val('0');
+                    $('#remainingContainer').addClass('d-none');
+                }
             }
             calcGrand();
         });
@@ -724,4 +802,138 @@
         let selVend = $('#vendor').find('option:selected');
         if (selVend.val()) { $('#phone').val(selVend.data('phone') || ''); $('#address').val(selVend.data('address') || ''); }
     });
+
+    // ================= SPLIT PAYMENT (multiple accounts) =================
+    const splitAccountOptions = function () {
+        let html = '<select class="form-control form-control-sm split-account">';
+        html += '<option value="">Select Account</option>';
+        @foreach($Accounts as $account)
+            html += '<option value="{{ $account->id }}" data-name="{{ $account->name }}">{{ $account->name }}</option>';
+        @endforeach
+        html += '</select>';
+        return html;
+    };
+
+    function renderSplitRow(accountId, amount, isFirst) {
+        let row = $('<div class="split-row d-flex gap-1 align-items-center w-100"></div>');
+
+        let $sel = $(splitAccountOptions());
+        $sel.css('flex', '0 0 auto');
+        $sel.css('width', '220px');
+        if (accountId) {
+            $sel.val(String(accountId));
+        }
+
+        let $amt = $('<input type="text" inputmode="decimal" class="form-control form-control-sm split-amount" placeholder="Amt">');
+        $amt.css({ 'flex': '1 1 auto', 'min-width': '0' });
+        if (amount) $amt.val(amount);
+
+        let $btn;
+        if (isFirst) {
+            $btn = $('<button type="button" class="btn btn-outline-primary btn-sm split-add" title="Add another account" style="width:31px;height:31px;flex:0 0 31px;padding:0;display:inline-flex;align-items:center;justify-content:center;border-radius:6px;font-size:16px;line-height:1;">+</button>');
+        } else {
+            $btn = $('<button type="button" class="btn btn-outline-danger btn-sm split-remove" title="Remove this account" style="width:31px;height:31px;flex:0 0 31px;padding:0;display:inline-flex;align-items:center;justify-content:center;border-radius:6px;font-size:15px;line-height:1;">&#128465;</button>');
+        }
+
+        row.append($sel, $amt, $btn);
+        return row;
+    }
+
+    function splitRowCount() {
+        return $('#splitRows .split-row').length;
+    }
+
+    function refreshFirstRowButton() {
+        $('#splitRows .split-row').each(function (i) {
+            let $row = $(this);
+            let $btn = $row.find('.split-add, .split-remove');
+            if (i === 0) {
+                if (!$btn.hasClass('split-add')) {
+                    $row.find('.split-remove').replaceWith(
+                        $('<button type="button" class="btn btn-outline-primary btn-sm split-add" title="Add another account" style="width:31px;height:31px;flex:0 0 31px;padding:0;display:inline-flex;align-items:center;justify-content:center;border-radius:6px;font-size:16px;line-height:1;">+</button>')
+                    );
+                }
+            } else {
+                if (!$btn.hasClass('split-remove')) {
+                    $row.find('.split-add').replaceWith(
+                        $('<button type="button" class="btn btn-outline-danger btn-sm split-remove" title="Remove this account" style="width:31px;height:31px;flex:0 0 31px;padding:0;display:inline-flex;align-items:center;justify-content:center;border-radius:6px;font-size:15px;line-height:1;">&#128465;</button>')
+                    );
+                }
+            }
+        });
+    }
+
+    function ensurePrimaryRow() {
+        if (splitRowCount() === 0) {
+            $('#splitRows').append(renderSplitRow(null, null, true));
+        }
+        refreshFirstRowButton();
+        syncSplitJson();
+    }
+
+    function syncSplitJson() {
+        let data = [];
+        $('#splitRows .split-row').each(function () {
+            let $sel = $(this).find('.split-account');
+            let accountId = $sel.val();
+            let amount = parseFloat($(this).find('.split-amount').val()) || 0;
+            let name = $sel.find('option:selected').data('name') || '';
+            if (accountId && amount > 0) {
+                data.push({ account_id: accountId, account_name: name, amount: amount });
+            }
+        });
+        $('#splitPaymentsJson').val(JSON.stringify(data));
+        let total = data.reduce((s, d) => s + parseFloat(d.amount), 0);
+        $('#splitTotal').text(total.toFixed(2));
+        if (data.length) {
+            $('#advance').val(total);
+            // Recalculate Remaining from the split-paid amount
+            let net = parseFloat($('#netAmount').val()) || 0;
+            if ($('#partyType').val() === 'walkin') {
+                let saleType = $('input[name="sale_type"]:checked').val();
+                if (saleType === 'estimate') {
+                    $('#remaining').val(net.toFixed(2));
+                } else {
+                    $('#remaining').val('0');
+                }
+            } else {
+                $('#remaining').val((net - total).toFixed(2));
+            }
+        }
+        refreshFirstRowButton();
+    }
+
+    $('#splitRows').on('click', '.split-add', function () {
+        if (splitRowCount() >= 10) return;
+        $('#splitRows').append(renderSplitRow(null, null, false));
+        refreshFirstRowButton();
+    });
+
+    $('#splitRows').on('input', '.split-amount', syncSplitJson);
+    $('#splitRows').on('change', '.split-account', syncSplitJson);
+    $('#splitRows').on('click', '.split-remove', function () {
+        $(this).closest('.split-row').remove();
+        ensurePrimaryRow();
+    });
+
+    // Preload existing split payments on page load
+    let existingSplit = $('#splitPaymentsJson').val();
+    if (existingSplit) {
+        try {
+            let rows = JSON.parse(existingSplit);
+            if (rows.length) {
+                $('#splitRows').append(renderSplitRow(rows[0].account_id, rows[0].amount, true));
+                for (let i = 1; i < rows.length; i++) {
+                    $('#splitRows').append(renderSplitRow(rows[i].account_id, rows[i].amount, false));
+                }
+            } else {
+                ensurePrimaryRow();
+            }
+            syncSplitJson();
+        } catch (e) {
+            ensurePrimaryRow();
+        }
+    } else {
+        ensurePrimaryRow();
+    }
 </script>

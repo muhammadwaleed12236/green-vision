@@ -13,6 +13,10 @@ class LocalSale extends Model
 
     protected $guarded = [];
 
+    protected $casts = [
+        'split_payments' => 'array',
+    ];
+
     public function customer()
     {
         return $this->belongsTo(Customer::class, 'customer_id');

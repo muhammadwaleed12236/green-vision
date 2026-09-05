@@ -348,6 +348,11 @@
             margin-top: 5px;
         }
 
+        .total-row.split-row-small {
+            font-size: 12px;
+            color: #666;
+        }
+
         /* ----- TERMS & CONDITIONS ----- */
         .terms-conditions-block {
             margin: 0 40px 30px 40px;
@@ -604,7 +609,9 @@
             <thead>
                 <tr>
                     <th style="text-align: center; width: 5%;">#</th>
-                    <th style="width: 45%;">Product Name</th>
+                    <th style="width: 30%;">Product Name</th>
+                    <th style="text-align: center; width: 7%;">H</th>
+                    <th style="text-align: center; width: 7%;">W</th>
                     <th style="text-align: center; width: 10%;">Qty</th>
                     <th style="text-align: center; width: 10%;">Unit</th>
                     <th style="text-align: right; width: 15%;">Price/Unit</th>
@@ -614,6 +621,8 @@
             <tbody>
                 @php
                     $items = json_decode($sale->item) ?? [];
+                    $heights = json_decode($sale->height) ?? [];
+                    $widths = json_decode($sale->width) ?? [];
                     $qtys = json_decode($sale->qty) ?? [];
                     $units = json_decode($sale->unit) ?? [];
                     $rates = json_decode($sale->rate) ?? [];
@@ -624,6 +633,8 @@
                     <tr>
                         <td style="text-align: center; font-weight: 500;">{{ $loop->iteration }}</td>
                         <td><strong>{{ $item }}</strong></td>
+                        <td style="text-align: center;">{{ $heights[$i] ?? '-' }}</td>
+                        <td style="text-align: center;">{{ $widths[$i] ?? '-' }}</td>
                         <td style="text-align: center;">{{ ($qtys[$i] ?? 0) == 0 ? '-' : $qtys[$i] }}</td>
                         <td style="text-align: center;">{{ empty($units[$i]) ? '-' : strtoupper($units[$i]) }}</td>
                         <td style="text-align: right;">{{ number_format((float)($rates[$i] ?? 0), 2) }}</td>
@@ -677,6 +688,14 @@
                 <span>{{ $sale->party_type === 'walkin' ? 'Amount Paid' : 'Advance Paid' }}</span>
                 <span>{{ number_format($sale->advance_amount, 2) }}</span>
             </div>
+            @if(!empty($sale->split_payments) && is_array($sale->split_payments))
+                @foreach($sale->split_payments as $sp)
+                <div class="total-row split-row-small">
+                    <span>&nbsp;&nbsp;- {{ $sp['account_name'] ?? 'Account' }}</span>
+                    <span>{{ number_format($sp['amount'] ?? 0, 2) }}</span>
+                </div>
+                @endforeach
+            @endif
             <div class="total-row balance-due">
                 <span>Balance Due</span>
                 <span>RS {{ number_format($sale->remaining_amount, 2) }}</span>
