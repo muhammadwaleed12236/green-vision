@@ -157,6 +157,39 @@
         background: #e9ecef;
     }
 
+    .autocomplete-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .ac-thumb {
+        width: 34px;
+        height: 34px;
+        border-radius: 5px;
+        object-fit: cover;
+        flex-shrink: 0;
+        border: 1px solid #e2e8f0;
+        background: #f8f9fa;
+    }
+
+    .ac-thumb-placeholder {
+        width: 34px;
+        height: 34px;
+        border-radius: 5px;
+        flex-shrink: 0;
+        border: 1px solid #e2e8f0;
+        background: #f1f3f5;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #adb5bd;
+    }
+
+    .ac-info { display: flex; flex-direction: column; min-width: 0; }
+    .ac-name { font-size: 13px; font-weight: 500; color: #212529; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .ac-sku { font-size: 11px; color: #868e96; margin-top: 1px; }
+
     /* Purchase Table Styling */
     #purchaseTable {
         width: 100%;
@@ -363,6 +396,15 @@ $(document).ready(function () {
     });
 
     // Autocomplete search
+    const STORAGE_URL = "{{ asset('storage') }}";
+
+    function acThumb(image) {
+        if (image) {
+            return `<img src="${STORAGE_URL}/${image}" class="ac-thumb" onerror="this.outerHTML='<div class=ac-thumb-placeholder><svg width=16 height=16 fill=none viewBox=\'0 0 24 24\'><rect width=24 height=24 rx=4 fill=\'#e9ecef\'/><path d=\'M5 19l4-5 3 4 4-6 5 7H5z\' fill=\'#adb5bd\'/></svg></div>'">`;
+        }
+        return `<div class="ac-thumb-placeholder"><svg width="16" height="16" fill="none" viewBox="0 0 24 24"><rect width="24" height="24" rx="4" fill="#e9ecef"/><path d="M5 19l4-5 3 4 4-6 5 7H5z" fill="#adb5bd"/></svg></div>`;
+    }
+
     $(document).on('input', '.item-input', function () {
         let input = $(this);
         let row = input.closest('tr');
@@ -386,7 +428,8 @@ $(document).ready(function () {
 
                 list.empty().removeClass('d-none');
                 res.forEach(it => {
-                    let el = $(`<div class="autocomplete-item">${it.item_name}</div>`);
+                    let skuHtml = it.item_code ? `<span class="ac-sku">${it.item_code}</span>` : '';
+                    let el = $(`<div class="autocomplete-item">${acThumb(it.image)}<div class="ac-info"><span class="ac-name">${it.item_name}</span>${skuHtml}</div></div>`);
                     el.data('item', it);
                     list.append(el);
                 });
