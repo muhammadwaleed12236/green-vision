@@ -823,6 +823,15 @@
     // Single global autocomplete dropdown
     let $acList = $('<div class="autocomplete-list d-none"></div>').appendTo('body');
 
+    const STORAGE_URL = "{{ asset('storage') }}";
+
+    function acThumb(image) {
+        if (image) {
+            return `<img src="${STORAGE_URL}/${image}" class="ac-thumb" onerror="this.outerHTML='<div class=ac-thumb-placeholder><svg width=16 height=16 fill=none viewBox=\'0 0 24 24\'><rect width=24 height=24 rx=4 fill=\'#e9ecef\'/><path d=\'M5 19l4-5 3 4 4-6 5 7H5z\' fill=\'#adb5bd\'/></svg></div>'">`;
+        }
+        return `<div class="ac-thumb-placeholder"><svg width="16" height="16" fill="none" viewBox="0 0 24 24"><rect width="24" height="24" rx="4" fill="#e9ecef"/><path d="M5 19l4-5 3 4 4-6 5 7H5z" fill="#adb5bd"/></svg></div>`;
+    }
+
     function fetchProducts(input, q) {
         let row = input.closest('tr');
         if (input.attr('data-mode') === 'manual') { $acList.addClass('d-none'); return; }
@@ -836,7 +845,14 @@
                 let rect = input[0].getBoundingClientRect();
                 $acList.css({ left: rect.left + 'px', top: rect.bottom + 'px', width: input.outerWidth() + 'px' });
                 $acList.empty().removeClass('d-none');
-                res.forEach(it => { $('<div class="autocomplete-item"></div>').text(it.item_name).data('item', it).appendTo($acList); });
+                res.forEach(it => {
+                    let skuHtml = it.item_code ? `<span class="ac-sku">${it.item_code}</span>` : '';
+                    $(`<div class="autocomplete-item"></div>`)
+                        .append(acThumb(it.image))
+                        .append(`<div class="ac-info"><span class="ac-name">${it.item_name}</span>${skuHtml}</div>`)
+                        .data('item', it)
+                        .appendTo($acList);
+                });
             },
             error: function () { $acList.addClass('d-none'); }
         });

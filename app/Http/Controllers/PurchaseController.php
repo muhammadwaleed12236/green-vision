@@ -42,7 +42,7 @@ class PurchaseController extends Controller
         $q = $request->get('q', null);
 
         // base query - limit to current admin/user's products if you need (optional)
-        $query = Product::query()->select('id', 'item_name', 'item_code', 'retail_price', 'wholesale_price', 'unit', 'initial_stock');
+        $query = Product::query()->select('id', 'item_name', 'item_code', 'image', 'retail_price', 'wholesale_price', 'unit', 'initial_stock');
     
         if ($q === null || $q === '') {
             // return limited set (don't return everything)
