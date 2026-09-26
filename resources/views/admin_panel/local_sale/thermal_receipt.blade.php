@@ -19,16 +19,16 @@
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             background-color: #f1f5f9;
             color: #0f172a;
-            padding: 24px 12px;
-            font-size: 12px;
-            line-height: 1.4;
+            padding: 20px 10px;
+            font-size: 11.5px;
+            line-height: 1.35;
             -webkit-font-smoothing: antialiased;
         }
 
         /* ----- ACTION TOOLBAR (SCREEN ONLY) ----- */
         .toolbar-container {
             max-width: 440px;
-            margin: 0 auto 18px auto;
+            margin: 0 auto 16px auto;
             display: flex;
             flex-wrap: wrap;
             gap: 8px;
@@ -39,14 +39,14 @@
             display: inline-flex;
             align-items: center;
             gap: 7px;
-            padding: 9px 15px;
-            font-size: 12.5px;
+            padding: 8px 14px;
+            font-size: 12px;
             font-weight: 600;
-            border-radius: 8px;
+            border-radius: 7px;
             text-decoration: none;
             border: 1px solid transparent;
             cursor: pointer;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.15s ease-in-out;
             box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
         }
 
@@ -57,14 +57,13 @@
         }
         .btn-print:hover {
             background-color: #1e293b;
-            transform: translateY(-1px);
         }
 
         .btn-print kbd {
             background: rgba(255, 255, 255, 0.2);
-            padding: 2px 5px;
+            padding: 1px 4px;
             border-radius: 4px;
-            font-size: 10px;
+            font-size: 9.5px;
             font-family: inherit;
         }
 
@@ -96,15 +95,18 @@
         }
 
         /* ----- THERMAL RECEIPT CONTAINER ----- */
+        /* Safe 70mm - 72mm width to prevent edge cutting on 80mm thermal printers */
         .receipt-wrapper {
-            max-width: 80mm;
+            max-width: 72mm;
             width: 100%;
             margin: 0 auto;
             background: #ffffff;
-            padding: 16px 14px 18px 14px;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.04);
-            border-radius: 8px;
+            padding: 14px 10px 16px 10px;
+            box-shadow: 0 8px 20px -4px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05);
+            border-radius: 6px;
             color: #000000;
+            box-sizing: border-box;
+            overflow: hidden;
         }
 
         /* Number font formatting */
@@ -116,99 +118,102 @@
         /* Header */
         .receipt-header {
             text-align: center;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }
 
         .receipt-logo {
-            max-width: 110px;
-            max-height: 50px;
+            max-width: 100px;
+            max-height: 45px;
             object-fit: contain;
-            margin: 0 auto 6px auto;
+            margin: 0 auto 5px auto;
             display: block;
             filter: grayscale(100%) contrast(150%);
         }
 
         .company-title {
-            font-size: 15px;
+            font-size: 14px;
             font-weight: 900;
             text-transform: uppercase;
-            letter-spacing: 0.8px;
-            margin-bottom: 3px;
+            letter-spacing: 0.6px;
+            margin-bottom: 2px;
             color: #000;
         }
 
         .company-meta {
-            font-size: 10.5px;
+            font-size: 10px;
             font-weight: 500;
             color: #222;
-            line-height: 1.35;
+            line-height: 1.3;
         }
 
         .company-meta.phone {
             font-weight: 700;
             margin-top: 1px;
-            font-size: 11px;
+            font-size: 10.5px;
         }
 
         /* Receipt Badge */
         .receipt-type-badge {
-            margin: 10px 0 8px 0;
+            margin: 8px 0 6px 0;
             text-align: center;
-            font-size: 11.5px;
+            font-size: 11px;
             font-weight: 800;
             text-transform: uppercase;
-            letter-spacing: 1.2px;
-            padding: 4px 0;
+            letter-spacing: 1px;
+            padding: 3px 0;
             border-top: 1px solid #000;
             border-bottom: 1px solid #000;
         }
 
         /* Info meta rows */
         .info-grid {
-            margin: 8px 0;
-            font-size: 11.5px;
+            margin: 6px 0;
+            font-size: 10.5px;
         }
 
         .info-row {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            margin-bottom: 3.5px;
-            gap: 6px;
+            margin-bottom: 3px;
+            gap: 4px;
+            width: 100%;
         }
 
         .info-row .label {
             font-weight: 600;
             color: #222;
-            white-space: nowrap;
+            flex-shrink: 0;
         }
 
         .info-row .value {
             font-weight: 700;
             text-align: right;
             color: #000;
+            flex: 1;
+            overflow-wrap: break-word;
             word-break: break-word;
         }
 
         /* Dividers */
         .divider-dashed {
             border-top: 1px dashed #000;
-            margin: 8px 0;
+            margin: 6px 0;
         }
 
         .divider-dotted {
             border-top: 1px dotted #555;
-            margin: 6px 0;
+            margin: 5px 0;
         }
 
         .divider-solid {
             border-top: 1px solid #000;
-            margin: 8px 0;
+            margin: 6px 0;
         }
 
         .divider-double {
             border-top: 2.5px double #000;
-            margin: 8px 0;
+            margin: 6px 0;
         }
 
         /* Items Section */
@@ -216,28 +221,31 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            font-size: 10.5px;
+            font-size: 10px;
             font-weight: 800;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            padding: 4px 0;
+            padding: 3px 0;
             border-top: 1px solid #000;
             border-bottom: 1px solid #000;
-            margin-bottom: 6px;
+            margin-bottom: 5px;
+            width: 100%;
         }
 
         .items-list {
             display: flex;
             flex-direction: column;
-            gap: 7px;
+            gap: 5px;
+            width: 100%;
         }
 
         .item-card {
             display: flex;
             flex-direction: column;
             gap: 2px;
-            padding-bottom: 5px;
+            padding-bottom: 4px;
             border-bottom: 1px dotted #888;
+            width: 100%;
         }
 
         .item-card:last-child {
@@ -249,20 +257,25 @@
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            gap: 6px;
+            gap: 4px;
+            width: 100%;
         }
 
         .item-name {
             font-weight: 700;
-            font-size: 11.5px;
+            font-size: 11px;
             color: #000;
-            line-height: 1.3;
+            line-height: 1.25;
+            flex: 1;
+            overflow-wrap: break-word;
+            word-break: break-word;
         }
 
         .item-amount {
             font-weight: 800;
-            font-size: 12px;
+            font-size: 11px;
             text-align: right;
+            flex-shrink: 0;
             white-space: nowrap;
         }
 
@@ -270,9 +283,10 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            font-size: 10.5px;
+            font-size: 10px;
             color: #333;
-            padding-left: 12px;
+            padding-left: 8px;
+            width: 100%;
         }
 
         .item-calc {
@@ -280,139 +294,127 @@
         }
 
         .item-dim {
-            font-size: 10px;
+            font-size: 9.5px;
             color: #444;
             font-weight: 500;
-            padding-left: 12px;
+            padding-left: 8px;
             margin-top: -1px;
         }
 
         /* Totals Block */
         .totals-block {
-            margin: 8px 0;
+            margin: 6px 0;
             display: flex;
             flex-direction: column;
-            gap: 3.5px;
-            font-size: 11.5px;
+            gap: 3px;
+            font-size: 10.5px;
+            width: 100%;
         }
 
         .total-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            gap: 4px;
+            width: 100%;
         }
 
         .total-row .label {
             font-weight: 600;
             color: #222;
+            flex: 1;
         }
 
         .total-row .value {
             font-weight: 700;
             text-align: right;
+            flex-shrink: 0;
+            white-space: nowrap;
         }
 
         .total-row.net-amount-row {
-            font-size: 13.5px;
+            font-size: 12.5px;
             font-weight: 900;
             border-top: 1.5px solid #000;
             border-bottom: 1.5px solid #000;
-            padding: 5px 0;
-            margin: 4px 0;
+            padding: 4px 0;
+            margin: 3px 0;
         }
 
         .total-row.net-amount-row .label {
             font-weight: 900;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.3px;
         }
 
         .total-row.net-amount-row .value {
             font-weight: 900;
-            font-size: 14px;
+            font-size: 13px;
         }
 
         .total-row.balance-due-row {
             font-weight: 800;
-            font-size: 12.5px;
+            font-size: 11.5px;
             padding-top: 2px;
         }
 
         .split-item {
-            font-size: 10.5px;
-            padding-left: 10px;
+            font-size: 10px;
+            padding-left: 8px;
             color: #333;
         }
 
         /* Ledger / Account Summary Box */
         .ledger-box {
-            margin-top: 8px;
-            padding: 6px 8px;
+            margin-top: 6px;
+            padding: 5px 6px;
             border: 1px dashed #000;
-            border-radius: 4px;
+            border-radius: 3px;
             background: #fafafa;
-            font-size: 11px;
+            font-size: 10px;
+            width: 100%;
+            box-sizing: border-box;
         }
 
         .ledger-title {
             text-align: center;
             font-weight: 800;
-            font-size: 10.5px;
+            font-size: 10px;
             text-transform: uppercase;
-            letter-spacing: 0.6px;
-            margin-bottom: 5px;
-            padding-bottom: 3px;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+            padding-bottom: 2px;
             border-bottom: 1px dotted #999;
         }
 
         /* Footer */
         .receipt-footer {
             text-align: center;
-            margin-top: 12px;
-            font-size: 10.5px;
-            line-height: 1.4;
+            margin-top: 10px;
+            font-size: 10px;
+            line-height: 1.35;
         }
 
         .receipt-footer .thank-you {
             font-weight: 800;
-            font-size: 11.5px;
+            font-size: 11px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            margin-bottom: 3px;
+            margin-bottom: 2px;
         }
 
         .receipt-footer .policy {
             color: #333;
-            font-size: 10px;
-        }
-
-        .barcode-container {
-            margin: 8px auto 4px auto;
-            text-align: center;
-        }
-
-        .barcode-svg {
-            max-width: 100%;
-            height: 38px;
-            margin: 0 auto;
-            display: block;
-        }
-
-        .barcode-text {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 11px;
-            font-weight: 800;
-            letter-spacing: 1.5px;
-            margin-top: 2px;
+            font-size: 9.5px;
         }
 
         .software-branding {
-            margin-top: 8px;
-            font-size: 9px;
+            margin-top: 6px;
+            font-size: 8.5px;
             font-weight: 600;
             color: #555;
-            letter-spacing: 0.3px;
+            letter-spacing: 0.2px;
             border-top: 1px dotted #ccc;
-            padding-top: 5px;
+            padding-top: 4px;
         }
 
         /* ----- PRINT SPECIFIC STYLES ----- */
@@ -427,15 +429,18 @@
                 text-shadow: none !important;
                 background: transparent !important;
                 box-shadow: none !important;
+                box-sizing: border-box !important;
             }
 
             html, body {
-                width: 80mm;
+                width: 100% !important;
+                max-width: 100% !important;
                 margin: 0 !important;
                 padding: 0 !important;
                 background: #ffffff !important;
                 color: #000000 !important;
-                font-size: 11.5px !important;
+                font-size: 10px !important;
+                line-height: 1.3 !important;
             }
 
             .no-print {
@@ -443,27 +448,96 @@
             }
 
             .receipt-wrapper {
-                max-width: 80mm !important;
-                width: 80mm !important;
+                width: 100% !important;
+                max-width: 68mm !important; /* Safe printable width on 80mm POS printers */
                 border: none !important;
                 box-shadow: none !important;
                 border-radius: 0 !important;
-                padding: 2mm 3mm 4mm 3mm !important;
-                margin: 0 !important;
+                padding: 1mm 1.5mm 3mm 1.5mm !important;
+                margin: 0 auto !important;
+                box-sizing: border-box !important;
+                overflow: hidden !important;
+            }
+
+            .company-title {
+                font-size: 13px !important;
+            }
+
+            .company-meta {
+                font-size: 9px !important;
+            }
+
+            .receipt-type-badge {
+                font-size: 10px !important;
+                margin: 5px 0 4px 0 !important;
+                padding: 2px 0 !important;
+            }
+
+            .info-grid {
+                font-size: 9.5px !important;
+                margin: 4px 0 !important;
+            }
+
+            .items-header {
+                font-size: 9px !important;
+                padding: 2px 0 !important;
+                margin-bottom: 4px !important;
+            }
+
+            .item-name {
+                font-size: 10px !important;
+            }
+
+            .item-amount {
+                font-size: 10px !important;
+            }
+
+            .item-calc, .item-dim {
+                font-size: 9px !important;
+            }
+
+            .totals-block {
+                font-size: 9.5px !important;
+                margin: 4px 0 !important;
+            }
+
+            .total-row.net-amount-row {
+                font-size: 11.5px !important;
+                padding: 3px 0 !important;
+                margin: 2px 0 !important;
+            }
+
+            .total-row.net-amount-row .value {
+                font-size: 12px !important;
+            }
+
+            .total-row.balance-due-row {
+                font-size: 10.5px !important;
             }
 
             .ledger-box {
                 background: transparent !important;
                 border: 1px dashed #000 !important;
+                padding: 3px 4px !important;
+                font-size: 9.5px !important;
+                margin-top: 4px !important;
+            }
+
+            .receipt-footer {
+                font-size: 9px !important;
+                margin-top: 6px !important;
             }
 
             .receipt-logo {
                 filter: grayscale(100%) contrast(250%) !important;
+                max-width: 85px !important;
             }
 
             .software-branding {
                 border-top: 1px dotted #000 !important;
                 color: #000 !important;
+                font-size: 8px !important;
+                padding-top: 3px !important;
             }
         }
     </style>
@@ -557,7 +631,7 @@
         @if(!empty($party->address) && $party->address !== 'N/A' && $party->address !== 'Address Not Provided')
         <div class="info-row">
             <span class="label">Address:</span>
-            <span class="value">{{ Str::limit($party->address, 36) }}</span>
+            <span class="value">{{ Str::limit($party->address, 32) }}</span>
         </div>
         @endif
     </div>
@@ -668,7 +742,7 @@
             <span class="label">Current Invoice:</span>
             <span class="value num-font">{{ $ledger_info->operator }} RS {{ number_format($sale->remaining_amount, 2) }}</span>
         </div>
-        <div class="total-row" style="font-weight: 800; border-top: 1px dotted #888; margin-top: 3px; padding-top: 3px;">
+        <div class="total-row" style="font-weight: 800; border-top: 1px dotted #888; margin-top: 3px; padding-top: 2px;">
             <span class="label">{{ $ledger_info->label_curr }}:</span>
             <span class="value num-font">RS {{ number_format($ledger_info->current_balance, 2) }}</span>
         </div>
@@ -682,45 +756,16 @@
         <div class="thank-you">THANK YOU!</div>
         <div class="policy">Goods once sold will not be returned.</div>
         <div class="policy">Please keep this receipt for future reference.</div>
-        
-        {{-- <div class="barcode-container">
-            <svg id="barcode" class="barcode-svg"></svg>
-            <div class="barcode-text" id="barcodeFallback" style="display:none;">*{{ $sale->invoice_number }}*</div>
-        </div> --}}
 
         <div class="software-branding">
-            ProWave Software Solutions &bull; 0317-3836223
+            ProWave Software technologies &bull; 0317-3836223
         </div>
     </div>
 
 </div>
 
-<!-- BARCODE & PRINT SCRIPTS -->
+<!-- PRINT SCRIPTS -->
 <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        try {
-            if (typeof JsBarcode === "function") {
-                JsBarcode("#barcode", "{{ $sale->invoice_number }}", {
-                    format: "CODE128",
-                    lineColor: "#000",
-                    width: 1.5,
-                    height: 32,
-                    displayValue: true,
-                    fontSize: 11,
-                    fontOptions: "bold",
-                    font: "monospace",
-                    margin: 0
-                });
-            } else {
-                document.getElementById('barcodeFallback').style.display = 'block';
-                document.getElementById('barcode').style.display = 'none';
-            }
-        } catch (e) {
-            document.getElementById('barcodeFallback').style.display = 'block';
-            document.getElementById('barcode').style.display = 'none';
-        }
-    });
-
     // Auto print if requested in query or session
     window.addEventListener('load', function() {
         @if(request()->has('autoprint') || session('autoprint'))
