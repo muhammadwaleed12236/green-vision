@@ -535,17 +535,17 @@ class LocalSaleController extends Controller
             $party->phone = $sale->vendor->phone_number;
             $party->label = "Vendor";
 
-            $ledger = \DB::table('contractor_ledgers')->where('contractor_id', $sale->vendor_id)->first();
+            $ledger = \DB::table('vendor_ledgers')->where('vendor_id', $sale->vendor_id)->first();
             $current_ledger_balance = $ledger->closing_balance ?? 0;
 
-            $previous_balance = $current_ledger_balance - $invoice_effect_amount;
+            $previous_balance = $current_ledger_balance + $invoice_effect_amount;
 
             $ledger_info->type = 'payable';
             $ledger_info->previous_balance = $previous_balance;
             $ledger_info->current_balance = $current_ledger_balance;
             $ledger_info->label_prev = "Previous Payable";
             $ledger_info->label_curr = "Total Payable";
-            $ledger_info->operator = '+';
+            $ledger_info->operator = '-';
         }
         // Default fallback
         else {

@@ -50,13 +50,13 @@ class SaleReturnController extends Controller
                 ->get(['id', 'invoice_number', 'item', 'distributor_id']);
         } else {
             $rows = $query->orderBy('id', 'desc')
-                ->get(['id', 'invoice_number', 'item', 'customer_id']);
+                ->get(['id', 'invoice_number', 'item', 'customer_id', 'vendor_id']);
         }
 
         $result = collect($rows)->map(function ($row) use ($saleType) {
             return [
                 'invoice_number' => $row->invoice_number,
-                'party_id' => $saleType === 'distributor' ? ($row->distributor_id ?? null) : ($row->customer_id ?? null),
+                'party_id' => $saleType === 'distributor' ? ($row->distributor_id ?? null) : ($row->customer_id ?? $row->vendor_id ?? null),
                 'first_item' => null,
                 'label' => $row->invoice_number, // simple label
             ];
@@ -80,7 +80,7 @@ class SaleReturnController extends Controller
         if ($type === 'distributor') {
             $sale = Sale::with('distributor')->where('invoice_number', $invoiceNumber)->first();
         } elseif ($type === 'customer') {
-            $sale = LocalSale::with('customer')->where('invoice_number', $invoiceNumber)->first();
+            $sale = LocalSale::with(['customer', 'vendor'])->where('invoice_number', $invoiceNumber)->first();
         } else {
             return response()->json(['success' => false, 'message' => 'Invalid sale type.']);
         }
@@ -100,7 +100,7 @@ class SaleReturnController extends Controller
 
         $partyName = $type === 'distributor'
             ? ($sale->distributor->Customer ?? 'N/A')
-            : ($sale->customer->customer_name ?? 'N/A');
+            : ($sale->customer->customer_name ?? $sale->vendor->vendor_name ?? 'N/A');
 
         $rows = [];
         $grandTotal = 0;
@@ -180,7 +180,7 @@ class SaleReturnController extends Controller
                 'scheme_value' => $sale->scheme_value ?? 0,
                 'net_amount' => $sale->net_amount ?? 0,
             ],
-            'party_id' => $type === 'distributor' ? $sale->distributor_id : $sale->customer_id,
+            'party_id' => $type === 'distributor' ? $sale->distributor_id : ($sale->customer_id ?? $sale->vendor_id),
         ]);
     }
 
@@ -247,13 +247,20 @@ class SaleReturnController extends Controller
                 }
             } else {
                 $localSale = LocalSale::where('invoice_number', $data['invoice_number'])->first();
+                $partyType = 'customer';
                 if ($localSale) {
                     $localSale->return_status = 1;
                     $localSale->save();
+                    $partyType = $localSale->party_type;
                 }
 
-                CustomerLedger::where('customer_id', $data['party_id'])
-                    ->decrement('closing_balance', $totalReturnAmount);
+                if ($partyType === 'vendor') {
+                    \App\Models\VendorLedger::where('vendor_id', $data['party_id'])
+                        ->increment('closing_balance', $totalReturnAmount);
+                } else {
+                    \App\Models\CustomerLedger::where('customer_id', $data['party_id'])
+                        ->decrement('closing_balance', $totalReturnAmount);
+                }
             }
 
             foreach ($items as $item) {

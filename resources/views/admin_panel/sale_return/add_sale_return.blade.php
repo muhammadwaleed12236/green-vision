@@ -256,7 +256,7 @@
                                 <td class="text-center">${parseFloat(rate).toFixed(2)}</td>
                                 <td class="text-end">${parseFloat(itemAmount).toFixed(2)}</td>
                                 <td><input type="number" min="0" max="${sale.qty}" class="form-control return-pcs-qty" data-index="${index}" data-rate="${rate}" value="0"></td>
-                                <td><input type="text" class="form-control-plaintext return-amount" readonly value="0"></td>
+                                <td><input type="number" step="0.01" class="form-control return-amount" value="0"></td>
                             </tr>`;
                         });
                     } else {
@@ -294,7 +294,7 @@
                                 <td class="text-end">${parseFloat(itemAmount).toFixed(2)}</td>
                                 <td><input type="number" min="0" max="${sale.carton_quantity}" class="form-control return-carton-qty" data-index="${index}" data-rate="${rate}" value="0"></td>
                                 <td><input type="number" min="0" max="${sale.pcs_quantity}" class="form-control return-pcs-qty" data-index="${index}" data-rate="${rate}" value="0"></td>
-                                <td><input type="text" class="form-control-plaintext return-amount" readonly value="0"></td>
+                                <td><input type="number" step="0.01" class="form-control return-amount" value="0"></td>
                             </tr>`;
                         });
                     }
@@ -342,6 +342,15 @@
             $row.find('.return-amount').val(returnAmount.toFixed(2));
 
             // update total
+            let totalReturnAmount = 0;
+            $('.return-amount').each(function () {
+                totalReturnAmount += parseFloat($(this).val()) || 0;
+            });
+            $('#totalReturnAmount').text(totalReturnAmount.toFixed(2));
+        });
+
+        // Recalculate total when user manually edits return amount
+        $(document).on('input', '.return-amount', function () {
             let totalReturnAmount = 0;
             $('.return-amount').each(function () {
                 totalReturnAmount += parseFloat($(this).val()) || 0;

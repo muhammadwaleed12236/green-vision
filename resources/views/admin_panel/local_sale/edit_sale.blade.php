@@ -22,10 +22,10 @@
     .sale-table th:nth-child(1) { width: 4%; }  /* # */
     .sale-table th:nth-child(2) { width: 25%; } /* Product Name */
     .sale-table th:nth-child(3) { width: 7%; }  /* Avail Stock */
-    .sale-table th:nth-child(4) { width: 8%; }  /* H */
-    .sale-table th:nth-child(5) { width: 8%; }  /* W */
-    .sale-table th:nth-child(6) { width: 10%; } /* Qty/Feet */
-    .sale-table th:nth-child(7) { width: 8%; }  /* Unit */
+    .sale-table th:nth-child(4) { width: 7%; }  /* H */
+    .sale-table th:nth-child(5) { width: 7%; }  /* W */
+    .sale-table th:nth-child(6) { width: 13%; } /* Qty/Feet */
+    .sale-table th:nth-child(7) { width: 6%; }  /* Unit */
     .sale-table th:nth-child(8) { width: 11%; } /* Price/unit */
     .sale-table th:nth-child(9) { width: 11%; } /* amount */
     .sale-table th:nth-child(10) { width: 8%; } /* Action */
@@ -237,10 +237,10 @@
     .ls-wrap .sale-table th:nth-child(1), .ls-wrap .sale-table td:nth-child(1) { width: 4%; }
     .ls-wrap .sale-table th:nth-child(2), .ls-wrap .sale-table td:nth-child(2) { width: 25%; }
     .ls-wrap .sale-table th:nth-child(3), .ls-wrap .sale-table td:nth-child(3) { width: 7%; }
-    .ls-wrap .sale-table th:nth-child(4), .ls-wrap .sale-table td:nth-child(4) { width: 8%; }
-    .ls-wrap .sale-table th:nth-child(5), .ls-wrap .sale-table td:nth-child(5) { width: 8%; }
-    .ls-wrap .sale-table th:nth-child(6), .ls-wrap .sale-table td:nth-child(6) { width: 10%; }
-    .ls-wrap .sale-table th:nth-child(7), .ls-wrap .sale-table td:nth-child(7) { width: 8%; }
+    .ls-wrap .sale-table th:nth-child(4), .ls-wrap .sale-table td:nth-child(4) { width: 7%; }
+    .ls-wrap .sale-table th:nth-child(5), .ls-wrap .sale-table td:nth-child(5) { width: 7%; }
+    .ls-wrap .sale-table th:nth-child(6), .ls-wrap .sale-table td:nth-child(6) { width: 13%; }
+    .ls-wrap .sale-table th:nth-child(7), .ls-wrap .sale-table td:nth-child(7) { width: 6%; }
     .ls-wrap .sale-table th:nth-child(8), .ls-wrap .sale-table td:nth-child(8) { width: 11%; }
     .ls-wrap .sale-table th:nth-child(9), .ls-wrap .sale-table td:nth-child(9) { width: 11%; }
     .ls-wrap .sale-table th:nth-child(10), .ls-wrap .sale-table td:nth-child(10) { width: 8%; }
@@ -248,6 +248,8 @@
     /* H/W reserved space in both modes; only visible on manual rows */
     .sale-table .hw-cell { visibility: hidden; }
     .sale-table tr.manual-mode .hw-cell { visibility: visible; }
+    .sale-table .row-unit-toggle { display: none; }
+    .sale-table tr.manual-mode .row-unit-toggle { display: inline-block; }
 
     /* ---------- Page header (Estimate/Sale/Booking + date) ---------- */
     @media (max-width: 575.98px) {
@@ -484,7 +486,7 @@
                                         <th class="text-center">Avail. Stock</th>
                                         <th class="text-center">H</th>
                                         <th class="text-center">W</th>
-                                        <th class="text-center">Qty/Feet</th>
+                                        <th class="text-center">QTY</th>
                                         <th>Unit</th>
                                         <th class="text-end">Price/unit</th>
                                         <th class="text-end">amount</th>
@@ -519,11 +521,16 @@
                                             <input type="text" name="width[]" class="form-control w-input p-1 text-center" placeholder="W" value="{{ $widths[$i] ?? '' }}">
                                         </td>
                                             <td data-label="Qty">
-                                                <div class="qty-box">
+                                                <div class="d-flex align-items-center gap-1 qty-wrap"><div class="qty-box" style="flex:1;min-width:0;">
                                                     <button type="button" class="btn qty-minus">−</button>
                                                     <input name="qty[]" class="form-control qty text-center" value="{{ $qtys[$i] ?? 1 }}">
                                                     <button type="button" class="btn qty-plus">+</button>
-                                                </div>
+                                                @php
+                                                    // Saved sale doesn't store ft/in; detect inches rows where qty == H x W x 12
+                                                    $hw = (float)($heights[$i] ?? 0) * (float)($widths[$i] ?? 0);
+                                                    $isInch = !empty($rowManual[$i]) && $hw > 0 && abs((float)($qtys[$i] ?? 0) - $hw * 12) < 0.01;
+                                                @endphp
+                                                </div><button type="button" class="btn btn-sm {{ $isInch ? 'btn-outline-primary' : 'btn-outline-secondary' }} py-0 px-1 row-unit-toggle" title="Feet / Inches" style="font-size: 11px; height: 32px; min-width: 28px;">{{ $isInch ? 'in' : 'ft' }}</button></div>
                                             </td>
                                             <td data-label="Unit">
                                                 <input name="unit[]" class="form-control unit p-1 text-center" value="{{ $units[$i] ?? '' }}" readonly>
@@ -565,11 +572,11 @@
                                             <input type="text" name="width[]" class="form-control w-input p-1 text-center" placeholder="W" value="">
                                         </td>
                                         <td data-label="Qty">
-                                            <div class="qty-box">
+                                            <div class="d-flex align-items-center gap-1 qty-wrap"><div class="qty-box" style="flex:1;min-width:0;">
                                                 <button type="button" class="btn qty-minus">−</button>
                                                 <input name="qty[]" class="form-control qty text-center" value="1">
                                                 <button type="button" class="btn qty-plus">+</button>
-                                            </div>
+                                            </div><button type="button" class="btn btn-sm btn-outline-secondary py-0 px-1 row-unit-toggle" title="Feet / Inches" style="font-size: 11px; height: 32px; min-width: 28px;">ft</button></div>
                                         </td>
                                         <td>
                                             <input name="unit[]" class="form-control unit p-1 text-center" value="" readonly>
@@ -733,7 +740,9 @@
             row.find('.qty').removeClass('border-danger text-danger');
         }
 
-        let total = rate * qty;
+        // In inches mode QTY is shown x12, but the amount is charged on the feet quantity
+        let billQty = (row.hasClass('manual-mode') && row.find('.row-unit-toggle').text() === 'in') ? qty / 12 : qty;
+        let total = rate * billQty;
         row.find('.item-total').val(total.toFixed(2));
 
         calcGrand();
@@ -777,7 +786,15 @@
         if (r.find('.item-input').attr('data-mode') !== 'manual') return;
         let h = parseFloat(r.find('.h-input').val()) || 0;
         let w = parseFloat(r.find('.w-input').val()) || 0;
-        r.find('.qty').val((h * w).toFixed(2));
+        
+        let unit = r.find('.row-unit-toggle').text();
+        let qty = h * w;
+        
+        if (unit === 'in') {
+            qty = qty * 12;
+        }
+        
+        r.find('.qty').val(qty.toFixed(2));
         calcRow(r);
     });
 
@@ -1146,6 +1163,19 @@
         if (selCust.val()) { $('#phone').val(selCust.data('phone') || ''); $('#address').val(selCust.data('address') || ''); }
         let selVend = $('#vendor').find('option:selected');
         if (selVend.val()) { $('#phone').val(selVend.data('phone') || ''); $('#address').val(selVend.data('address') || ''); }
+
+        // Per-row Unit Toggle Button
+        $(document).on('click', '.row-unit-toggle', function() {
+            if ($(this).text() === 'ft') {
+                $(this).text('in');
+                $(this).removeClass('btn-outline-secondary').addClass('btn-outline-primary');
+            } else {
+                $(this).text('ft');
+                $(this).removeClass('btn-outline-primary').addClass('btn-outline-secondary');
+            }
+            // Recalculate only this row
+            $(this).closest('tr').find('.h-input').trigger('input');
+        });
     });
 
     // ================= SPLIT PAYMENT (multiple accounts) =================

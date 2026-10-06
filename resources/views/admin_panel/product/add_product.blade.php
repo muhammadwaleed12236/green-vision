@@ -194,7 +194,8 @@
                                                 <img src="{{ asset('storage/' . $p->image) }}"
                                                      alt="{{ $p->item_name }}"
                                                      class="product-thumb"
-                                                     style="width:48px;height:48px;object-fit:cover;border-radius:8px;">
+                                                     style="width:48px;height:48px;object-fit:cover;border-radius:8px;cursor:pointer;"
+                                                     onclick="showImageModal('{{ asset('storage/' . $p->image) }}')">
                                             @else
                                                 <span class="badge bg-light text-secondary">No Image</span>
                                             @endif
@@ -389,6 +390,23 @@
                     <button type="submit" class="btn btn-primary" id="saveUnitBtn">Save Unit</button>
                 </div>
             </form>
+        </div>
+    </div>
+</div>
+
+{{-- IMAGE PREVIEW MODAL --}}
+<div class="modal fade" id="imagePreviewModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Image Preview</h5>
+                <button type="button" data-bs-dismiss="modal" aria-label="Close" style="background: transparent; border: none; font-size: 1.5rem; line-height: 1; color: #000; opacity: 0.5; cursor: pointer;" onmouseover="this.style.opacity='0.75'" onmouseout="this.style.opacity='0.5'">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body text-center">
+                <img id="previewModalImage" src="" alt="Product Image" style="max-width: 100%; height: auto; border-radius: 8px;">
+            </div>
         </div>
     </div>
 </div>
@@ -610,4 +628,10 @@
             reader.readAsDataURL(file);
         }
     });
+
+    // Show image modal
+    function showImageModal(imageUrl) {
+        $('#previewModalImage').attr('src', imageUrl);
+        $('#imagePreviewModal').modal('show');
+    }
 </script>
