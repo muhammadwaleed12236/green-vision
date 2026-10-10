@@ -819,6 +819,7 @@ class LocalSaleController extends Controller
                 'advance_amount' => $advance,
                 'net_amount' => $netAmount,
                 'remaining_amount' => $remaining,
+                'account_id' => $request->account_id,
                 'estimate_plans' => $request->has('plans') ? json_encode($request->plans) : null,
                 'sale_type' => $newType,
                 'sale_date' => $request->sale_date ?? $sale->sale_date,

@@ -715,6 +715,13 @@
             $('[name="delivery_date"]').prop('required', false).val('');
             advanceLabel.text('Received Amount');
 
+            // Auto-fill advance with total if currently 0
+            let currentAdvance = parseFloat($('#advance').val()) || 0;
+            if (currentAdvance === 0) {
+                let net = parseFloat($('#netAmount').val()) || parseFloat($('#grandTotal').val()) || 0;
+                $('#advance').val(net);
+            }
+
             // Refresh avail-stock for all rows so validation is accurate
             $('.sale-row:not(#rowTemplate)').each(function() {
                 let row = $(this);
@@ -796,8 +803,14 @@
         let saleType = $('input[name="sale_type"]:checked').val();
         let advance = parseFloat($('#advance').val()) || 0;
         let partyType = $('#partyType').val();
-        if (saleType !== 'estimate' && (advance > 0 || partyType === 'walkin') && !$('select[name="account_id"]').val()) {
+        let accountId = $('select[name="account_id"]').val();
+        
+        if (saleType !== 'estimate' && (advance > 0 || partyType === 'walkin') && !accountId) {
             errors.push('Please select a Payment Account.');
+        }
+
+        if (saleType !== 'estimate' && accountId && advance <= 0 && partyType !== 'walkin') {
+            errors.push('Please enter a Received Amount greater than 0, or clear the Payment Account.');
         }
 
         if (errors.length > 0) {
