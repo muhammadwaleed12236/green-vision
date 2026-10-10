@@ -285,6 +285,99 @@
                     </div>
                 </div>
 
+                {{-- ===== PLANS SECTION (Only for Estimate) ===== --}}
+                <div class="card mb-3" id="plansPanel" style="display: none;">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="mb-0 fw-bold text-primary">Estimate Plans (Options)</h6>
+                            <div>
+                                <button type="button" class="btn btn-sm btn-danger me-2" id="removePlanBtn" style="display: none;"><i class="fas fa-trash"></i> Remove Plan</button>
+                                <button type="button" class="btn btn-sm btn-outline-primary" id="addPlanBtn">+ Add Plan</button>
+                            </div>
+                        </div>
+                        <div id="plansContainer">
+                            @if(!empty($original->estimate_plans))
+                                @php $existingPlans = json_decode($original->estimate_plans, true) ?? []; @endphp
+                                @foreach($existingPlans as $pIdx => $pData)
+                                    <div class="plan-block border rounded p-3 mb-3 bg-white position-relative">
+                                        <div class="row mb-3">
+                                            <div class="col-md-4">
+                                                <label class="fw-bold">Plan Name</label>
+                                                <input type="text" name="plans[{{ $pIdx }}][name]" class="form-control plan-name-input" value="{{ $pData['name'] ?? '' }}" placeholder="e.g. BYD Battery" required>
+                                            </div>
+                                        </div>
+                                        <div class="table-responsive ls-wrap">
+                                            <table class="table table-borderless mb-0 sale-table plan-sale-table">
+                                                <thead class="bg-light">
+                                                    <tr>
+                                                        <th class="text-center">#</th>
+                                                        <th>Product Name</th>
+                                                        <th class="text-center">Avail. Stock</th>
+                                                        <th class="text-center">Quantity</th>
+                                                        <th>Unit</th>
+                                                        <th class="text-end">Price/unit</th>
+                                                        <th class="text-end">amount</th>
+                                                        <th class="text-center">Action</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody class="plan-items-body">
+                                                    @if(!empty($pData['item_name']))
+                                                        @foreach($pData['item_name'] as $iIdx => $pItem)
+                                                            @php
+                                                                $pProd = \App\Models\Product::where('item_name', $pItem)->first();
+                                                                $pAvail = $pProd ? $pProd->initial_stock : 0;
+                                                            @endphp
+                                                            <tr class="sale-row">
+                                                                <td class="text-center"><span class="row-index">{{ $iIdx + 1 }}</span></td>
+                                                                <td style="position:relative;">
+                                                                    <div class="input-group input-group-sm">
+                                                                        <button type="button" class="btn btn-outline-secondary mode-toggle px-2" title="Toggle Search/Manual" tabindex="-1">
+                                                                            <i class="fas fa-search mode-icon"></i>
+                                                                        </button>
+                                                                        <input name="plans[{{ $pIdx }}][item_name][]" class="form-control item-input" value="{{ $pItem }}" autocomplete="off" placeholder="Search Product" data-mode="search">
+                                                                    </div>
+                                                                    <div class="autocomplete-list d-none"></div>
+                                                                </td>
+                                                                <td>
+                                                                    <input type="text" name="plans[{{ $pIdx }}][avail_stock][]" class="form-control avail-stock p-1 text-center readonly-box" value="{{ $pAvail }}" readonly tabindex="-1" placeholder="-">
+                                                                </td>
+                                                                <td>
+                                                                    <div class="qty-box">
+                                                                        <button type="button" class="btn btn-sm btn-secondary qty-minus">−</button>
+                                                                        <input name="plans[{{ $pIdx }}][qty][]" class="form-control qty text-center" value="{{ $pData['qty'][$iIdx] ?? 1 }}">
+                                                                        <button type="button" class="btn btn-sm btn-secondary qty-plus">+</button>
+                                                                    </div>
+                                                                </td>
+                                                                <td>
+                                                                    <input name="plans[{{ $pIdx }}][unit][]" class="form-control unit text-center" value="{{ $pData['unit'][$iIdx] ?? '' }}" readonly>
+                                                                </td>
+                                                                <td>
+                                                                    <input name="plans[{{ $pIdx }}][rate][]" class="form-control rate" value="{{ $pData['rate'][$iIdx] ?? 0 }}">
+                                                                </td>
+                                                                <td>
+                                                                    <input name="plans[{{ $pIdx }}][amount][]" class="form-control item-total" value="{{ $pData['amount'][$iIdx] ?? 0 }}" readonly>
+                                                                </td>
+                                                                <td class="text-center">
+                                                                    <button type="button" class="btn btn-success btn-sm add-plan-item-row-btn" title="Add row">
+                                                                        <i class="fas fa-plus"></i>
+                                                                    </button>
+                                                                    <button type="button" class="btn btn-danger btn-sm remove-plan-item-row-btn" title="Delete row">
+                                                                        <i class="fas fa-times"></i>
+                                                                    </button>
+                                                                </td>
+                                                            </tr>
+                                                        @endforeach
+                                                    @endif
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            @endif
+                        </div>
+                    </div>
+                </div>
+
                 {{-- ================= DELIVERY & PAYMENT ================= --}}
                 <div class="card mb-3" id="deliveryPaymentPanel">
                     <div class="card-body">
@@ -296,7 +389,7 @@
                             </div>
                             <div class="col-md-4">
                                 <label class="fw-bold">Notify Before (Days)</label>
-                                <input type="number" name="notify_days_before" class="form-control" value="{{ old('notify_days_before', $original->notify_days_before ?? 2) }}" min="1" max="30">
+                                <input type="number" name="notify_days_before" class="form-control" value="{{ old('notify_days_before', $original->notify_days_before ?? 2) }}" min="0" max="30">
                                 <small class="text-muted">System will notify you X days before delivery</small>
                             </div>
                         </div>
@@ -343,6 +436,12 @@
                             </div>
 
                         </div>
+
+                        <div id="plansTotalsContainer" class="mt-4 p-3 bg-light border rounded" style="display:none;">
+                            <h6 class="fw-bold mb-2">Estimate Options Summary</h6>
+                            <ul id="plansTotalsList" class="mb-0 list-unstyled" style="font-size:15px; font-weight: 500;">
+                            </ul>
+                        </div>
                     </div>
                 </div>
 
@@ -351,6 +450,27 @@
                 <button class="btn btn-primary"><i class="fa fa-save me-1"></i> Update Invoice</button>
 
             </form>
+        </div>
+    </div>
+<!-- Select Plan Modal for Edit Conversion -->
+<div class="modal fade" id="selectPlanEditModal" data-bs-backdrop="static" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold text-primary">Finalize Plan / Option</h5>
+                <button type="button" class="btn-close" id="cancelPlanSelectBtn1" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group mb-3">
+                    <label class="fw-bold mb-2">Selected Plan / Option</label>
+                    <select id="editPlanSelectDropdown" class="form-select">
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="cancelPlanSelectBtn2" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="confirmPlanMergeBtn">Finalize & Merge Items</button>
+            </div>
         </div>
     </div>
 </div>
@@ -393,7 +513,7 @@
 
     function calcGrand() {
         let total = 0;
-        $('.item-total').each(function () {
+        $('#saleTableBody .item-total').each(function () {
             total += parseFloat(this.value) || 0;
         });
         let discount = parseFloat($('[name="gross_discount"]').val()) || 0;
@@ -402,6 +522,22 @@
         $('#netAmount').val(net.toFixed(2));
         let adv = parseFloat($('#advance').val()) || 0;
         $('#remaining').val((net - adv).toFixed(2));
+
+        // Plans Calculation
+        if ($('input[name="sale_type"]:checked').val() === 'estimate' && $('.plan-block').length > 0) {
+            $('#plansTotalsContainer').show();
+            let plansHtml = '';
+            $('.plan-block').each(function(idx) {
+                let pName = $(this).find('.plan-name-input').val().trim() || ('Plan ' + (idx + 1));
+                let pGross = 0;
+                $(this).find('.item-total').each((_, input) => pGross += +input.value || 0);
+                let pNet = total + pGross - discount;
+                plansHtml += '<li>TOTAL AMOUNT WITH ' + pName.toUpperCase() + ' = <strong class="text-primary">' + pNet.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + '</strong></li>';
+            });
+            $('#plansTotalsList').html(plansHtml);
+        } else {
+            $('#plansTotalsContainer').hide();
+        }
     }
 
     $(document).on('input change', '.rate,.qty', function () {
@@ -578,6 +714,23 @@
             $('#remainingContainer label').text('Remaining');
             $('[name="delivery_date"]').prop('required', false).val('');
             advanceLabel.text('Received Amount');
+
+            // Refresh avail-stock for all rows so validation is accurate
+            $('.sale-row:not(#rowTemplate)').each(function() {
+                let row = $(this);
+                let itemName = row.find('.item-input').val().trim();
+                if (itemName) {
+                    $.get("{{ route('get.items') }}", { q: itemName }, function(res) {
+                        if (res && res.length > 0) {
+                            let match = res.find(r => r.item_name === itemName);
+                            if (match) {
+                                row.find('.avail-stock').val(match.initial_stock !== null ? match.initial_stock : 0);
+                            }
+                        }
+                    });
+                }
+            });
+
         } else if (saleType === 'estimate') {
             $('#deliveryPaymentPanel').addClass('d-none');
             $('#discountContainer').removeClass('d-none');
@@ -607,6 +760,7 @@
         });
     }
 
+
     $('form').on('submit', function () {
         calcGrand();
         
@@ -626,7 +780,9 @@
                 
                 let saleType = $('input[name="sale_type"]:checked').val();
                 let avail = parseFloat(row.find('.avail-stock').val());
-                if (saleType === 'sale' && !isNaN(avail) && qty > avail) {
+                // Only block if avail-stock is a valid positive number AND qty exceeds it
+                // (avail = 0 could mean product has no stock OR it wasn't loaded for estimates)
+                if (saleType === 'sale' && !isNaN(avail) && avail > 0 && qty > avail) {
                     errors.push(`Row ${row.find('.row-index').text()}: Quantity (${qty}) for product "${itemName}" exceeds Available Stock (${avail}).`);
                 }
             }
@@ -678,7 +834,6 @@
         updateAccountLabel();
 
         handleSaleTypeToggle();
-        $('input[name="sale_type"]').on('change', handleSaleTypeToggle);
 
         $('#partyType').on('change', function () {
             let t = this.value;
@@ -729,5 +884,226 @@
         if (selCust.val()) { $('#phone').val(selCust.data('phone') || ''); $('#address').val(selCust.data('address') || ''); }
         let selVend = $('#vendor').find('option:selected');
         if (selVend.val()) { $('#phone').val(selVend.data('phone') || ''); $('#address').val(selVend.data('address') || ''); }
+
+        // ====== PLANS LOGIC ======
+        function updatePlanRowNumbers(planBlock) {
+            planBlock.find('.plan-items-body tr').each(function(index) {
+                $(this).find('.row-index').text(index + 1);
+            });
+        }
+
+        function toggleRemovePlanBtn() {
+            if ($('.plan-block').length > 0) {
+                $('#removePlanBtn').show();
+            } else {
+                $('#removePlanBtn').hide();
+            }
+        }
+
+        let planCounter = $('.plan-block').length;
+
+        $('#addPlanBtn').click(function() {
+            planCounter++;
+            let planHtml = `
+                <div class="plan-block border rounded p-3 mb-3 bg-white position-relative">
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label class="fw-bold">Plan Name</label>
+                            <input type="text" name="plans[${planCounter}][name]" class="form-control plan-name-input" placeholder="e.g. BYD Battery" required>
+                        </div>
+                    </div>
+                    <div class="table-responsive ls-wrap">
+                        <table class="table table-borderless mb-0 sale-table plan-sale-table">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th class="text-center">#</th>
+                                    <th>Product Name</th>
+                                    <th class="text-center">Avail. Stock</th>
+                                    <th class="text-center">Quantity</th>
+                                    <th>Unit</th>
+                                    <th class="text-end">Price/unit</th>
+                                    <th class="text-end">amount</th>
+                                    <th class="text-center">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody class="plan-items-body">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+            $('#plansContainer').append(planHtml);
+            
+            let newBlock = $('#plansContainer .plan-block').last();
+            addPlanItemRow(newBlock);
+            
+            calcGrand();
+            toggleRemovePlanBtn();
+        });
+
+        let currentSaleType = $('input[name="sale_type"]:checked').val() || 'estimate';
+        let pendingTargetType = null;
+
+        function togglePlansPanel() {
+            if ($('input[name="sale_type"]:checked').val() === 'estimate') {
+                $('#plansPanel').show();
+            } else {
+                $('#plansPanel').hide();
+                calcGrand();
+                toggleRemovePlanBtn();
+            }
+        }
+
+        $('input[name="sale_type"]').on('change', function(e) {
+            let targetVal = $(this).val();
+
+            if (currentSaleType === 'estimate' && (targetVal === 'sale' || targetVal === 'booking') && $('.plan-block').length > 0) {
+                // Revert radio button back to estimate temporarily
+                $(`input[name="sale_type"][value="${currentSaleType}"]`).prop('checked', true);
+                pendingTargetType = targetVal;
+
+                // Populate dropdown
+                let dropdown = $('#editPlanSelectDropdown');
+                dropdown.empty();
+                dropdown.append('<option value="-1">None (Only Common Items)</option>');
+
+                $('.plan-block').each(function(index) {
+                    let name = $(this).find('.plan-name-input').val().trim() || ('Plan ' + (index + 1));
+                    dropdown.append(`<option value="${index}">${name}</option>`);
+                });
+
+                let modalEl = document.getElementById('selectPlanEditModal');
+                let modal = new bootstrap.Modal(modalEl);
+                modal.show();
+                return;
+            }
+
+            currentSaleType = targetVal;
+            handleSaleTypeToggle();
+            togglePlansPanel();
+        });
+
+        $('#confirmPlanMergeBtn').click(function() {
+            let selectedIdx = parseInt($('#editPlanSelectDropdown').val());
+
+            if (selectedIdx >= 0) {
+                let targetBlock = $('.plan-block').eq(selectedIdx);
+                if (targetBlock.length) {
+                    targetBlock.find('.plan-items-body tr').each(function() {
+                        let itemRow = $(this);
+                        let pItem = itemRow.find('.item-input').val().trim();
+                        if (pItem) {
+                            let pAvail = itemRow.find('.avail-stock').val();
+                            let pQty = itemRow.find('.qty').val() || 1;
+                            let pUnit = itemRow.find('.unit').val() || 'pcs';
+                            let pRate = itemRow.find('.rate').val() || 0;
+                            let pAmount = itemRow.find('.item-total').val() || 0;
+
+                            let newRow = createRowHtml();
+                            newRow.find('.item-input').val(pItem);
+                            newRow.find('.avail-stock').val(pAvail);
+                            newRow.find('.qty').val(pQty);
+                            newRow.find('.unit').val(pUnit);
+                            newRow.find('.rate').val(pRate);
+                            newRow.find('.item-total').val(pAmount);
+                            $('#saleTableBody').append(newRow);
+                        }
+                    });
+                }
+            }
+
+            // Remove all plan blocks
+            $('.plan-block').remove();
+
+            if (pendingTargetType) {
+                $(`input[name="sale_type"][value="${pendingTargetType}"]`).prop('checked', true);
+                currentSaleType = pendingTargetType;
+            }
+
+            updateRowNumbers();
+            handleSaleTypeToggle();
+            togglePlansPanel();
+            calcGrand();
+
+            let modalEl = document.getElementById('selectPlanEditModal');
+            let modal = bootstrap.Modal.getInstance(modalEl);
+            if (modal) modal.hide();
+        });
+
+        togglePlansPanel();
+
+        $('#removePlanBtn').click(function() {
+            if ($('.plan-block').length > 0) {
+                $('.plan-block').last().remove();
+                calcGrand();
+                toggleRemovePlanBtn();
+            }
+        });
+
+        function addPlanItemRow(planBlock) {
+            let pId = planBlock.find('.plan-name-input').attr('name').match(/\d+/)[0];
+            let r = $('.sale-row:first').clone();
+            
+            r.find('input').val('');
+            r.find('.qty').val(1).removeClass('border-danger text-danger');
+            r.find('.avail-stock').val('');
+            r.find('.rate').val('');
+            r.find('.item-total').val('0.00');
+            r.find('.unit').val('pcs');
+            r.find('.autocomplete-list').addClass('d-none').empty();
+            
+            r.find('.item-id').attr('name', `plans[${pId}][item_id][]`);
+            r.find('.item-input').attr('name', `plans[${pId}][item_name][]`);
+            r.find('input[name="avail_stock[]"]').attr('name', `plans[${pId}][avail_stock][]`);
+            r.find('.qty').attr('name', `plans[${pId}][qty][]`);
+            r.find('.unit').attr('name', `plans[${pId}][unit][]`);
+            r.find('.rate').attr('name', `plans[${pId}][rate][]`);
+            r.find('.item-total').attr('name', `plans[${pId}][amount][]`);
+            
+            r.find('.add-row').removeClass('add-row').addClass('add-plan-item-row-btn');
+            r.find('.remove-row').removeClass('remove-row').addClass('remove-plan-item-row-btn');
+            
+            let input = r.find('.item-input');
+            input.attr('data-mode', 'search');
+            input.attr('placeholder', 'Search Product');
+            let btn = r.find('.mode-toggle');
+            btn.removeClass('btn-outline-primary').addClass('btn-outline-secondary');
+            btn.find('.mode-icon').removeClass('fa-keyboard').addClass('fa-search');
+            
+            planBlock.find('.plan-items-body').append(r);
+            updatePlanRowNumbers(planBlock);
+        }
+
+        $(document).on('click', '.add-plan-item-row-btn', function() {
+            addPlanItemRow($(this).closest('.plan-block'));
+        });
+
+        $(document).on('click', '.remove-plan-item-row-btn', function() {
+            let block = $(this).closest('.plan-block');
+            if (block.find('tbody tr').length > 1) {
+                $(this).closest('tr').remove();
+                calcGrand();
+                updatePlanRowNumbers(block);
+            }
+        });
+
+        $(document).on('input', '.plan-name-input', function() {
+            calcGrand();
+        });
+
+        toggleRemovePlanBtn();
+        calcGrand();
     });
 </script>
+
+@if(session('success'))
+<script>
+    Swal.fire({ icon: 'success', title: 'Success', text: "{{ session('success') }}", timer: 2000, showConfirmButton: false });
+</script>
+@endif
+
+@if(session('error'))
+<script>
+    Swal.fire({ icon: 'error', title: 'Error', text: "{{ session('error') }}" });
+</script>
+@endif

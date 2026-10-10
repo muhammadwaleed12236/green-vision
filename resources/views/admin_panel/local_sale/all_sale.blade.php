@@ -276,4 +276,115 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
+<!-- Convert Estimate Modal -->
+<div class="modal fade" id="convertEstimateModal" tabindex="-1" aria-labelledby="convertEstimateModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <form id="convertEstimateForm" method="POST" action="">
+            @csrf
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title" id="convertEstimateModalLabel">Convert Estimate to Sale</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Select Plan Option</label>
+                        <select name="selected_plan" id="selectedPlanDropdown" class="form-select">
+                            <option value="">None (Convert Common Items Only)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">Convert to Sale</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Convert Estimate to Sale Modal -->
+<div class="modal fade" id="convertEstimateModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="convertEstimateForm" method="POST">
+                @csrf
+                <div class="modal-header">
+                    <h5 class="modal-title">Convert Estimate to Sale</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group mb-3">
+                        <label class="fw-bold mb-2">Selected Plan</label>
+                        <select name="selected_plan" id="selectedPlanDropdown" class="form-select">
+                            <option value="">None (Only Common Items)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Convert Now</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Convert Estimate Button
+        $('.convert-to-sale-btn').on('click', function() {
+            let saleId = $(this).data('sale-id');
+            let plansJson = $(this).attr('data-plans');
+            let plans = [];
+            if (plansJson) {
+                try { plans = JSON.parse(plansJson); } catch (e) {}
+            }
+            
+            let dropdown = $('#selectedPlanDropdown');
+            dropdown.empty();
+            dropdown.append('<option value="">None (Only Common Items)</option>');
+            
+            if (plans && Array.isArray(plans)) {
+                plans.forEach((plan, index) => {
+                    dropdown.append(`<option value="${index}">${plan.name}</option>`);
+                });
+            }
+            
+            $('#convertEstimateForm').attr('action', `/local-sale/convert/${saleId}/sale`);
+            $('#convertEstimateModal').modal('show');
+        });
+
+        $('.convert-btn').on('click', function() {
+            let saleId = $(this).data('id');
+            let plansJson = $(this).attr('data-plans');
+            
+            let $dropdown = $('#selectedPlanDropdown');
+            $dropdown.empty();
+            $dropdown.append('<option value="">None (Convert Common Items Only)</option>');
+            
+            if (plansJson) {
+                try {
+                    let plans = JSON.parse(plansJson);
+                    if (Array.isArray(plans)) {
+                        plans.forEach(function(plan, idx) {
+                            $dropdown.append('<option value="' + idx + '">' + (plan.name || 'Plan ' + (idx+1)) + '</option>');
+                        });
+                    }
+                } catch (e) {
+                    console.error("Error parsing plans: ", e);
+                }
+            }
+            
+            let url = "{{ route('local.sale.convert', [':id', 'sale']) }}";
+            url = url.replace(':id', saleId);
+            $('#convertEstimateForm').attr('action', url);
+            
+            let myModal = new bootstrap.Modal(document.getElementById('convertEstimateModal'));
+            myModal.show();
+        });
+    });
+</script>
+
 @include('admin_panel.include.footer_include')
+

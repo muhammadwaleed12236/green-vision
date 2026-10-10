@@ -143,6 +143,7 @@ class LocalSaleController extends Controller
                 'advance_amount' => $advance,
                 'remaining_amount' => $remaining,
                 'account_id' => $request->account_id,
+                'estimate_plans' => $request->has('plans') ? json_encode($request->plans) : null,
                 'job_status' => ($request->sale_type === 'sale') ? 'completed' : 'pending',
                 'delivery_date' => ($request->sale_type === 'sale') ? null : $request->delivery_date,
                 'notify_days_before' => ($request->sale_type === 'sale') ? 0 : ($request->notify_days_before ?? 2),
@@ -818,6 +819,7 @@ class LocalSaleController extends Controller
                 'advance_amount' => $advance,
                 'net_amount' => $netAmount,
                 'remaining_amount' => $remaining,
+                'estimate_plans' => $request->has('plans') ? json_encode($request->plans) : null,
                 'sale_type' => $newType,
                 'sale_date' => $request->sale_date ?? $sale->sale_date,
                 'job_status' => ($newType === 'sale') ? 'completed' : (($oldType === 'sale') ? 'pending' : $sale->job_status),
@@ -837,7 +839,7 @@ class LocalSaleController extends Controller
         }
     }
 
-    public function convert_localsale($id, $targetType)
+    public function convert_localsale(Request $request, $id, $targetType)
     {
         if (!Auth::check()) {
             return redirect()->back()->with('error', 'Unauthorized');
@@ -859,6 +861,57 @@ class LocalSaleController extends Controller
 
         DB::beginTransaction();
         try {
+            if ($request->has('selected_plan') && $request->selected_plan !== null && $request->selected_plan !== '' && !empty($sale->estimate_plans)) {
+                $plans = json_decode($sale->estimate_plans, true);
+                $selectedPlanIndex = intval($request->selected_plan);
+                if (isset($plans[$selectedPlanIndex])) {
+                    $selectedPlan = $plans[$selectedPlanIndex];
+                    
+                    // Decode common items
+                    $commonItemIds = json_decode($sale->item_id, true) ?? [];
+                    $commonItems = json_decode($sale->item, true) ?? [];
+                    $commonQtys = json_decode($sale->qty, true) ?? [];
+                    $commonRates = json_decode($sale->rate, true) ?? [];
+                    $commonAmounts = json_decode($sale->amount, true) ?? [];
+                    
+                    // Calculate old gross
+                    $oldGross = 0;
+                    foreach ($commonAmounts as $amt) $oldGross += floatval($amt);
+                    
+                    // Append plan items
+                    if (isset($selectedPlan['item_name']) && is_array($selectedPlan['item_name'])) {
+                        foreach ($selectedPlan['item_name'] as $idx => $planItem) {
+                            $commonItemIds[] = $selectedPlan['item_id'][$idx] ?? null;
+                            $commonItems[] = $planItem;
+                            $commonQtys[] = $selectedPlan['qty'][$idx] ?? 1;
+                            $commonRates[] = $selectedPlan['rate'][$idx] ?? 0;
+                            $commonAmounts[] = $selectedPlan['amount'][$idx] ?? 0;
+                        }
+                    }
+                    
+                    // Re-encode and save
+                    $sale->item_id = json_encode($commonItemIds);
+                    $sale->item = json_encode($commonItems);
+                    $sale->qty = json_encode($commonQtys);
+                    $sale->rate = json_encode($commonRates);
+                    $sale->amount = json_encode($commonAmounts);
+                    
+                    // Re-calculate totals
+                    $newGross = 0;
+                    foreach ($commonAmounts as $amt) $newGross += floatval($amt);
+                    $sale->grand_total = $newGross;
+                    $discount = floatval($sale->gross_discount);
+                    $net = $newGross - $discount;
+                    $sale->net_amount = $net;
+                    $adv = floatval($sale->advance_amount);
+                    $sale->remaining_amount = $net - $adv;
+                    
+                    // Clear plans so it behaves like normal
+                    $sale->estimate_plans = null;
+                    $sale->save();
+                }
+            }
+
             $oldType = $sale->sale_type;
             $remaining = floatval($sale->remaining_amount);
             $partyType = $sale->party_type;

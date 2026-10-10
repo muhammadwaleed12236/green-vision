@@ -307,6 +307,22 @@
                      </div>
                  </div>
 
+                 {{-- ===== PLANS SECTION (Only for Estimate) ===== --}}
+                 <div class="card mb-3" id="plansPanel" style="display: none;">
+                     <div class="card-body">
+                         <div class="d-flex justify-content-between align-items-center mb-3">
+                             <h6 class="mb-0 fw-bold text-primary">Estimate Plans (Options)</h6>
+                             <div>
+                                 <button type="button" class="btn btn-sm btn-danger me-2" id="removePlanBtn" style="display: none;"><i class="fas fa-trash"></i> Remove Plan</button>
+                                 <button type="button" class="btn btn-sm btn-outline-primary" id="addPlanBtn">+ Add Plan</button>
+                             </div>
+                         </div>
+                         <div id="plansContainer">
+                             <!-- Plans will be dynamically added here -->
+                         </div>
+                     </div>
+                 </div>
+
                  <div class="card mb-3" id="deliveryPaymentPanel">
                      <div class="card-body">
                          <h6 class="mb-3 fw-bold text-primary">Delivery & Payment Details</h6>
@@ -317,7 +333,7 @@
                              </div>
                              <div class="col-md-4">
                                  <label class="fw-bold">Notify Before (Days)</label>
-                                 <input type="number" name="notify_days_before" class="form-control" value="{{ old('notify_days_before') ?? ($cloneEstimate?->notify_days_before ?? '2') }}" min="1" max="30">
+                                 <input type="number" name="notify_days_before" class="form-control" value="{{ old('notify_days_before') ?? ($cloneEstimate?->notify_days_before ?? '2') }}" min="0" max="30">
                                  <small class="text-muted">System will notify you X days before delivery</small>
                              </div>
                          </div>
@@ -356,6 +372,12 @@
                                      @endforeach
                                  </select>
                              </div>
+                         </div>
+                         
+                         <div id="plansTotalsContainer" class="mt-4 p-3 bg-light border rounded" style="display:none;">
+                             <h6 class="fw-bold mb-2">Estimate Options Summary</h6>
+                             <ul id="plansTotalsList" class="mb-0 list-unstyled" style="font-size:15px; font-weight: 500;">
+                             </ul>
                          </div>
                      </div>
                  </div>
@@ -548,13 +570,29 @@
 
     function calcGrand() {
         let g = 0;
-        $('.item-total').each((_, e) => g += +e.value || 0);
+        $('#saleTableBody .item-total').each((_, e) => g += +e.value || 0);
         let d = +$('[name="gross_discount"]').val() || 0;
         let net = g - d;
         $('#grandTotal').val(g.toFixed(2));
         $('#netAmount').val(net.toFixed(2));
         let adv = +$('#advance').val() || 0;
         $('#remaining').val((net - adv).toFixed(2));
+
+        // Plans Calculation
+        if ($('input[name="sale_type"]:checked').val() === 'estimate' && $('.plan-block').length > 0) {
+            $('#plansTotalsContainer').show();
+            let plansHtml = '';
+            $('.plan-block').each(function(idx) {
+                let pName = $(this).find('.plan-name-input').val().trim() || ('Plan ' + (idx + 1));
+                let pGross = 0;
+                $(this).find('.item-total').each((_, input) => pGross += +input.value || 0);
+                let pNet = g + pGross - d;
+                plansHtml += '<li>TOTAL AMOUNT WITH ' + pName.toUpperCase() + ' = <strong class="text-primary">' + pNet.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + '</strong></li>';
+            });
+            $('#plansTotalsList').html(plansHtml);
+        } else {
+            $('#plansTotalsContainer').hide();
+        }
     }
 
     $('#advance,[name="gross_discount"]').on('input', calcGrand);
@@ -842,6 +880,132 @@
             });
         });
 
+        // ====== PLANS LOGIC ======
+        function updatePlanRowNumbers(planBlock) {
+            planBlock.find('.plan-items-body tr').each(function(index) {
+                $(this).find('.row-index').text(index + 1);
+            });
+        }
+
+        function toggleRemovePlanBtn() {
+            if ($('.plan-block').length > 0) {
+                $('#removePlanBtn').show();
+            } else {
+                $('#removePlanBtn').hide();
+            }
+        }
+
+        let planCounter = 0;
+        $('#addPlanBtn').click(function() {
+            planCounter++;
+            let planHtml = `
+                <div class="plan-block border rounded p-3 mb-3 bg-white position-relative">
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label class="fw-bold">Plan Name</label>
+                            <input type="text" name="plans[${planCounter}][name]" class="form-control plan-name-input" placeholder="e.g. BYD Battery" required>
+                        </div>
+                    </div>
+                    <div class="table-responsive ls-wrap">
+                        <table class="table table-borderless mb-0 sale-table plan-sale-table">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th class="text-center">#</th>
+                                    <th>Product Name</th>
+                                    <th class="text-center">Avail. Stock</th>
+                                    <th class="text-center">Quantity</th>
+                                    <th>Unit</th>
+                                    <th class="text-end">Price/unit</th>
+                                    <th class="text-end">amount</th>
+                                    <th class="text-center">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody class="plan-items-body">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+            $('#plansContainer').append(planHtml);
+            
+            let newBlock = $('#plansContainer .plan-block').last();
+            addPlanItemRow(newBlock);
+            
+            calcGrand();
+            toggleRemovePlanBtn();
+        });
+
+        function togglePlansPanel() {
+            if ($('input[name="sale_type"]:checked').val() === 'estimate') {
+                $('#plansPanel').show();
+            } else {
+                $('#plansPanel').hide();
+                $('.plan-block').remove();
+                calcGrand();
+                toggleRemovePlanBtn();
+            }
+        }
+        $('input[name="sale_type"]').on('change', togglePlansPanel);
+        togglePlansPanel();
+
+        $('#removePlanBtn').click(function() {
+            if ($('.plan-block').length > 0) {
+                $('.plan-block').last().remove();
+                calcGrand();
+                toggleRemovePlanBtn();
+            }
+        });
+
+        function addPlanItemRow(planBlock) {
+            let pId = planBlock.find('.plan-name-input').attr('name').match(/\d+/)[0];
+            let r = $('.sale-row:first').clone();
+            
+            r.find('input').val('');
+            r.find('.qty').val(0).removeClass('border-danger text-danger');
+            r.find('.avail-stock').val('');
+            r.find('.rate').val('');
+            r.find('.item-total').val('0.00');
+            r.find('.unit').val('pcs');
+            r.find('.autocomplete-list').addClass('d-none').empty();
+            
+            r.find('.item-id').attr('name', `plans[${pId}][item_id][]`);
+            r.find('.item-input').attr('name', `plans[${pId}][item_name][]`);
+            r.find('input[name="avail_stock[]"]').attr('name', `plans[${pId}][avail_stock][]`);
+            r.find('.qty').attr('name', `plans[${pId}][qty][]`);
+            r.find('.unit').attr('name', `plans[${pId}][unit][]`);
+            r.find('.rate').attr('name', `plans[${pId}][rate][]`);
+            r.find('.item-total').attr('name', `plans[${pId}][amount][]`);
+            
+            r.find('.add-row').removeClass('add-row').addClass('add-plan-item-row-btn');
+            r.find('.remove-row').removeClass('remove-row').addClass('remove-plan-item-row-btn');
+            
+            let input = r.find('.item-input');
+            input.attr('data-mode', 'search');
+            input.attr('placeholder', 'Search Product');
+            let btn = r.find('.mode-toggle');
+            btn.removeClass('btn-outline-primary').addClass('btn-outline-secondary');
+            btn.find('.mode-icon').removeClass('fa-keyboard').addClass('fa-search');
+            
+            planBlock.find('.plan-items-body').append(r);
+            updatePlanRowNumbers(planBlock);
+        }
+
+        $(document).on('click', '.add-plan-item-row-btn', function() {
+            addPlanItemRow($(this).closest('.plan-block'));
+        });
+
+        $(document).on('click', '.remove-plan-item-row-btn', function() {
+            let block = $(this).closest('.plan-block');
+            if (block.find('tbody tr').length > 1) {
+                $(this).closest('tr').remove();
+                calcGrand();
+                updatePlanRowNumbers(block);
+            }
+        });
+
+        $(document).on('input', '.plan-name-input', function() {
+            calcGrand();
+        });
     });
 </script>
 

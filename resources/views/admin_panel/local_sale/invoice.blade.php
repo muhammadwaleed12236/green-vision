@@ -626,11 +626,13 @@
                     $units = json_decode($sale->unit) ?? [];
                     $rates = json_decode($sale->rate) ?? [];
                     $amounts = json_decode($sale->amount) ?? [];
+                    $globalSerial = 0;
                 @endphp
                 @foreach($items as $i => $item)
                     @if(!empty($item))
+                    @php $globalSerial++; @endphp
                     <tr>
-                        <td style="text-align: center; font-weight: 500;">{{ $loop->iteration }}</td>
+                        <td style="text-align: center; font-weight: 500;">{{ $globalSerial }}</td>
                         <td><strong>{{ $item }}</strong></td>
                         <td style="text-align: center;">{{ ($qtys[$i] ?? 0) == 0 ? '-' : $qtys[$i] }}</td>
                         <td style="text-align: center;">{{ empty($units[$i]) ? '-' : strtoupper($units[$i]) }}</td>
@@ -639,6 +641,29 @@
                     </tr>
                     @endif
                 @endforeach
+                @if(!empty($sale->estimate_plans))
+                    @php
+                        $plans = json_decode($sale->estimate_plans, true);
+                        $planSerial = $globalSerial; // each plan restarts from common count
+                    @endphp
+                    @foreach($plans as $planIndex => $plan)
+                        @if(!empty($plan['item_name']))
+                            @foreach($plan['item_name'] as $pIdx => $pItem)
+                                @if(!empty($pItem))
+                                @php $planSerial++; @endphp
+                                <tr>
+                                    <td style="text-align: center; font-weight: 500;">{{ $planSerial }}</td>
+                                    <td><strong>{{ $pItem }}</strong></td>
+                                    <td style="text-align: center;">{{ ($plan['qty'][$pIdx] ?? 0) == 0 ? '-' : $plan['qty'][$pIdx] }}</td>
+                                    <td style="text-align: center;">{{ empty($plan['unit'][$pIdx]) ? '-' : strtoupper($plan['unit'][$pIdx]) }}</td>
+                                    <td style="text-align: right;">{{ number_format((float)($plan['rate'][$pIdx] ?? 0), 2) }}</td>
+                                    <td style="text-align: right;"><strong>{{ number_format((float)($plan['amount'][$pIdx] ?? 0), 2) }}</strong></td>
+                                </tr>
+                                @endif
+                            @endforeach
+                        @endif
+                    @endforeach
+                @endif
             </tbody>
         </table>
     </div>
@@ -665,30 +690,51 @@
         <div style="display: none;"></div>
         @endif
 
-        <div class="totals-box">
-            <div class="total-row">
-                <span>Sub Total</span>
-                <span>{{ number_format($sale->grand_total, 2) }}</span>
-            </div>
-            @if($sale->discount_value > 0)
-            <div class="total-row">
-                <span>Discount</span>
-                <span>- {{ number_format($sale->discount_value, 2) }}</span>
-            </div>
-            @endif
-            <div class="total-row grand-total">
-                <span>Net Total</span>
-                <span>RS {{ number_format($sale->net_amount, 2) }}</span>
-            </div>
-            @if(strtolower($sale->sale_type) !== 'estimate')
-            <div class="total-row">
-                <span>{{ $sale->party_type === 'walkin' ? 'Amount Paid' : 'Advance Paid' }}</span>
-                <span>{{ number_format($sale->advance_amount, 2) }}</span>
-            </div>
-            <div class="total-row balance-due">
-                <span>Balance Due</span>
-                <span>RS {{ number_format($sale->remaining_amount, 2) }}</span>
-            </div>
+        <div class="totals-box" @if(!empty($sale->estimate_plans)) style="width: auto; padding-right: 30px;" @endif>
+            @if(strtolower($sale->sale_type) === 'estimate' && !empty($sale->estimate_plans))
+                @php
+                    $plans = json_decode($sale->estimate_plans, true);
+                    $commonGross = floatval($sale->grand_total);
+                    $discount = floatval($sale->discount_value ?? $sale->gross_discount ?? 0);
+                @endphp
+                @foreach($plans as $plan)
+                    @php
+                        $planGross = 0;
+                        if(!empty($plan['amount'])) {
+                            foreach($plan['amount'] as $amt) $planGross += floatval($amt);
+                        }
+                        $planNet = $commonGross + $planGross - $discount;
+                    @endphp
+                    <div class="total-row" style="margin-bottom: 12px;">
+                        <span style="font-size: 14px;">TOTAL AMOUNT WITH {{ strtoupper($plan['name']) }} =</span>
+                        <span style="font-size: 16px; font-weight: bold; margin-left: 30px; color: #2563eb;">{{ number_format($planNet, 2) }}</span>
+                    </div>
+                @endforeach
+            @else
+                <div class="total-row">
+                    <span>Sub Total</span>
+                    <span>{{ number_format($sale->grand_total, 2) }}</span>
+                </div>
+                @if(($sale->discount_value ?? $sale->gross_discount ?? 0) > 0)
+                <div class="total-row">
+                    <span>Discount</span>
+                    <span>- {{ number_format($sale->discount_value ?? $sale->gross_discount ?? 0, 2) }}</span>
+                </div>
+                @endif
+                <div class="total-row grand-total">
+                    <span>Net Total</span>
+                    <span>RS {{ number_format($sale->net_amount, 2) }}</span>
+                </div>
+                @if(strtolower($sale->sale_type) !== 'estimate')
+                <div class="total-row">
+                    <span>{{ $sale->party_type === 'walkin' ? 'Amount Paid' : 'Advance Paid' }}</span>
+                    <span>{{ number_format($sale->advance_amount, 2) }}</span>
+                </div>
+                <div class="total-row balance-due">
+                    <span>Balance Due</span>
+                    <span>RS {{ number_format($sale->remaining_amount, 2) }}</span>
+                </div>
+                @endif
             @endif
         </div>
     </div>
