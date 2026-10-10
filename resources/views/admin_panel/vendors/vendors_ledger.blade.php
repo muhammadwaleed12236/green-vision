@@ -181,9 +181,9 @@
                                 @forelse($VendorLedgers as $ledger)
                                     <tr>
                                         <td data-label="ID">{{ $ledger->vendor_id }}</td>
-                                        <td data-label="Date">{{ $ledger->updated_at->format('Y-m-d') }}</td>
-                                        <td data-label="Party Code">{{ $ledger->vendor->Party_code }}</td>
-                                        <td data-label="Party Name">{{ $ledger->vendor->Party_name }}</td>
+                                        <td data-label="Date">{{ $ledger->updated_at ? $ledger->updated_at->format('Y-m-d') : 'N/A' }}</td>
+                                        <td data-label="Party Code">{{ $ledger->vendor ? $ledger->vendor->Party_code : 'N/A' }}</td>
+                                        <td data-label="Party Name">{{ $ledger->vendor ? $ledger->vendor->Party_name : 'N/A' }}</td>
                                         <td data-label="Opening">{{ number_format($ledger->opening_balance, 0) }}</td>
                                         <td data-label="Previous">{{ number_format($ledger->previous_balance, 0) }}</td>
                                         <td data-label="Closing" id="closing_balance_{{ $ledger->id }}">
