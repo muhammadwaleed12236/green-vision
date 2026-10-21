@@ -121,7 +121,9 @@ class VendorController extends Controller
     {
         if (Auth::id()) {
             $userId = Auth::id();
-            $VendorLedgers = VendorLedger::where('admin_or_user_id', $userId)->with('vendor')->get();
+            $VendorLedgers = VendorLedger::where('admin_or_user_id', $userId)->with(['vendor' => function ($query) {
+                $query->withTrashed();
+            }])->get();
 
             return view('admin_panel.vendors.vendors_ledger', compact('VendorLedgers'));
         } else {
