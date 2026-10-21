@@ -524,10 +524,21 @@
             }
         }
     </style>
-<div class="no-print" style="max-width: 900px; margin: 30px auto 0 auto;">
+<div class="no-print" style="max-width: 900px; margin: 30px auto 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
     <a href="{{ route('local-sale') }}" style="display: inline-block; padding: 10px 20px; background-color: #16a34a; color: #fff; text-decoration: none; border-radius: 4px; font-size: 14px; font-weight: 500;">
         &larr; Create New Sale
     </a>
+    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <a href="{{ route('local.sale.receipt', $sale->id) }}" class="back-btn">
+            <i class="fa fa-receipt me-1"></i> Thermal Receipt
+        </a>
+        <a href="{{ route('local.sale.invoice', $sale->id) }}" class="back-btn">
+            <i class="fa fa-file-invoice me-1"></i> A4 Invoice
+        </a>
+        <a href="{{ route('local.sale.gatepass', $sale->id) }}" class="back-btn">
+            <i class="fa fa-id-badge me-1"></i> Gate Pass
+        </a>
+    </div>
 </div>
 
 <div class="invoice-container">

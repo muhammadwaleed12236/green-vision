@@ -27,7 +27,7 @@
 
         /* ----- ACTION TOOLBAR (SCREEN ONLY) ----- */
         .toolbar-container {
-            max-width: 440px;
+            max-width: 580px;
             margin: 0 auto 16px auto;
             display: flex;
             flex-wrap: wrap;
@@ -551,6 +551,9 @@
     </button>
     <a href="{{ route('local.sale.invoice', $sale->id) }}" class="btn-action btn-invoice" title="View A4 Invoice">
         <i class="fa fa-file-invoice"></i> A4 Invoice
+    </a>
+    <a href="{{ route('local.sale.gatepass', $sale->id) }}" class="btn-action btn-invoice" title="View Gate Pass">
+        <i class="fa fa-id-badge"></i> Gate Pass
     </a>
     <a href="{{ route('show-local-sale', $sale->id) }}" class="btn-action btn-invoice" title="View Sale Details">
         <i class="fa fa-eye"></i> Details

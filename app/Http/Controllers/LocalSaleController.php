@@ -583,6 +583,15 @@ class LocalSaleController extends Controller
         return view('admin_panel.local_sale.thermal_receipt', compact('sale', 'party', 'ledger_info'));
     }
 
+    public function localsaleGatePass($id)
+    {
+        $sale = LocalSale::with(['customer', 'vendor'])->findOrFail($id);
+
+        [$party, $ledger_info] = $this->resolvePartyAndLedger($sale);
+
+        return view('admin_panel.local_sale.gate_pass', compact('sale', 'party', 'ledger_info'));
+    }
+
     public function delete_localsale($id)
     {
         $sale = LocalSale::findOrFail($id);

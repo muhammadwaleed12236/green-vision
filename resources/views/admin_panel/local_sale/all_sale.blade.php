@@ -273,6 +273,11 @@
                         </a>
                     </li>
                     <li>
+                        <a class="dropdown-item" href="{{ route('local.sale.gatepass', $sale->id) }}" target="_blank">
+                            <i class="fa fa-id-badge me-2"></i>Gate Pass
+                        </a>
+                    </li>
+                    <li>
                         <a class="dropdown-item" href="{{ route('local.sale.receipt', $sale->id) }}" target="_blank">
                             <i class="fa fa-receipt me-2"></i>Thermal Receipt
                         </a>
