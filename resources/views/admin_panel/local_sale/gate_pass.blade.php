@@ -6,18 +6,7 @@
     <title>Gate Pass #{{ $sale->invoice_number }} - {{ $appSettings['company_name'] ?? 'Gate Pass' }}</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-        
-        :root {
-            --primary: #000000; 
-            --primary-light: #333333;
-            --text-main: #1a1a1a;
-            --text-muted: #555555;
-            --bg-light: #ffffff; 
-            --bg-gray: #f8fafc;
-            --border-color: #000000;
-            --table-border: #222222;
-        }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap');
 
         * {
             margin: 0;
@@ -26,634 +15,608 @@
         }
 
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: #e2e8f0;
-            padding: 20px;
-            color: var(--text-main);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f1f5f9;
+            color: #0f172a;
+            padding: 20px 10px;
+            font-size: 11.5px;
+            line-height: 1.35;
             -webkit-font-smoothing: antialiased;
         }
 
-        /* Screen toolbar */
-        .no-print {
-            max-width: 900px; 
-            margin: 0 auto 15px auto;
+        /* ----- ACTION TOOLBAR (SCREEN ONLY) ----- */
+        .toolbar-container {
+            max-width: 580px;
+            margin: 0 auto 16px auto;
             display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 10px;
             flex-wrap: wrap;
-        }
-
-        .toolbar-left, .toolbar-right {
-            display: flex;
-            align-items: center;
             gap: 8px;
-            flex-wrap: wrap;
+            justify-content: center;
         }
 
-        .btn-link-action {
+        .btn-action {
             display: inline-flex;
             align-items: center;
-            gap: 6px;
+            gap: 7px;
             padding: 8px 14px;
-            background-color: #ffffff;
-            color: var(--text-main);
-            text-decoration: none;
-            border-radius: 6px;
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 600;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-            border: 1px solid #cbd5e1;
-            transition: all 0.2s;
+            border-radius: 7px;
+            text-decoration: none;
+            border: 1px solid transparent;
             cursor: pointer;
+            transition: all 0.15s ease-in-out;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
         }
 
-        .btn-link-action:hover {
-            background-color: #f1f5f9;
-            color: #000000;
+        .btn-print {
+            background-color: #0f172a;
+            color: #ffffff;
+            box-shadow: 0 3px 8px rgba(15, 23, 42, 0.25);
+        }
+        .btn-print:hover {
+            background-color: #1e293b;
+        }
+
+        .btn-print kbd {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 1px 4px;
+            border-radius: 4px;
+            font-size: 9.5px;
+            font-family: inherit;
+        }
+
+        .btn-invoice {
+            background-color: #ffffff;
+            color: #334155;
+            border-color: #cbd5e1;
+        }
+        .btn-invoice:hover {
+            background-color: #f8fafc;
+            color: #0f172a;
             border-color: #94a3b8;
         }
 
-        .btn-link-action.btn-primary-print {
-            background-color: #0f172a;
+        .btn-back {
+            background-color: #64748b;
             color: #ffffff;
-            border-color: #0f172a;
+        }
+        .btn-back:hover {
+            background-color: #475569;
         }
 
-        .btn-link-action.btn-primary-print:hover {
-            background-color: #1e293b;
+        .btn-new {
+            background-color: #16a34a;
+            color: #ffffff;
+        }
+        .btn-new:hover {
+            background-color: #15803d;
         }
 
-        .btn-link-action kbd {
-            background: rgba(255, 255, 255, 0.25);
-            padding: 1px 5px;
-            border-radius: 4px;
-            font-size: 10px;
-        }
-
-        /* Gate Pass document sheet */
-        .invoice-container {
-            max-width: 900px;
+        /* ----- THERMAL RECEIPT CONTAINER ----- */
+        /* Safe 70mm - 72mm width to prevent edge cutting on 80mm thermal printers */
+        .receipt-wrapper {
+            max-width: 72mm;
+            width: 100%;
             margin: 0 auto;
             background: #ffffff;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
-            border-radius: 4px;
-            border: 1px solid #d1d5db;
+            padding: 14px 10px 16px 10px;
+            box-shadow: 0 8px 20px -4px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05);
+            border-radius: 6px;
+            color: #000000;
+            box-sizing: border-box;
+            overflow: hidden;
         }
 
-        /* ----- HEADER ----- */
-        .invoice-header {
-            padding: 35px 40px 25px 40px;
+        /* Number font formatting */
+        .num-font {
+            font-family: 'JetBrains Mono', 'Consolas', monospace;
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* Header */
+        .receipt-header {
+            text-align: center;
+            margin-bottom: 8px;
+        }
+
+        .receipt-logo {
+            max-width: 100px;
+            max-height: 45px;
+            object-fit: contain;
+            margin: 0 auto 5px auto;
+            display: block;
+            filter: grayscale(100%) contrast(150%);
+        }
+
+        .company-title {
+            font-size: 14px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            margin-bottom: 2px;
+            color: #000;
+        }
+
+        .company-meta {
+            font-size: 10px;
+            font-weight: 500;
+            color: #222;
+            line-height: 1.3;
+        }
+
+        .company-meta.phone {
+            font-weight: 700;
+            margin-top: 1px;
+            font-size: 10.5px;
+        }
+
+        /* Receipt Badge */
+        .receipt-type-badge {
+            margin: 8px 0 6px 0;
+            text-align: center;
+            font-size: 12px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            padding: 4px 0;
+            border-top: 1.5px solid #000;
+            border-bottom: 1.5px solid #000;
+        }
+
+        /* Info meta rows */
+        .info-grid {
+            margin: 6px 0;
+            font-size: 10.5px;
+        }
+
+        .info-row {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            border-bottom: 2px solid #000000;
-            background-color: #ffffff;
-        }
-
-        .inv-header-left {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            max-width: 50%;
-        }
-
-        .main-logo {
-            max-width: 170px;
-            max-height: 70px;
-            object-fit: contain;
-            display: block;
-        }
-
-        .company-name {
-            font-size: 22px;
-            font-weight: 800;
-            color: var(--primary);
-            margin: 0;
-            letter-spacing: 0.5px;
-        }
-
-        .company-contact {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
-
-        .contact-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 12.5px;
-            color: var(--text-muted);
-            font-weight: 500;
-        }
-
-        .contact-item a {
-            color: var(--text-muted);
-            text-decoration: none;
-        }
-
-        .contact-item a:hover {
-            color: var(--primary);
-        }
-
-        .inv-header-right {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-end;
-            gap: 10px;
-            max-width: 50%;
-        }
-
-        .document-title {
-            font-size: 32px;
-            font-weight: 900;
-            margin: 0;
-            letter-spacing: 2.5px;
-            color: var(--primary);
-            text-transform: uppercase;
-            line-height: 1.1;
-        }
-
-        .document-subtitle {
-            font-size: 11px;
-            font-weight: 700;
-            color: #475569;
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
-            border-bottom: 2px solid #000;
-            padding-bottom: 3px;
-        }
-
-        .meta-container {
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            gap: 15px;
-            margin-top: 4px;
-        }
-
-        .secondary-logo {
-            max-height: 70px;
-            object-fit: contain;
-        }
-
-        .meta-details {
-            text-align: right;
-            font-size: 12.5px;
-            color: var(--text-muted);
-            line-height: 1.5;
-        }
-
-        .meta-details span {
-            font-weight: 700;
-            color: var(--primary);
-        }
-
-        /* ----- INFO SECTION ----- */
-        .invoice-info-section {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            padding: 24px 40px;
-            background-color: var(--bg-light);
-            border-bottom: 1px solid #e2e8f0;
-        }
-
-        .info-block {
-            background: #f8fafc;
-            padding: 16px 20px;
-            border-radius: 4px;
-            border: 1px solid #cbd5e1;
-        }
-
-        .info-block-title {
-            font-size: 11px;
-            font-weight: 800;
-            text-transform: uppercase;
-            color: var(--primary);
-            margin-bottom: 10px;
-            letter-spacing: 1px;
-            border-bottom: 1px solid #cbd5e1;
-            padding-bottom: 6px;
-        }
-
-        .info-block p {
-            font-size: 12.5px;
-            margin: 4px 0;
-            color: var(--text-muted);
-            line-height: 1.45;
-        }
-
-        .info-block strong {
-            color: var(--text-main);
-            font-weight: 700;
-        }
-
-        /* ----- GATE PASS TABLE SECTION ----- */
-        .gatepass-table-container {
-            padding: 25px 40px 20px 40px;
-        }
-
-        .gatepass-table {
-            width: 100%;
-            border-collapse: collapse;
-            border: 1.5px solid #000000;
-        }
-
-        .gatepass-table th {
-            background-color: #f1f5f9;
-            color: #000000;
-            padding: 10px 14px;
-            font-size: 13px;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            border: 1.5px solid #000000;
-        }
-
-        .gatepass-table td {
-            padding: 10px 14px;
-            font-size: 13px;
-            color: #000000;
-            border: 1px solid #000000;
-            height: 36px;
-            vertical-align: middle;
-        }
-
-        .gatepass-table tr.blank-row td {
-            height: 34px;
-        }
-
-        .gatepass-table tfoot th {
-            background-color: #f8fafc;
-            padding: 10px 14px;
-            font-size: 13px;
-            font-weight: 800;
-            border: 1.5px solid #000000;
-        }
-
-        .item-title {
-            font-weight: 600;
-            color: #000000;
-        }
-
-        .item-sub {
-            font-size: 11px;
-            color: #555555;
-            margin-top: 2px;
-        }
-
-        /* ----- TERMS & CONDITIONS ----- */
-        .terms-conditions-block {
-            margin: 0 40px 20px 40px;
-            padding: 16px 20px;
-            border-radius: 4px;
-            background-color: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-left: 4px solid #0f172a;
-        }
-
-        .terms-conditions-block h4 {
-            font-size: 11px;
-            font-weight: 800;
-            text-transform: uppercase;
-            margin-bottom: 8px;
-            color: var(--primary);
-            letter-spacing: 1px;
-        }
-
-        .terms-conditions-block ul {
-            font-size: 11.5px;
-            color: var(--text-muted);
-            padding-left: 20px;
-            line-height: 1.5;
-        }
-        
-        .terms-conditions-block ul li {
             margin-bottom: 3px;
+            gap: 4px;
+            width: 100%;
         }
 
-        /* ----- ADDRESSES ----- */
-        .addresses-block {
-            margin: 0 40px 20px 40px;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .address-item {
-            display: flex;
-            align-items: flex-start;
-            gap: 10px;
-            font-size: 11.5px;
+        .info-row .label {
             font-weight: 600;
-            color: var(--text-main);
-            line-height: 1.45;
-        }
-
-        .address-item svg {
-            width: 14px;
-            height: 14px;
-            fill: #475569;
-            margin-top: 2px;
+            color: #222;
             flex-shrink: 0;
         }
 
-        /* ----- FOOTER ----- */
-        .invoice-footer {
-            text-align: center;
-            padding: 14px 20px;
-            background-color: var(--primary);
-            color: #ffffff;
+        .info-row .value {
+            font-weight: 700;
+            text-align: right;
+            color: #000;
+            flex: 1;
+            overflow-wrap: break-word;
+            word-break: break-word;
+        }
+
+        /* Dividers */
+        .divider-dashed {
+            border-top: 1px dashed #000;
+            margin: 6px 0;
+        }
+
+        .divider-dotted {
+            border-top: 1px dotted #555;
+            margin: 5px 0;
+        }
+
+        .divider-solid {
+            border-top: 1px solid #000;
+            margin: 6px 0;
+        }
+
+        .divider-double {
+            border-top: 2.5px double #000;
+            margin: 6px 0;
+        }
+
+        /* Gate Pass Products Table (Matching User's Layout) */
+        .thermal-table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 1px solid #000;
+            margin: 6px 0;
+            font-size: 10.5px;
+        }
+
+        .thermal-table th {
+            border: 1px solid #000;
+            background-color: #f1f5f9;
+            padding: 4px 3px;
+            font-weight: 800;
+            text-transform: uppercase;
+            font-size: 10px;
+            color: #000;
+            letter-spacing: 0.3px;
+        }
+
+        .thermal-table td {
+            border: 1px solid #000;
+            padding: 4px 3px;
+            color: #000;
+            vertical-align: middle;
+        }
+
+        .thermal-table tr.blank-row td {
+            height: 22px;
+        }
+
+        .thermal-table tfoot th {
+            border: 1.5px solid #000;
+            padding: 5px 4px;
+            font-weight: 900;
             font-size: 11px;
+            background-color: #f8fafc;
+        }
+
+        .item-name {
+            font-weight: 700;
+            font-size: 10.5px;
+            color: #000;
+            line-height: 1.25;
+        }
+
+        .item-dim {
+            font-size: 9px;
+            color: #444;
+            margin-top: 1px;
             font-weight: 500;
+        }
+
+        /* Footer */
+        .receipt-footer {
+            text-align: center;
+            margin-top: 10px;
+            font-size: 10px;
+            line-height: 1.35;
+        }
+
+        .receipt-footer .thank-you {
+            font-weight: 800;
+            font-size: 11px;
+            text-transform: uppercase;
             letter-spacing: 0.5px;
+            margin-bottom: 2px;
         }
 
-        /* Floating print button */
-        .print-button {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            padding: 12px 24px;
-            background-color: #0f172a;
-            color: #ffffff;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 13.5px;
+        .receipt-footer .policy {
+            color: #333;
+            font-size: 9.5px;
+        }
+
+        .software-branding {
+            margin-top: 6px;
+            font-size: 8.5px;
             font-weight: 600;
-            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            z-index: 100;
+            color: #555;
+            letter-spacing: 0.2px;
+            border-top: 1px dotted #ccc;
+            padding-top: 4px;
         }
 
-        .print-button:hover {
-            background-color: #1e293b;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
-        }
-
-        /* ----- PRINT STYLES ----- */
+        /* ----- PRINT SPECIFIC STYLES ----- */
         @media print {
             @page {
-                size: A4 portrait;
-                margin: 8mm 6mm;
+                size: 80mm auto;
+                margin: 0mm;
             }
-            body { 
-                padding: 0; 
-                background-color: #ffffff !important;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-            }
-            .invoice-container { 
-                border: none !important;
-                box-shadow: none !important;
-                max-width: 100% !important; 
-                width: 100% !important;
-                border-radius: 0 !important;
-            }
-            
-            .invoice-header { padding: 15px 25px 12px 25px; }
-            .document-title { font-size: 26px; }
-            .main-logo { max-width: 140px; max-height: 55px; }
-            .invoice-info-section { padding: 12px 25px; gap: 12px; }
-            .info-block { padding: 10px 14px; }
-            .info-block p, .info-block-title { font-size: 10.5px; margin: 3px 0; }
-            .gatepass-table-container { padding: 12px 25px; }
-            .gatepass-table th, .gatepass-table td { padding: 6px 10px; font-size: 11px; }
-            .gatepass-table tr.blank-row td { height: 26px; }
-            .terms-conditions-block { margin: 0 25px 12px 25px; padding: 10px 14px; }
-            .terms-conditions-block h4 { font-size: 10px; margin-bottom: 5px; }
-            .terms-conditions-block ul { font-size: 9.5px; }
-            .addresses-block { margin: 0 25px 12px 25px; gap: 5px; }
-            .address-item { font-size: 9.5px; }
-            .invoice-footer { padding: 8px; font-size: 9px; }
 
-            .print-button, .no-print {
+            *, *:before, *:after {
+                color: #000000 !important;
+                text-shadow: none !important;
+                background: transparent !important;
+                box-shadow: none !important;
+                box-sizing: border-box !important;
+            }
+
+            html, body {
+                width: 100% !important;
+                max-width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                background: #ffffff !important;
+                color: #000000 !important;
+                font-size: 10px !important;
+                line-height: 1.3 !important;
+            }
+
+            .no-print {
                 display: none !important;
             }
 
-            .invoice-header, .invoice-info-section, .info-block, .gatepass-table th, .gatepass-table td, 
-            .terms-conditions-block, .invoice-footer {
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
+            .receipt-wrapper {
+                width: 100% !important;
+                max-width: 68mm !important; /* Safe printable width on 80mm POS printers */
+                border: none !important;
+                box-shadow: none !important;
+                border-radius: 0 !important;
+                padding: 1mm 1.5mm 3mm 1.5mm !important;
+                margin: 0 auto !important;
+                box-sizing: border-box !important;
+                overflow: hidden !important;
+            }
+
+            .receipt-logo {
+                filter: grayscale(100%) contrast(250%) !important;
+                max-width: 85px !important;
+            }
+
+            .company-title {
+                font-size: 13px !important;
+            }
+
+            .company-meta {
+                font-size: 9px !important;
+            }
+
+            .receipt-type-badge {
+                font-size: 11px !important;
+                margin: 5px 0 4px 0 !important;
+                padding: 2px 0 !important;
+            }
+
+            .info-grid {
+                font-size: 9.5px !important;
+                margin: 4px 0 !important;
+            }
+
+            .thermal-table {
+                font-size: 9.5px !important;
+                margin: 4px 0 !important;
+            }
+
+            .thermal-table th {
+                font-size: 9px !important;
+                padding: 3px 2px !important;
+                border-color: #000000 !important;
+            }
+
+            .thermal-table td {
+                padding: 3px 2px !important;
+                font-size: 9.5px !important;
+                border-color: #000000 !important;
+            }
+
+            .thermal-table tr.blank-row td {
+                height: 18px !important;
+            }
+
+            .thermal-table tfoot th {
+                font-size: 10px !important;
+                padding: 4px 2px !important;
+                border-color: #000000 !important;
+            }
+
+            .receipt-type-badge, .divider-solid, .divider-double, .divider-dashed {
+                border-color: #000000 !important;
+            }
+
+            .receipt-footer {
+                font-size: 9px !important;
+                margin-top: 6px !important;
+            }
+
+            .software-branding {
+                border-top: 1px dotted #000 !important;
+                color: #000 !important;
+                font-size: 8px !important;
+                padding-top: 3px !important;
             }
         }
     </style>
 </head>
 <body>
 
-<!-- SCREEN ACTION TOOLBAR -->
-<div class="no-print">
-    <div class="toolbar-left">
-        <a href="{{ route('local.sale.receipt', $sale->id) }}" class="btn-link-action" title="View Thermal Receipt">
-            <i class="fa fa-receipt"></i> Thermal Receipt
-        </a>
-        <a href="{{ route('local.sale.invoice', $sale->id) }}" class="btn-link-action" title="View A4 Invoice">
-            <i class="fa fa-file-invoice"></i> A4 Invoice
-        </a>
-        <a href="{{ route('show-local-sale', $sale->id) }}" class="btn-link-action" title="View Details">
-            <i class="fa fa-eye"></i> Details
-        </a>
-        <a href="{{ route('all-local-sale') }}" class="btn-link-action" title="Sales List">
-            <i class="fa fa-list"></i> Sales List
-        </a>
-    </div>
-    <div class="toolbar-right">
-        <button onclick="window.print()" class="btn-link-action btn-primary-print" title="Print Gate Pass (Ctrl+P)">
-            <i class="fa fa-print"></i> Print Gate Pass <kbd>Ctrl+P</kbd>
-        </button>
-    </div>
+<!-- SCREEN ONLY ACTIONS -->
+<div class="toolbar-container no-print">
+    <button onclick="window.print()" class="btn-action btn-print" title="Print Gate Pass (Ctrl+P)">
+        <i class="fa fa-print"></i> Print Gate Pass <kbd>Ctrl+P</kbd>
+    </button>
+    <a href="{{ route('local.sale.receipt', $sale->id) }}" class="btn-action btn-invoice" title="View Thermal Receipt">
+        <i class="fa fa-receipt"></i> Thermal Receipt
+    </a>
+    <a href="{{ route('local.sale.invoice', $sale->id) }}" class="btn-action btn-invoice" title="View A4 Invoice">
+        <i class="fa fa-file-invoice"></i> A4 Invoice
+    </a>
+    <a href="{{ route('show-local-sale', $sale->id) }}" class="btn-action btn-invoice" title="View Sale Details">
+        <i class="fa fa-eye"></i> Details
+    </a>
+    <a href="{{ route('all-local-sale') }}" class="btn-action btn-back" title="Back to All Sales">
+        <i class="fa fa-list"></i> Sales List
+    </a>
+    <a href="{{ route('local-sale') }}" class="btn-action btn-new" title="Create New Sale">
+        <i class="fa fa-plus"></i> New Sale
+    </a>
 </div>
 
-<div class="invoice-container">
+<!-- THERMAL GATE PASS PAPER -->
+<div class="receipt-wrapper" id="thermalGatePass">
+
     <!-- HEADER -->
-    <div class="invoice-header">
-        <div class="inv-header-left">
-            @if(!empty($appSettings['company_logo']))
-                <img src="{{ asset('storage/' . $appSettings['company_logo']) }}" alt="{{ $appSettings['company_name'] }}" class="main-logo">
-            @else
-                <h1 class="company-name">{{ $appSettings['company_name'] ?? 'Company Name' }}</h1>
-            @endif
-            
-            <div class="company-contact">
-                @if(!empty($appSettings['company_social']))
-                <div class="contact-item">
-                    <i class="fa-brands fa-facebook" style="width: 14px; color: #475569;"></i>
-                    <a href="{{ strpos($appSettings['company_social'], 'http') === 0 ? $appSettings['company_social'] : 'https://'.$appSettings['company_social'] }}" target="_blank">{{ preg_replace('#^https?://#', '', rtrim($appSettings['company_social'], '/')) }}</a>
-                </div>
-                @endif
-                @if(!empty($appSettings['company_phone']))
-                <div class="contact-item">
-                    <i class="fa fa-phone" style="width: 14px; color: #475569;"></i>
-                    <span>{{ $appSettings['company_phone'] }}</span>
-                </div>
-                @endif
-                @if(!empty($appSettings['company_website']))
-                <div class="contact-item">
-                    <i class="fa fa-globe" style="width: 14px; color: #475569;"></i>
-                    <a href="{{ strpos($appSettings['company_website'], 'http') === 0 ? $appSettings['company_website'] : 'https://'.$appSettings['company_website'] }}" target="_blank">{{ preg_replace('#^https?://#', '', rtrim($appSettings['company_website'], '/')) }}</a>
-                </div>
-                @endif
-            </div>
-        </div>
-        
-        <div class="inv-header-right">
-            <h2 class="document-title">GATE PASS</h2>
-            <div class="document-subtitle">Goods Delivery Challan</div>
-            <div class="meta-container">
-                <div class="meta-details">
-                    <p>{{ \Carbon\Carbon::parse($sale->sale_date)->format('F j, Y') }}</p>
-                    <p>GATE PASS #: <span>GP-{{ $sale->invoice_number }}</span></p>
-                    <p>INVOICE REF #: <span>#{{ $sale->invoice_number }}</span></p>
-                </div>
-            </div>
-            @if(!empty($appSettings['secondary_logo']))
-                <div style="display: flex; flex-direction: column; align-items: center; margin-top: 6px;">
-                    <img src="{{ asset('storage/' . $appSettings['secondary_logo']) }}" alt="Secondary Logo" class="secondary-logo">
-                    <span style="font-size: 9.5px; font-weight: 700; margin-top: 3px; color: var(--text-main); letter-spacing: 0.5px;">PEC CERTIFIED</span>
-                </div>
-            @endif
-        </div>
+    <div class="receipt-header">
+        @if(!empty($appSettings['company_logo']))
+            <img src="{{ asset('storage/' . $appSettings['company_logo']) }}" 
+                 alt="Logo" 
+                 class="receipt-logo"
+                 onerror="this.style.display='none'">
+        @endif
+
+        <div class="company-title">{{ $appSettings['company_name'] ?? 'Company Name' }}</div>
+
+        @if(!empty($appSettings['company_phone']))
+            <div class="company-meta phone">Tel: {{ $appSettings['company_phone'] }}</div>
+        @endif
+
+        @if(!empty($appSettings['company_address']))
+            <div class="company-meta">{{ Str::limit($appSettings['company_address'], 65) }}</div>
+        @endif
+
+        @if(!empty($appSettings['company_website']))
+            <div class="company-meta">{{ preg_replace('#^https?://#', '', rtrim($appSettings['company_website'], '/')) }}</div>
+        @endif
     </div>
 
-    <!-- INFO SECTION -->
-    <div class="invoice-info-section">
-        <div class="info-block">
-            <div class="info-block-title">Delivered To / Consignee</div>
-            <p><strong>{{ $party->business_name ?? $party->name }}</strong></p>
-            <p>{{ !empty($party->address) ? $party->address : 'Address Not Provided' }}</p>
-            <p>Phone: {{ $party->phone ?: 'N/A' }}</p>
-        </div>
-        
-        <div class="info-block">
-            <div class="info-block-title">Dispatch Information</div>
-            <p><strong>Gate Pass No:</strong> GP-{{ $sale->invoice_number }}</p>
-            <p><strong>Ref Invoice:</strong> #{{ $sale->invoice_number }}</p>
-            <p><strong>Issue Date:</strong> {{ date('d-M-Y', strtotime($sale->sale_date)) }}</p>
-            @if(!empty($sale->delivery_date))
-                <p><strong>Delivery Date:</strong> {{ date('d-M-Y', strtotime($sale->delivery_date)) }}</p>
-            @endif
-        </div>
+    <!-- GATE PASS BADGE -->
+    <div class="receipt-type-badge">
+        GATE PASS
     </div>
 
-    <!-- PRODUCTS TABLE (EXACT GATE PASS LAYOUT) -->
-    <div class="gatepass-table-container">
-        <table class="gatepass-table">
-            <thead>
-                <tr>
-                    <th style="width: 10%; text-align: center;">S.No.</th>
-                    <th style="width: 65%; text-align: left;">Description</th>
-                    <th style="width: 25%; text-align: center;">Quantity</th>
-                </tr>
-            </thead>
-            <tbody>
-                @php
-                    $items = json_decode($sale->item) ?? [];
-                    $heights = json_decode($sale->height) ?? [];
-                    $widths = json_decode($sale->width) ?? [];
-                    $qtys = json_decode($sale->qty) ?? [];
-                    $units = json_decode($sale->unit) ?? [];
-                    $rowCount = 0;
-                    $totalQty = 0;
-                @endphp
+    <!-- META & PARTY INFO -->
+    <div class="info-grid">
+        <div class="info-row">
+            <span class="label">Gate Pass #:</span>
+            <span class="value num-font">GP-{{ $sale->invoice_number }}</span>
+        </div>
+        <div class="info-row">
+            <span class="label">Invoice Ref:</span>
+            <span class="value num-font">#{{ $sale->invoice_number }}</span>
+        </div>
+        <div class="info-row">
+            <span class="label">Date &amp; Time:</span>
+            <span class="value num-font">{{ \Carbon\Carbon::parse($sale->sale_date)->format('d-M-Y') }} {{ date('h:i A') }}</span>
+        </div>
+        @if(!empty($sale->delivery_date))
+        <div class="info-row">
+            <span class="label">Delivery Date:</span>
+            <span class="value num-font">{{ date('d-M-Y', strtotime($sale->delivery_date)) }}</span>
+        </div>
+        @endif
 
-                @foreach($items as $i => $item)
-                    @if(!empty($item))
-                        @php
-                            $rowCount++;
-                            $qtyVal = (float)($qtys[$i] ?? 0);
-                            $totalQty += $qtyVal;
-                            $unitVal = !empty($units[$i]) ? strtoupper($units[$i]) : '';
-                            $hasDims = (!empty($heights[$i]) || !empty($widths[$i]));
-                        @endphp
-                        <tr>
-                            <td style="text-align: center; font-weight: 600;">{{ $rowCount }}</td>
-                            <td style="text-align: left;">
-                                <div class="item-title">{{ $item }}</div>
-                                @if($hasDims)
-                                    <div class="item-sub">Dim: {{ $heights[$i] ?? '-' }} &times; {{ $widths[$i] ?? '-' }} {{ $unitVal }}</div>
-                                @endif
-                            </td>
-                            <td style="text-align: center; font-weight: 700;">
-                                {{ $qtyVal == (int)$qtyVal ? (int)$qtyVal : $qtyVal }}
-                                @if(!empty($unitVal))
-                                    <span style="font-weight: 500; font-size: 11px; margin-left: 3px;">{{ $unitVal }}</span>
-                                @endif
-                            </td>
-                        </tr>
-                    @endif
-                @endforeach
+        <div class="divider-dotted"></div>
 
-                {{-- Blank rows padding to reproduce gate pass voucher look --}}
-                @php
-                    $minRows = 8;
-                    $blankRows = max(0, $minRows - $rowCount);
-                @endphp
-                @for($b = 0; $b < $blankRows; $b++)
-                    <tr class="blank-row">
-                        <td style="text-align: center;">&nbsp;</td>
-                        <td>&nbsp;</td>
-                        <td>&nbsp;</td>
+        <div class="info-row">
+            <span class="label">Consignee:</span>
+            <span class="value">{{ $party->business_name ?? $party->name }}</span>
+        </div>
+        @if(!empty($party->phone) && $party->phone !== 'N/A')
+        <div class="info-row">
+            <span class="label">Phone:</span>
+            <span class="value num-font">{{ $party->phone }}</span>
+        </div>
+        @endif
+        @if(!empty($party->address) && $party->address !== 'N/A' && $party->address !== 'Address Not Provided')
+        <div class="info-row">
+            <span class="label">Address:</span>
+            <span class="value">{{ Str::limit($party->address, 36) }}</span>
+        </div>
+        @endif
+    </div>
+
+    <!-- PRODUCTS TABLE (EXACT LAYOUT: S.No | Description | Quantity) -->
+    @php
+        $items = json_decode($sale->item) ?? [];
+        $heights = json_decode($sale->height) ?? [];
+        $widths = json_decode($sale->width) ?? [];
+        $qtys = json_decode($sale->qty) ?? [];
+        $units = json_decode($sale->unit) ?? [];
+        $rowCount = 0;
+        $totalQtyCount = 0;
+    @endphp
+
+    <table class="thermal-table">
+        <thead>
+            <tr>
+                <th style="width: 14%; text-align: center;">S.No.</th>
+                <th style="width: 58%; text-align: left;">Description</th>
+                <th style="width: 28%; text-align: center;">Quantity</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach($items as $i => $item)
+                @if(!empty($item))
+                    @php
+                        $rowCount++;
+                        $qtyVal = (float)($qtys[$i] ?? 0);
+                        $totalQtyCount += $qtyVal;
+                        $unitVal = !empty($units[$i]) ? strtoupper($units[$i]) : '';
+                        $hasDim = (!empty($heights[$i]) || !empty($widths[$i]));
+                    @endphp
+                    <tr>
+                        <td style="text-align: center; font-weight: 700;">{{ $rowCount }}</td>
+                        <td style="text-align: left;">
+                            <div class="item-name">{{ $item }}</div>
+                            @if($hasDim)
+                                <div class="item-dim">
+                                    Size: {{ $heights[$i] ?? '-' }} &times; {{ $widths[$i] ?? '-' }}{{ !empty($unitVal) ? ' ' . $unitVal : '' }}
+                                </div>
+                            @endif
+                        </td>
+                        <td style="text-align: center; font-weight: 800;" class="num-font">
+                            {{ $qtyVal == (int)$qtyVal ? (int)$qtyVal : $qtyVal }}
+                            @if(!empty($unitVal))
+                                <span style="font-weight: 500; font-size: 9.5px;">{{ $unitVal }}</span>
+                            @endif
+                        </td>
                     </tr>
-                @endfor
-            </tbody>
-            <tfoot>
-                <tr>
-                    <th colspan="2" style="text-align: right; text-transform: uppercase;">Total Quantity:</th>
-                    <th style="text-align: center;">{{ $totalQty == (int)$totalQty ? (int)$totalQty : $totalQty }}</th>
-                </tr>
-            </tfoot>
-        </table>
-    </div>
-
-    <!-- TERMS & CONDITIONS FROM SETTINGS -->
-    @if(!empty($appSettings['invoice_terms']))
-    <div class="terms-conditions-block">
-        <h4>Gate Instructions &amp; Terms</h4>
-        <ul>
-            @foreach(explode("\n", str_replace("\r", "", $appSettings['invoice_terms'])) as $term)
-                @if(trim($term) !== '')
-                    <li>{{ $term }}</li>
                 @endif
             @endforeach
-            <li>Please inspect goods and quantity carefully at the gate before accepting delivery.</li>
-        </ul>
+
+            {{-- Minimum 5 rows to preserve classic gate pass voucher look --}}
+            @php
+                $minRows = 5;
+                $blankRows = max(0, $minRows - $rowCount);
+            @endphp
+            @for($b = 0; $b < $blankRows; $b++)
+                <tr class="blank-row">
+                    <td style="text-align: center;">&nbsp;</td>
+                    <td>&nbsp;</td>
+                    <td>&nbsp;</td>
+                </tr>
+            @endfor
+        </tbody>
+        <tfoot>
+            <tr>
+                <th colspan="2" style="text-align: right; text-transform: uppercase;">Total Quantity:</th>
+                <th style="text-align: center;" class="num-font">{{ $totalQtyCount == (int)$totalQtyCount ? (int)$totalQtyCount : $totalQtyCount }}</th>
+            </tr>
+        </tfoot>
+    </table>
+
+    <div class="divider-dashed"></div>
+
+    <!-- TERMS & NOTE FROM SETTINGS -->
+    @if(!empty($appSettings['invoice_terms']))
+    <div style="font-size: 9px; color: #222; margin: 4px 0 6px 0; line-height: 1.35; text-align: left;">
+        <strong>Instructions:</strong>
+        <div>{{ Str::limit(str_replace(["\r", "\n"], ' ', $appSettings['invoice_terms']), 120) }}</div>
     </div>
     @endif
 
-    <!-- COMPANY ADDRESSES FROM SETTINGS -->
-    <div class="addresses-block">
-        @if(!empty($appSettings['company_address']))
-        <div class="address-item">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M256 0c-88.37 0-160 71.63-160 160 0 102.34 140.09 335.79 150.93 346.52 4.79 5.37 13.35 5.37 18.14 0C275.91 495.79 416 262.34 416 160c0-88.37-71.63-160-160-160zm0 240c-44.18 0-80-35.82-80-80s35.82-80 80-80 80 35.82 80 80-35.82 80-80 80z"/></svg>
-            <span>{!! nl2br(e($appSettings['company_address'])) !!}</span>
-        </div>
-        @endif
-        @if(!empty($appSettings['company_address_2']))
-        <div class="address-item">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M256 0c-88.37 0-160 71.63-160 160 0 102.34 140.09 335.79 150.93 346.52 4.79 5.37 13.35 5.37 18.14 0C275.91 495.79 416 262.34 416 160c0-88.37-71.63-160-160-160zm0 240c-44.18 0-80-35.82-80-80s35.82-80 80-80 80 35.82 80 80-35.82 80-80 80z"/></svg>
-            <span>{!! nl2br(e($appSettings['company_address_2'])) !!}</span>
-        </div>
-        @endif
-    </div>
+    <div class="divider-double"></div>
 
     <!-- FOOTER -->
-    <div class="invoice-footer">
-        Powered by ProWave Software Solutions | Contact: 0317-3836223
+    <div class="receipt-footer">
+        <div class="software-branding">
+            ProWave Software technologies &bull; 0317-3836223
+        </div>
     </div>
+
 </div>
 
-<!-- FLOATING PRINT BUTTON -->
-<button class="print-button" onclick="window.print()">
-    <i class="fa fa-print"></i>
-    Print Gate Pass
-</button>
+<!-- SCRIPTS FOR PRINT -->
+<script>
+    // Auto print if requested in query
+    window.addEventListener('load', function() {
+        @if(request()->has('autoprint') || session('autoprint'))
+            setTimeout(function() {
+                window.print();
+            }, 450);
+        @endif
+    });
+
+    // Support keyboard shortcut Ctrl+P or Command+P
+    document.addEventListener('keydown', function(e) {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
+            e.preventDefault();
+            window.print();
+        }
+    });
+</script>
 
 </body>
 </html>
