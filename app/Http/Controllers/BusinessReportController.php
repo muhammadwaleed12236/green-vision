@@ -137,8 +137,8 @@ class BusinessReportController extends Controller
             ->whereDate('voucher_date', '<=', $toDate)
             ->sum('debit_amount');
 
-        // 9. Net Profit = Job Amount - Job Assignment Expense - Other Expenses - Staff Payments
-        $netProfit = $totalJobsAmount - $jobAssignmentExpense - $totalOtherExpenses - $staffPayments;
+        // 9. Net Profit = Job Amount - All Expenses (Job Assignment + Vendor Payments + Contractor Payments + Other Expenses + Staff Payments)
+        $netProfit = $totalJobsAmount - $jobAssignmentExpense - $vendorPayments - $contractorPayments - $totalOtherExpenses - $staffPayments;
 
         // ==================== DUES & BALANCES ====================
 
@@ -265,8 +265,8 @@ class BusinessReportController extends Controller
                 ->whereDate('voucher_date', $date)
                 ->sum('debit_amount');
 
-            // Day Profit
-            $dayProfit = $dayJobsAmount - $dayJobExpense - $dayOtherExpense - $dayStaffPayment;
+            // Day Profit = Day Jobs Amount - Job Assignment Expense - Vendor Payment - Contractor Payment - Other Expense - Staff Payment
+            $dayProfit = $dayJobsAmount - $dayJobExpense - $dayVendorPayment - $dayContractorPayment - $dayOtherExpense - $dayStaffPayment;
 
             // Only add if there's any activity
             if ($dayJobs > 0 || $dayJobsAmount > 0 || $dayJobExpense > 0 || $dayOtherExpense > 0 || $dayStaffPayment > 0 || $dayCustomerReceipt > 0 || $dayVendorPayment > 0 || $dayContractorPayment > 0) {
