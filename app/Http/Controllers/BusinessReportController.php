@@ -43,31 +43,17 @@ class BusinessReportController extends Controller
             ->whereDate('sale_date', '<=', $toDate)
             ->sum('net_amount'); // FIXED: Use net_amount (after discount) instead of grand_total
 
-        $totalJobsReceivedAdvance = LocalSale::where('admin_or_user_id', $userId)
+        // Amount received (advance/payment) on jobs created in this period
+        $totalJobsReceived = LocalSale::where('admin_or_user_id', $userId)
             ->whereDate('sale_date', '>=', $fromDate)
             ->whereDate('sale_date', '<=', $toDate)
             ->sum('advance_amount');
 
-        $totalCustomerRecoveriesData = \App\Models\CustomerRecovery::join('customer_ledgers', 'customer_recoveries.customer_ledger_id', '=', 'customer_ledgers.id')
-            ->where('customer_ledgers.admin_or_user_id', $userId)
-            ->whereDate('customer_recoveries.date', '>=', $fromDate)
-            ->whereDate('customer_recoveries.date', '<=', $toDate)
-            ->sum('customer_recoveries.amount_paid');
-
-        $totalCustomerReceiptsData = JournalVoucher::where('admin_or_user_id', $userId)
-            ->where('voucher_type', 'receipt')
-            ->where('party_type', 'customer')
-            ->whereDate('voucher_date', '>=', $fromDate)
-            ->whereDate('voucher_date', '<=', $toDate)
-            ->sum('credit_amount');
-
-        $totalJobsReceived = $totalJobsReceivedAdvance + $totalCustomerRecoveriesData + $totalCustomerReceiptsData;
-
-        // Job Pending = Total Jobs Amount - Total Received (in this period). Prevent negative.
-        $totalJobsPending = $totalJobsAmount - $totalJobsReceived;
-        if ($totalJobsPending < 0) {
-            $totalJobsPending = 0;
-        }
+        // Remaining pending on jobs created in this period
+        $totalJobsPending = LocalSale::where('admin_or_user_id', $userId)
+            ->whereDate('sale_date', '>=', $fromDate)
+            ->whereDate('sale_date', '<=', $toDate)
+            ->sum('remaining_amount');
 
         // 2. Job Assignment Expenses (FIXED: Only from AddExpense table to avoid double counting)
         $jobAssignmentExpense = AddExpense::where('add_expenses.admin_or_user_id', $userId)
@@ -106,20 +92,12 @@ class BusinessReportController extends Controller
 
         $totalPaymentsOut = $totalPaymentsOutVouchers;
 
-        // 6. Total Receipts In
-        $totalReceiptsInVouchers = JournalVoucher::where('admin_or_user_id', $userId)
+        // 6. Total Receipts In (All incoming cash/bank entries from Journal Vouchers)
+        $totalReceiptsIn = JournalVoucher::where('admin_or_user_id', $userId)
             ->where('voucher_type', 'receipt')
             ->whereDate('voucher_date', '>=', $fromDate)
             ->whereDate('voucher_date', '<=', $toDate)
             ->sum('credit_amount');
-
-        $totalCustomerRecoveries = \App\Models\CustomerRecovery::join('customer_ledgers', 'customer_recoveries.customer_ledger_id', '=', 'customer_ledgers.id')
-            ->where('customer_ledgers.admin_or_user_id', $userId)
-            ->whereDate('customer_recoveries.date', '>=', $fromDate)
-            ->whereDate('customer_recoveries.date', '<=', $toDate)
-            ->sum('customer_recoveries.amount_paid');
-
-        $totalReceiptsIn = $totalReceiptsInVouchers + $totalCustomerRecoveries;
 
         // 7. Vendor Payments (New)
         $vendorPayments = JournalVoucher::where('admin_or_user_id', $userId)
@@ -237,19 +215,11 @@ class BusinessReportController extends Controller
                 ->whereDate('voucher_date', $date)
                 ->sum('debit_amount');
 
-            // Customer Receipt for this date
-            $dayCustomerReceiptVoucher = JournalVoucher::where('admin_or_user_id', $userId)
+            // Customer Receipt for this date (All cash/bank receipts for this date)
+            $dayCustomerReceipt = JournalVoucher::where('admin_or_user_id', $userId)
                 ->where('voucher_type', 'receipt')
-                ->where('party_type', 'customer')
                 ->whereDate('voucher_date', $date)
                 ->sum('credit_amount');
-
-            $dayCustomerRecovery = \App\Models\CustomerRecovery::join('customer_ledgers', 'customer_recoveries.customer_ledger_id', '=', 'customer_ledgers.id')
-                ->where('customer_ledgers.admin_or_user_id', $userId)
-                ->whereDate('customer_recoveries.date', $date)
-                ->sum('customer_recoveries.amount_paid');
-
-            $dayCustomerReceipt = $dayCustomerReceiptVoucher + $dayCustomerRecovery;
 
             // Vendor Payment for this date
             $dayVendorPayment = JournalVoucher::where('admin_or_user_id', $userId)
